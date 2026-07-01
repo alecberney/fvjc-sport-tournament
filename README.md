@@ -10,15 +10,15 @@ Sport tournament management app for FVJC. Runs as a single JAR with SQLite, serv
 
 ## Run as a JAR
 
+Build and run in one command:
+
 ```bash
-cd backend
-mvn package
-java -jar target/tournament-0.0.1-SNAPSHOT.jar
+cd backend && mvn package && java -jar target/tournament-0.0.1-SNAPSHOT.jar
 ```
 
 App available at http://localhost:8081
 
-> `mvn package` builds the Angular frontend and packages it inside the JAR automatically.
+The JAR is at `backend/target/tournament-0.0.1-SNAPSHOT.jar`. `mvn package` builds the Angular frontend and bundles it inside the JAR automatically.
 
 ## Dev mode
 
@@ -36,4 +36,4 @@ cd frontend
 npm start
 ```
 
-Frontend at http://localhost:4200 — API calls are proxied to the backend on port 8080.
+Frontend at http://localhost:4200 — API calls are proxied to the backend on port 8081.
