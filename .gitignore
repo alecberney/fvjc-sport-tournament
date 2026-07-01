@@ -1,3 +1,15 @@
+# Database
+/database/*.db
+
+# Frontend
+/frontend/node_modules/
+/frontend/.angular/
+/frontend/node/
+
+# Backend build
+/backend/target/
+/backend/src/main/resources/static/
+
 # Compiled class file
 *.class
 
