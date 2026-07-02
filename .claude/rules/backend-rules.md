@@ -4,33 +4,27 @@ Base package: `abe.fvjc.tournament`
 
 ## Package Structure
 
-Feature-first, then layer. Each feature has exactly 3 sub-packages:
+Layer-first, then feature. Three top-level layers, each containing one sub-package per feature:
 
 ```
 abe.fvjc.tournament
-├── tournament/
-│   ├── api/
-│   ├── domain/
-│   └── persistence/
-├── team/
-│   ├── api/
-│   ├── domain/
-│   └── persistence/
-├── group/
-│   ├── api/
-│   ├── domain/
-│   └── persistence/
-├── match/
-│   ├── api/
-│   ├── domain/
-│   └── persistence/
-├── schedule/
-│   ├── api/
-│   ├── domain/
-│   └── persistence/
-└── shared/
-    └── exception/
+├── api/
+│   ├── tournament/
+│   ├── team/
+│   └── ...
+├── domain/
+│   ├── common/
+│   │   └── problem/        ← shared domain exceptions
+│   ├── tournament/
+│   ├── team/
+│   └── ...
+└── persistence/
+    ├── tournament/
+    ├── team/
+    └── ...
 ```
+
+Shared domain exceptions live in `domain.common.problem` — never in a `shared` package.
 
 ## Dependency Direction
 
@@ -591,24 +585,24 @@ public class TeamApiMapper {
 
 ---
 
-## Shared Layer (`shared/`)
+## Common Domain Problems (`domain.common.problem`)
 
 ```java
-// shared/exception/NotFoundException.java
+// domain/common/problem/NotFoundException.java
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String entity, Object id) {
         super(entity + " not found with id: " + id);
     }
 }
 
-// shared/exception/BusinessException.java
+// domain/common/problem/BusinessException.java
 public class BusinessException extends RuntimeException {
     public BusinessException(String message) {
         super(message);
     }
 }
 
-// shared/exception/ValidationException.java
+// domain/common/problem/ValidationException.java
 public class ValidationException extends RuntimeException {
     private final List<FieldError> errors;
 

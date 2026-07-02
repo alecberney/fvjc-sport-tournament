@@ -104,7 +104,7 @@ assertFalse(condition);
 assertThrows(ExceptionClass.class, () -> methodUnderTest());
 ```
 
-For exception tests, `assertThrows` captures the throw and execution continues — place `verify(...)` after:
+For exception tests, assign `assertThrows` to a `var` and assert on the exception — `verify(...)` comes after:
 
 ```java
 @Test
@@ -113,9 +113,11 @@ void findByIdWhenNotFoundShouldThrowNotFoundException() {
 
     when(tournamentStore.findById(id)).thenReturn(Optional.empty());
 
-    assertThrows(NotFoundException.class, () -> tournamentService.findById(id));
+    final var exception = assertThrows(NotFoundException.class, () -> tournamentService.findById(id));
 
     verify(tournamentStore).findById(id);
+
+    assertEquals("Tournament not found with id: " + id, exception.getMessage());
 }
 ```
 
@@ -248,5 +250,5 @@ final var tournamentFound   = tournamentService.findById(id);
 | Empty ID in tests | Use Lombok `@With`: `TournamentFakes.buildTournament().withId(TournamentId.empty())` |
 | IdGenerator | Package-private `@UtilityClass` per feature — generates typed IDs, used only by Fakes/tests |
 | No `toBuilder` | Use Lombok `@With` for field overrides — never `toBuilder()` |
-| Static imports | Enum values and validator methods always statically imported in fakes and tests |
+| Static imports | Enum values, Fakes methods, and `IdGenerator` methods always statically imported in tests |
 | `final var` | All local variables use `final var` |

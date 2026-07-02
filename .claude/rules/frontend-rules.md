@@ -8,30 +8,41 @@ Base path: `src/app/`
 
 ## Package Structure
 
-Feature-first, then layer. Each feature has 4 sub-folders:
+Layer-first, then feature. Four top-level layers:
 
 ```
-src/app/tournament/
+src/app/
 ├── api/
-│   ├── tournament.dto.ts
-│   ├── tournament.api.service.ts
-│   └── tournament.api.mapper.ts
+│   └── tournament/
+│       ├── tournament.api.dto.ts
+│       ├── tournament.api.service.ts
+│       └── tournament.api.mapper.ts
 ├── domain/
-│   ├── tournament.model.ts
-│   ├── tournament.actions.ts
-│   ├── tournament.state.ts
-│   └── tournament.domain.service.ts   ← only if needed
+│   └── tournament/
+│       ├── tournament.model.ts
+│       ├── tournament.actions.ts
+│       ├── tournament.state.ts
+│       └── tournament.domain.service.ts   ← only if needed
 ├── display/
-│   ├── pages/
-│   │   └── tournament-list/
-│   │       ├── tournament-list.page.ts
-│   │       └── tournament-list.page.html
-│   └── components/
-│       └── tournament-card/
-│           ├── tournament-card.component.ts
-│           └── tournament-card.component.html
+│   └── tournament/
+│       ├── pages/
+│       │   └── tournament-list/
+│       │       ├── tournament-list.page.ts
+│       │       └── tournament-list.page.html
+│       └── components/
+│           └── tournament-card/
+│               ├── tournament-card.component.ts
+│               └── tournament-card.component.html
 └── modules/
     └── tournament.routes.ts
+```
+
+Imports always use the `@app/` alias — never relative paths:
+
+```typescript
+import { Tournament } from '@app/domain/tournament/tournament.model';
+import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { TournamentApiService } from '@app/api/tournament/tournament.api.service';
 ```
 
 ---
