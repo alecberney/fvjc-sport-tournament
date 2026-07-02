@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 
 import static abe.fvjc.tournament.shared.exception.ValidationErrorResponse.FieldError;
+import abe.fvjc.tournament.shared.exception.ConflictException;
+import abe.fvjc.tournament.shared.exception.ConflictErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -62,5 +64,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Void> handleNotFound(NotFoundException ex) {
         return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ConflictErrorResponse> handleConflict(final ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ConflictErrorResponse.builder().error(ex.getMessage()).build());
     }
 }

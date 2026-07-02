@@ -1,0 +1,46 @@
+<h2 mat-dialog-title>Modifier l'équipe</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="edit-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Nom de l'équipe</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.get('name')?.hasError('required')) {
+        <mat-error>Le nom de l'équipe est obligatoire</mat-error>
+      } @else if (form.get('name')?.hasError('maxlength')) {
+        <mat-error>Le nom ne peut pas dépasser 250 caractères</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="responsible-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Prénom du responsable</mat-label>
+        <input matInput formControlName="responsibleFirstName" />
+        @if (form.get('responsibleFirstName')?.hasError('required')) {
+          <mat-error>Le prénom du responsable est obligatoire</mat-error>
+        } @else if (form.get('responsibleFirstName')?.hasError('maxlength')) {
+          <mat-error>Maximum 100 caractères</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nom du responsable</mat-label>
+        <input matInput formControlName="responsibleLastName" />
+        @if (form.get('responsibleLastName')?.hasError('required')) {
+          <mat-error>Le nom du responsable est obligatoire</mat-error>
+        } @else if (form.get('responsibleLastName')?.hasError('maxlength')) {
+          <mat-error>Maximum 100 caractères</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-checkbox formControlName="paid">Payé</mat-checkbox>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="submit()">
+    Enregistrer
+  </button>
+</mat-dialog-actions>
