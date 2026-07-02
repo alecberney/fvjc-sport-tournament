@@ -9,36 +9,43 @@ Infrastructure (`persistence`) and API (`api`) layers are not unit-tested at thi
 
 ## Test Structure
 
-Every unit test follows this exact 5-part structure, each part separated by a blank line and marked with a comment:
+Test methods have no structural comments — code flow speaks for itself. A test has five natural sections:
+
+1. Test data setup (fakes)
+2. Mock stubs (`when(...).thenReturn(...)`)
+3. Method call under test — result named `<model><Action>` (e.g., `tournamentCreated`, `tournamentFound`)
+4. Verify block
+5. *(blank line)*
+6. Assert block
 
 ```java
 @Test
-void should_returnTeam_when_teamExists() {
-    // setup
-    Team team = TeamFakes.aTeam();
-    UUID id = team.getId().value();
+void createWhenValidRequestShouldSetDraftStatus() {
+    final var request = TournamentFakes.buildCreateRequest();
 
-    // when
-    when(teamStore.findById(id)).thenReturn(Optional.of(team));
+    when(tournamentStore.save(any(Tournament.class))).then(returnsFirstArg());
 
-    // call
-    Team result = teamService.findById(id);
+    final var tournamentCreated = tournamentService.create(request);
 
-    // verify
-    verify(teamStore).findById(id);
+    verify(tournamentStore).save(any(Tournament.class));
 
-    // assert
-    assertThat(result).isEqualTo(team);
+    assertEquals(DRAFT, tournamentCreated.getStatus());
 }
 ```
 
-| Part | Purpose |
-|------|---------|
-| `// setup` | Build test data using Fakes, prepare inputs |
-| `// when` | Stub Mockito mocks with `when(...).thenReturn(...)` |
-| `// call` | Invoke the method under test — exactly one call |
-| `// verify` | `verify(mock)` for each `when` stub — at minimum one verify per stub |
-| `// assert` | Assert on the value returned by the method under test |
+---
+
+## Test Method Naming
+
+```
+methodTestedNameWhenXxxxShouldXxx
+```
+
+Examples:
+- `createWhenValidRequestShouldSetDraftStatus`
+- `findByIdWhenNotFoundShouldThrowNotFoundException`
+- `findByIdWhenExistsShouldReturnTournament`
+- `deleteWhenExistsShouldCallStore`
 
 ---
 
@@ -49,21 +56,68 @@ Use Mockito to mock all dependencies injected into the class under test.
 ```java
 @ExtendWith(MockitoExtension.class)
 class TeamServiceTest {
-
     @Mock
-    TeamStore teamStore;
+    private TeamStore teamStore;
 
     @InjectMocks
-    TeamService teamService;
+    private TeamService teamService;
 }
 ```
 
 - Use `@ExtendWith(MockitoExtension.class)` — no Spring context.
+- `@Mock` fields are `private`.
+- `@InjectMocks` field is `private`.
 - One `@Mock` per dependency.
 - `@InjectMocks` on the class under test.
-- `when(...).thenReturn(...)` for happy path stubs.
+- `when(...).thenReturn(...)` for happy path stubs that return a specific value.
+- `when(...).then(returnsFirstArg())` for store `save` stubs — returns the argument passed in, enabling assertions on the result without a captor.
 - `when(...).thenThrow(...)` for error path stubs.
 - At least one `verify(mock).method(...)` per `when` stub.
+- **`ArgumentCaptor` is banned** — use `returnsFirstArg()` and assert on the return value instead.
+
+### Save stub pattern
+
+```java
+when(teamStore.save(any(Team.class))).then(returnsFirstArg());
+
+final var teamCreated = teamService.create(request);
+
+verify(teamStore).save(any(Team.class));
+
+assertEquals("Les Aigles", teamCreated.getName());
+assertEquals(FOOTBALL, teamCreated.getSport());
+```
+
+---
+
+## Assertions
+
+Use **JUnit 5 assertions only** — never AssertJ.
+
+```java
+import static org.junit.jupiter.api.Assertions.*;
+
+assertEquals(expected, actual);
+assertNotNull(value);
+assertTrue(condition);
+assertFalse(condition);
+assertThrows(ExceptionClass.class, () -> methodUnderTest());
+```
+
+For exception tests, `assertThrows` captures the throw and execution continues — place `verify(...)` after:
+
+```java
+@Test
+void findByIdWhenNotFoundShouldThrowNotFoundException() {
+    final var id = IdGenerator.tournamentId().value();
+
+    when(tournamentStore.findById(id)).thenReturn(Optional.empty());
+
+    assertThrows(NotFoundException.class, () -> tournamentService.findById(id));
+
+    verify(tournamentStore).findById(id);
+}
+```
 
 ---
 
@@ -76,7 +130,46 @@ One Fakes class per feature, located in the test source tree under the same pack
 src/test/java/abe/fvjc/tournament/
 └── team/
     └── domain/
-        └── TeamFakes.java
+        ├── IdGenerator.java
+        ├── TeamFakes.java
+        └── TeamServiceTest.java
+```
+
+### Naming
+
+Fakes methods are prefixed with `build`:
+
+```java
+TeamFakes.buildTeam()
+TeamFakes.buildCreateRequest()
+```
+
+### IdGenerator
+
+Each feature has a package-private `IdGenerator` `@UtilityClass` in its test domain package. It generates typed ID instances for use in fakes only. All methods are package-private.
+
+```java
+// team/domain/IdGenerator.java
+@UtilityClass
+class IdGenerator {
+    static TeamId teamId() {
+        return TeamId.of(UUID.randomUUID());
+    }
+}
+```
+
+- Package-private — only Fakes and tests in the same package can use it.
+- Generates a new random UUID-based ID on every call.
+- Never pass a UUID from outside — IDs are always generated internally.
+
+### Fakes Structure
+
+All `buildXxx()` methods for domain objects include a non-empty ID generated via `IdGenerator`. There is no separate `buildXxxWithId()` variant — the base method always has an ID.
+
+To get a domain object with an empty ID in a test, use Lombok `@With`:
+
+```java
+TournamentFakes.buildTournament().withId(TournamentId.empty())
 ```
 
 ```java
@@ -84,100 +177,51 @@ src/test/java/abe/fvjc/tournament/
 @UtilityClass
 public class TeamFakes {
 
-    public static Team aTeam() {
+    public static Team buildTeam() {
         return Team.builder()
-            .id(TeamId.of(UUID.randomUUID()))
+            .id(IdGenerator.teamId())
             .name("Les Aigles")
-            .sport(Sport.FOOTBALL)
+            .sport(FOOTBALL)
             .tournamentId(TournamentId.of(UUID.randomUUID()))
             .build();
     }
 
-    public static Team aTeamWithId(UUID id) {
-        return aTeam().toBuilder()
-            .id(TeamId.of(id))
-            .build();
-    }
-
-    public static Team aTeamWithTournament(UUID tournamentId) {
-        return aTeam().toBuilder()
-            .tournamentId(TournamentId.of(tournamentId))
+    public static TeamCreateRequest buildCreateRequest() {
+        return TeamCreateRequest.builder()
+            .name("Les Aigles")
+            .sport(FOOTBALL)
             .build();
     }
 }
 ```
 
-- Default values are realistic but arbitrary — they must compile and be valid domain objects.
-- Override specific fields with named variants: `aTeamWithId(...)`, `aTeamWithTournament(...)`.
-- Use `toBuilder()` for overrides — never mutate the base object.
+- `buildXxx()` — base factory with hardcoded realistic defaults and a generated ID.
+- `buildCreateRequest()` — builds the domain request object for service tests.
+- `buildXxxWith[Field](value)` — named variant for a specific test scenario.
+- Enum values are always statically imported.
+- Never use `toBuilder()` — use Lombok `@With` (`obj.withField(value)`) for field overrides.
 - Fakes are only in `src/test/` — never in `src/main/`.
 
----
+### Variable Naming
 
-## Full Example
+Variables built from fakes are named after the model, not the role they play:
 
 ```java
-@ExtendWith(MockitoExtension.class)
-class TeamServiceTest {
+// CORRECT
+final var tournament = TournamentFakes.buildTournament();
+final var request = TournamentFakes.buildCreateRequest();
 
-    @Mock
-    TeamStore teamStore;
-
-    @InjectMocks
-    TeamService teamService;
-
-    @Test
-    void should_returnSavedTeam_when_teamIsCreated() {
-        // setup
-        Team team = TeamFakes.aTeam();
-        Team savedTeam = team.toBuilder().id(TeamId.of(UUID.randomUUID())).build();
-
-        // when
-        when(teamStore.save(team)).thenReturn(savedTeam);
-
-        // call
-        Team result = teamService.create(team);
-
-        // verify
-        verify(teamStore).save(team);
-
-        // assert
-        assertThat(result).isEqualTo(savedTeam);
-        assertThat(result.getId().isEmpty()).isFalse();
-    }
-
-    @Test
-    void should_throwNotFoundException_when_teamDoesNotExist() {
-        // setup
-        UUID id = UUID.randomUUID();
-
-        // when
-        when(teamStore.findById(id)).thenReturn(Optional.empty());
-
-        // call + assert (exception case — call and assert are combined)
-        assertThatThrownBy(() -> teamService.findById(id))
-            .isInstanceOf(NotFoundException.class);
-
-        // verify
-        verify(teamStore).findById(id);
-    }
-}
+// WRONG
+final var saved = TournamentFakes.buildTournament();
+final var tournamentWithId = TournamentFakes.buildTournament();
 ```
 
-> **Exception tests:** when the method under test throws, `// call` and `// assert` are combined into a single `assertThatThrownBy` block. `// verify` still follows.
+The result of the method under test is named `<model><Action>`:
 
----
-
-## Test Method Naming
-
+```java
+final var tournamentCreated = tournamentService.create(request);
+final var tournamentFound   = tournamentService.findById(id);
 ```
-should_[expected outcome]_when_[condition]
-```
-
-Examples:
-- `should_returnTeam_when_teamExists`
-- `should_throwNotFoundException_when_teamDoesNotExist`
-- `should_saveTeam_when_teamIsValid`
 
 ---
 
@@ -186,11 +230,23 @@ Examples:
 | Rule | Detail |
 |------|--------|
 | Test scope | `domain` package only — services |
-| Structure | `setup` → `when` → `call` → `verify` → `assert` (in order, with comments) |
+| Test naming | `methodTestedNameWhenXxxxShouldXxx` |
+| No comments | No `// setup`, `// when`, `// call`, `// verify`, `// assert` comments |
+| Assertions | JUnit 5 only — never AssertJ |
 | Mocking | Mockito with `@Mock` + `@InjectMocks` + `@ExtendWith(MockitoExtension.class)` |
+| `@Mock` visibility | `@Mock private` — all mock fields are `private` |
+| `@InjectMocks` visibility | `private` — the class under test field is `private` |
+| No `ArgumentCaptor` | Banned — use `returnsFirstArg()` and assert on the return value |
+| Save stub | `when(store.save(any(X.class))).then(returnsFirstArg())` |
 | Verify | At least one `verify` per `when` stub |
+| Verify / assert separation | Blank line between the verify block and the assert block |
+| Result variable naming | Named `<model><Action>`: `tournamentCreated`, `tournamentFound` |
+| Fake variable naming | Named after the model: `tournament`, `request` — not `saved`, `tournamentWithId` |
 | Fakes | `@UtilityClass` per feature in `src/test/`, named `XxxFakes` |
-| Fake overrides | Use `toBuilder()` named variants — never mutate the base object |
-| Assertions | AssertJ (`assertThat`) |
-| Test naming | `should_[outcome]_when_[condition]` |
-| Exception tests | `assertThatThrownBy` combines call + assert; `verify` still comes after |
+| Fakes method naming | Prefix `build`: `buildTeam()`, `buildCreateRequest()` |
+| Fakes always have ID | `buildXxx()` always uses `IdGenerator.xxxId()` — no `buildXxxWithId()` variant |
+| Empty ID in tests | Use Lombok `@With`: `TournamentFakes.buildTournament().withId(TournamentId.empty())` |
+| IdGenerator | Package-private `@UtilityClass` per feature — generates typed IDs, used only by Fakes/tests |
+| No `toBuilder` | Use Lombok `@With` for field overrides — never `toBuilder()` |
+| Static imports | Enum values and validator methods always statically imported in fakes and tests |
+| `final var` | All local variables use `final var` |
