@@ -9,5 +9,5 @@
     <property name="now" value="date()" dbms="sqlite"/>
     <property name="createdByDefaultValue" value="system"/>
 
-    <include relativeToChangelogFile="true" file="changelog/20250710130200_example.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260701120000_create_tournaments_table.xml"/>
 </databaseChangeLog>
