@@ -1,0 +1,70 @@
+<h2 mat-dialog-title>Nouveau tournoi</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="create-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Nom du tournoi</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.get('name')?.hasError('required')) {
+        <mat-error>Le nom est requis</mat-error>
+      } @else if (form.get('name')?.hasError('maxlength')) {
+        <mat-error>Maximum 250 caractères</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Sport</mat-label>
+      <mat-select formControlName="sport">
+        @for (sport of sports; track sport) {
+          <mat-option [value]="sport">{{ sport }}</mat-option>
+        }
+      </mat-select>
+      @if (form.get('sport')?.hasError('required')) {
+        <mat-error>Le sport est requis</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre de terrains</mat-label>
+      <input matInput type="number" formControlName="numberOfFields" />
+      @if (form.get('numberOfFields')?.invalid) {
+        <mat-error>Entre 1 et 500</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="players-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Joueurs min / équipe</mat-label>
+        <input matInput type="number" formControlName="minPlayersPerTeam" />
+        @if (form.get('minPlayersPerTeam')?.invalid) {
+          <mat-error>Min 1</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Joueurs max / équipe</mat-label>
+        <input matInput type="number" formControlName="maxPlayersPerTeam" />
+        @if (form.get('maxPlayersPerTeam')?.hasError('required')) {
+          <mat-error>Requis</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+      @if (form.get('date')?.hasError('required')) {
+        <mat-error>La date est requise</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="submit()">
+    Créer
+  </button>
+</mat-dialog-actions>

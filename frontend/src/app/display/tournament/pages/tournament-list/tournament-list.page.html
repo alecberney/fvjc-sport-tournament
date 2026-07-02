@@ -1,0 +1,41 @@
+<div class="page-header">
+  <h1>Tournois</h1>
+  <button mat-raised-button color="primary" (click)="openCreateModal()">
+    <mat-icon>add</mat-icon>
+    Créer un tournoi
+  </button>
+</div>
+
+@if (tournaments$ | async; as tournaments) {
+  @if (tournaments.length === 0) {
+    <div class="empty-state">
+      <mat-icon>emoji_events</mat-icon>
+      <p>Aucun tournoi pour l'instant</p>
+    </div>
+  } @else {
+    <div class="tournament-grid">
+      @for (tournament of tournaments; track tournament.id) {
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ tournament.name }}</mat-card-title>
+            <mat-card-subtitle>{{ tournament.sport }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="card-info">
+              <span>{{ tournament.date | date:'dd MMM yyyy' }}</span>
+              <span>{{ tournament.numberOfFields }} terrain(s)</span>
+              <span>{{ tournament.minPlayersPerTeam }}–{{ tournament.maxPlayersPerTeam }} joueurs/équipe</span>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <mat-chip-set>
+              <mat-chip [class.chip-active]="tournament.status !== 'DRAFT'">
+                {{ tournament.status === 'DRAFT' ? 'Brouillon' : 'En cours' }}
+              </mat-chip>
+            </mat-chip-set>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+}

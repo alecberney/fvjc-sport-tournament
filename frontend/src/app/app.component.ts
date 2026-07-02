@@ -1,23 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, MatToolbarModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
-
-  private readonly http = inject(HttpClient);
-
-  message = '';
-
-  ngOnInit(): void {
-    this.http.get<{ message: string }>('/api/hello').subscribe({
-      next: (res) => (this.message = res.message),
-      error: () => (this.message = 'Could not reach backend'),
-    });
-  }
-}
+export class AppComponent {}
