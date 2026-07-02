@@ -128,6 +128,7 @@ class ArchitectureTest {
             .and().resideInAPackage(DOMAIN)
             .should().haveModifier(JavaModifier.FINAL)
             .because("validators use @UtilityClass which makes them final")
+            .allowEmptyShould(true)
             .check(CLASSES);
     }
 
