@@ -20,7 +20,7 @@ export class ScheduleApiMapper {
     };
   }
 
-  private static toMatchDomain(dto: MatchDto): Match {
+  static toMatchDomain(dto: MatchDto): Match {
     return {
       id: dto.id,
       field: dto.field,
@@ -28,6 +28,7 @@ export class ScheduleApiMapper {
       groupName: dto.groupName,
       team1: dto.team1,
       team2: dto.team2,
+      result: dto.result ? { score1: dto.result.score1, score2: dto.result.score2 } : null,
     };
   }
 }

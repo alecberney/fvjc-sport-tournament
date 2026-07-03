@@ -36,6 +36,12 @@ class TournamentController {
         return toTournamentDto(tournamentService.create(toTournamentCreateRequest(request)));
     }
 
+    @PostMapping("/{id}/start")
+    public TournamentDto start(@PathVariable UUID id) {
+        final var tournament = tournamentService.start(id);
+        return toTournamentDto(tournament);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {

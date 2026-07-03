@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -24,9 +25,32 @@ class JpaMatchStore implements MatchStore {
     }
 
     @Override
+    @Transactional
+    public Match save(final Match match) {
+        final var entity = MatchDbMapper.toMatchEntity(match);
+        final var savedEntity = matchRepository.save(entity);
+        return MatchDbMapper.toMatch(savedEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Match> findById(final UUID matchId) {
+        return matchRepository.findById(matchId)
+                .map(MatchDbMapper::toMatch);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Match> findAllByRoundIds(final List<UUID> roundIds) {
         return matchRepository.findByRoundIdIn(roundIds).stream()
+                .map(MatchDbMapper::toMatch)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Match> findAllByGroupId(final UUID groupId) {
+        return matchRepository.findByGroupId(groupId).stream()
                 .map(MatchDbMapper::toMatch)
                 .toList();
     }
@@ -39,7 +63,7 @@ class JpaMatchStore implements MatchStore {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean existsResultByTournamentId(final UUID tournamentId) {
-        return false; // No result columns until UC-05 adds them
+    public boolean existsResultByRoundIds(final List<UUID> roundIds) {
+        return matchRepository.existsByRoundIdInAndResultScore1IsNotNull(roundIds);
     }
 }

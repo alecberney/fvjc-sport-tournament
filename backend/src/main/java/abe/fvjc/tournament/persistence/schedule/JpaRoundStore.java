@@ -36,4 +36,10 @@ class JpaRoundStore implements RoundStore {
     public void deleteAllByTournamentId(final UUID tournamentId) {
         roundRepository.deleteByTournamentId(tournamentId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countByTournamentId(final UUID tournamentId) {
+        return roundRepository.countByTournamentId(tournamentId);
+    }
 }

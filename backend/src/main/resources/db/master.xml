@@ -16,4 +16,5 @@
     <include relativeToChangelogFile="true" file="changelog/20260703120001_create_groups_table.xml"/>
     <include relativeToChangelogFile="true" file="changelog/20260703120002_create_rounds_table.xml"/>
     <include relativeToChangelogFile="true" file="changelog/20260703120003_create_matches_table.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260703120004_alter_matches_add_result_columns.xml"/>
 </databaseChangeLog>

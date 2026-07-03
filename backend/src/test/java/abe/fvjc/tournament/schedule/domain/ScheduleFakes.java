@@ -36,6 +36,7 @@ public class ScheduleFakes {
                 .groupId(GroupId.of(UUID.randomUUID()))
                 .team1Id(TeamId.of(UUID.randomUUID()))
                 .team2Id(TeamId.of(UUID.randomUUID()))
+                .result(null)
                 .build();
     }
 }

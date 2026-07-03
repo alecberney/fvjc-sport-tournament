@@ -1,4 +1,4 @@
-import { Tournament } from '@app/domain/tournament/tournament.model';
+import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
 
 export class LoadTournaments {
   static readonly type = '[Tournament] Load Tournaments';
@@ -17,4 +17,9 @@ export class CreateTournament {
 export class DeleteTournament {
   static readonly type = '[Tournament] Delete Tournament';
   constructor(public readonly id: string) {}
+}
+
+export class PatchSelectedStatus {
+  static readonly type = '[Tournament] Patch Selected Status';
+  constructor(public readonly status: TournamentStatus) {}
 }

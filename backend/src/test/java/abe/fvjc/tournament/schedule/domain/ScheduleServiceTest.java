@@ -98,16 +98,18 @@ class ScheduleServiceTest {
     void generateWhenResultsExistShouldThrowConflictException() {
         final var tournament = buildTournament();
         final var group = GroupFakes.buildGroup(tournament.getId());
+        final var existingRound = buildRound(tournament.getId());
         final var request = buildGenerateRequest();
 
         when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
         when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group));
-        when(matchStore.existsResultByTournamentId(tournament.getId().value())).thenReturn(true);
+        when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(existingRound));
+        when(matchStore.existsResultByRoundIds(anyList())).thenReturn(true);
 
         assertThrows(ConflictException.class,
             () -> scheduleService.generate(tournament.getId().value(), request));
 
-        verify(matchStore).existsResultByTournamentId(tournament.getId().value());
+        verify(matchStore).existsResultByRoundIds(anyList());
     }
 
     @Test
@@ -129,7 +131,6 @@ class ScheduleServiceTest {
 
         when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
         when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group1, group2));
-        when(matchStore.existsResultByTournamentId(tournament.getId().value())).thenReturn(false);
         when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of());
         when(teamStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(t1, t2, t3, t4, t5, t6));
 
@@ -166,7 +167,6 @@ class ScheduleServiceTest {
 
         when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
         when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group1, group2));
-        when(matchStore.existsResultByTournamentId(tournament.getId().value())).thenReturn(false);
         when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of());
         when(teamStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(tA1, tA2, tB1, tB2, tB3, tB4));
 
@@ -196,7 +196,7 @@ class ScheduleServiceTest {
 
         when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
         when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group));
-        when(matchStore.existsResultByTournamentId(tournament.getId().value())).thenReturn(false);
+        when(matchStore.existsResultByRoundIds(anyList())).thenReturn(false);
         when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(existingRound));
         when(teamStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(t1, t2, t3));
 

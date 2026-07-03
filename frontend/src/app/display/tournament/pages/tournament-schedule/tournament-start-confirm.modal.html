@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>Démarrer le tournoi</h2>
+
+<mat-dialog-content>
+  <p>Êtes-vous sûr de vouloir démarrer le tournoi ?</p>
+  <p><strong>Cette action est irréversible.</strong></p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="warn" (click)="confirm()">
+    <mat-icon>play_arrow</mat-icon>
+    Démarrer
+  </button>
+</mat-dialog-actions>

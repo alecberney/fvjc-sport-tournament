@@ -8,4 +8,5 @@ import java.util.UUID;
 interface RoundRepository extends JpaRepository<RoundEntity, UUID> {
     List<RoundEntity> findByTournamentId(UUID tournamentId);
     void deleteByTournamentId(UUID tournamentId);
+    int countByTournamentId(UUID tournamentId);
 }

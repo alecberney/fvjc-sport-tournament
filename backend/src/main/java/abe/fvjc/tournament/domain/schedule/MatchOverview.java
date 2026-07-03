@@ -13,4 +13,5 @@ public class MatchOverview {
     String groupName;
     TeamRef team1;
     TeamRef team2;
+    MatchResult result;
 }

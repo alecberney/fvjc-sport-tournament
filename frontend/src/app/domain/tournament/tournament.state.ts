@@ -7,6 +7,7 @@ import {
   DeleteTournament,
   LoadTournamentById,
   LoadTournaments,
+  PatchSelectedStatus,
 } from '@app/domain/tournament/tournament.actions';
 import { TournamentApiService } from '@app/api/tournament/tournament.api.service';
 import { TournamentApiMapper } from '@app/api/tournament/tournament.api.mapper';
@@ -78,5 +79,13 @@ export class TournamentState {
         });
       })
     );
+  }
+
+  @Action(PatchSelectedStatus)
+  patchSelectedStatus(ctx: StateContext<ITournamentState>, { status }: PatchSelectedStatus) {
+    const selected = ctx.getState().selected;
+    if (selected) {
+      ctx.patchState({ selected: { ...selected, status } });
+    }
   }
 }

@@ -41,7 +41,13 @@ public class ScheduleApiMapper {
                 .build();
     }
 
-    private static MatchDto toMatchDto(final MatchOverview overview) {
+    static MatchDto toMatchDto(final MatchOverview overview) {
+        final var result = overview.getResult() != null
+                ? MatchResultDto.builder()
+                        .score1(overview.getResult().getScore1())
+                        .score2(overview.getResult().getScore2())
+                        .build()
+                : null;
         return MatchDto.builder()
                 .id(overview.getId().value())
                 .field(overview.getField())
@@ -49,6 +55,7 @@ public class ScheduleApiMapper {
                 .groupName(overview.getGroupName())
                 .team1(toMatchTeamDto(overview.getTeam1()))
                 .team2(toMatchTeamDto(overview.getTeam2()))
+                .result(result)
                 .build();
     }
 

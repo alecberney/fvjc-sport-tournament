@@ -1,3 +1,8 @@
+export interface MatchResultDto {
+  score1: number;
+  score2: number;
+}
+
 export interface MatchTeamDto {
   id: string;
   name: string;
@@ -10,6 +15,7 @@ export interface MatchDto {
   groupName: string;
   team1: MatchTeamDto;
   team2: MatchTeamDto;
+  result: MatchResultDto | null;
 }
 
 export interface RoundDto {

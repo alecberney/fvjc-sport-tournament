@@ -5,6 +5,7 @@ import { Schedule } from '@app/domain/schedule/schedule.model';
 import { GenerateSchedule, LoadSchedule } from '@app/domain/schedule/schedule.actions';
 import { ScheduleApiService } from '@app/api/schedule/schedule.api.service';
 import { ScheduleApiMapper } from '@app/api/schedule/schedule.api.mapper';
+import { UpdateMatchResult } from '@app/domain/result/result.actions';
 
 export interface IScheduleState {
   schedule: Schedule | undefined;
@@ -40,5 +41,20 @@ export class ScheduleState {
         ctx.patchState({ schedule: ScheduleApiMapper.toDomain(dto) });
       })
     );
+  }
+
+  @Action(UpdateMatchResult)
+  updateMatchResult(ctx: StateContext<IScheduleState>, { matchId, score1, score2 }: UpdateMatchResult) {
+    const schedule = ctx.getState().schedule;
+    if (!schedule) return;
+    const updatedRounds = schedule.rounds.map(round => ({
+      ...round,
+      matches: round.matches.map(match =>
+        match.id === matchId
+          ? { ...match, result: { score1, score2 } }
+          : match
+      ),
+    }));
+    ctx.patchState({ schedule: { ...schedule, rounds: updatedRounds } });
   }
 }

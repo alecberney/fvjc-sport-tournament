@@ -1,6 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,28 +12,46 @@ import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { ScheduleState } from '@app/domain/schedule/schedule.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
+import { StartTournament } from '@app/domain/result/result.actions';
 import { ScheduleGenerateModal } from '@app/display/tournament/pages/schedule-generate/schedule-generate.modal';
+import { TournamentStartConfirmModal } from './tournament-start-confirm.modal';
+import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 
 @Component({
   selector: 'app-tournament-schedule-page',
   templateUrl: './tournament-schedule.page.html',
   styleUrl: './tournament-schedule.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule],
+  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent],
 })
 export class TournamentSchedulePage implements OnInit {
 
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
 
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly schedule$: Observable<Schedule | undefined> = this.store.select(ScheduleState.getSchedule);
 
-  private tournamentId!: string;
+  protected tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;
+  }
+
+  isInProgress(tournament: Tournament): boolean {
+    return tournament.status === TournamentStatus.IN_PROGRESS;
+  }
+
+  startTournament(): void {
+    const dialogRef = this.dialog.open(TournamentStartConfirmModal);
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
+      this.store.dispatch(new StartTournament(this.tournamentId)).subscribe(() => {
+        this.router.navigate(['/', this.tournamentId, 'results']);
+      });
+    });
   }
 
   ngOnInit(): void {

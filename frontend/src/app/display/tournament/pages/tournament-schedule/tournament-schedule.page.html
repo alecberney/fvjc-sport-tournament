@@ -1,21 +1,24 @@
 @if (tournament$ | async; as tournament) {
   <div class="page-header">
     <div class="header-left">
-      <button mat-icon-button [routerLink]="['..']">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      <div>
-        <h1>{{ tournament.name }}</h1>
-        <span class="subtitle">Horaire</span>
-      </div>
+      <h1>{{ tournament.name }}</h1>
     </div>
-    @if (isDraft(tournament)) {
-      <button mat-raised-button color="primary" (click)="openGenerateModal()">
-        <mat-icon>calendar_month</mat-icon>
-        Générer l'horaire
-      </button>
-    }
+    <div class="header-right">
+      @if (isDraft(tournament)) {
+        <button mat-raised-button color="primary" (click)="openGenerateModal()">
+          <mat-icon>calendar_month</mat-icon>
+          Générer l'horaire
+        </button>
+      }
+      @if (isDraft(tournament) && (schedule$ | async)?.totalRounds! > 0) {
+        <button mat-raised-button color="accent" (click)="startTournament()">
+          <mat-icon>play_arrow</mat-icon>
+          Démarrer le tournoi
+        </button>
+      }
+    </div>
   </div>
+  <app-tournament-nav [tournamentId]="tournamentId" />
 
   @if (schedule$ | async; as schedule) {
     @if (schedule.totalRounds === 0) {
