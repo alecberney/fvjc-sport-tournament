@@ -10,4 +10,6 @@
     <property name="createdByDefaultValue" value="system"/>
 
     <include relativeToChangelogFile="true" file="changelog/20260701120000_create_tournaments_table.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260702120000_create_organisations_table.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260702120001_create_teams_table.xml"/>
 </databaseChangeLog>

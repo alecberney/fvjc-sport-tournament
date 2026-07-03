@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>Inscrire des équipes</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="register-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Nom de base de l'équipe</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.get('name')?.hasError('required')) {
+        <mat-error>Le nom de l'équipe est obligatoire</mat-error>
+      } @else if (form.get('name')?.hasError('maxlength')) {
+        <mat-error>Le nom ne peut pas dépasser 250 caractères</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="responsible-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Prénom du responsable</mat-label>
+        <input matInput formControlName="responsibleFirstName" />
+        @if (form.get('responsibleFirstName')?.hasError('required')) {
+          <mat-error>Le prénom du responsable est obligatoire</mat-error>
+        } @else if (form.get('responsibleFirstName')?.hasError('maxlength')) {
+          <mat-error>Maximum 100 caractères</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nom du responsable</mat-label>
+        <input matInput formControlName="responsibleLastName" />
+        @if (form.get('responsibleLastName')?.hasError('required')) {
+          <mat-error>Le nom du responsable est obligatoire</mat-error>
+        } @else if (form.get('responsibleLastName')?.hasError('maxlength')) {
+          <mat-error>Maximum 100 caractères</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre d'équipes</mat-label>
+      <input matInput type="number" min="1" formControlName="count" />
+      @if (form.get('count')?.hasError('required')) {
+        <mat-error>Le nombre d'équipes est obligatoire</mat-error>
+      } @else if (form.get('count')?.hasError('min')) {
+        <mat-error>Le nombre d'équipes doit être d'au moins 1</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="paid-section" formArrayName="paid">
+      <p class="paid-label">Paiement par équipe</p>
+      @for (ctrl of paidControls; track $index; let i = $index) {
+        <div class="paid-row">
+          <span>{{ teamLabel(i) }}</span>
+          <mat-checkbox [formControlName]="i">Payé</mat-checkbox>
+        </div>
+      }
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="submit()">
+    Inscrire
+  </button>
+</mat-dialog-actions>

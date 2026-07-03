@@ -1,5 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -17,7 +18,7 @@ import { TournamentCreateModal } from '@app/display/tournament/pages/tournament-
   templateUrl: './tournament-list.page.html',
   styleUrl: './tournament-list.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule],
+  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatCardModule, MatChipsModule, MatIconModule],
 })
 export class TournamentListPage implements OnInit {
 

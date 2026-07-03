@@ -1,0 +1,61 @@
+@if (tournament$ | async; as tournament) {
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button routerLink="..">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1>{{ tournament.name }}</h1>
+        <span class="subtitle">{{ tournament.sport }} · {{ tournament.date | date:'dd MMM yyyy' }}</span>
+      </div>
+    </div>
+    @if (isDraft(tournament)) {
+      <button mat-raised-button color="primary" (click)="openRegisterModal()">
+        <mat-icon>group_add</mat-icon>
+        Inscrire des équipes
+      </button>
+    }
+  </div>
+
+  <section class="teams-section">
+    <h2>Équipes inscrites</h2>
+    @if (groups$ | async; as groups) {
+      @if (groups.length === 0) {
+        <div class="empty-state">
+          <mat-icon>groups</mat-icon>
+          <p>Aucune équipe inscrite</p>
+        </div>
+      } @else {
+        @for (group of groups; track group.organisationId) {
+          <div class="org-group">
+            <div class="org-header">
+              <mat-icon>person</mat-icon>
+              <span>{{ group.responsibleName }}</span>
+            </div>
+            @for (team of group.teams; track team.id) {
+              <div class="team-row">
+                <span class="team-name">{{ team.name }}</span>
+                <div class="team-actions">
+                  <button mat-icon-button
+                          [color]="team.paid ? 'primary' : ''"
+                          (click)="markPaid(team, !team.paid)"
+                          [title]="team.paid ? 'Marquer non payé' : 'Marquer payé'">
+                    <mat-icon>{{ team.paid ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                  </button>
+                  @if (isDraft(tournament)) {
+                    <button mat-icon-button (click)="openEditModal(team)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="deleteTeam(team)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+  </section>
+}

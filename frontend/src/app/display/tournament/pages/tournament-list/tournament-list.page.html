@@ -33,6 +33,9 @@
                 {{ tournament.status === 'DRAFT' ? 'Brouillon' : 'En cours' }}
               </mat-chip>
             </mat-chip-set>
+            <button mat-icon-button [routerLink]="[tournament.id]" title="Voir le tournoi">
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
           </mat-card-actions>
         </mat-card>
       }
