@@ -15,7 +15,7 @@
   } @else {
     <div class="tournament-grid">
       @for (tournament of tournaments; track tournament.id) {
-        <mat-card>
+        <mat-card class="tournament-card" [routerLink]="[tournament.id]">
           <mat-card-header>
             <mat-card-title>{{ tournament.name }}</mat-card-title>
             <mat-card-subtitle>{{ tournament.sport }}</mat-card-subtitle>
@@ -33,9 +33,6 @@
                 {{ tournament.status === 'DRAFT' ? 'Brouillon' : 'En cours' }}
               </mat-chip>
             </mat-chip-set>
-            <button mat-icon-button [routerLink]="[tournament.id]" title="Voir le tournoi">
-              <mat-icon>arrow_forward</mat-icon>
-            </button>
           </mat-card-actions>
         </mat-card>
       }

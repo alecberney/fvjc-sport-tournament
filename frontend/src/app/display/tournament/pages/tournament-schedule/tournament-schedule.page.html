@@ -1,0 +1,62 @@
+@if (tournament$ | async; as tournament) {
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button [routerLink]="['..']">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1>{{ tournament.name }}</h1>
+        <span class="subtitle">Horaire</span>
+      </div>
+    </div>
+    @if (isDraft(tournament)) {
+      <button mat-raised-button color="primary" (click)="openGenerateModal()">
+        <mat-icon>calendar_month</mat-icon>
+        Générer l'horaire
+      </button>
+    }
+  </div>
+
+  @if (schedule$ | async; as schedule) {
+    @if (schedule.totalRounds === 0) {
+      <div class="empty-state">
+        <mat-icon>calendar_today</mat-icon>
+        <p>Aucun horaire généré</p>
+        @if (isDraft(tournament)) {
+          <button mat-stroked-button (click)="openGenerateModal()">Générer l'horaire</button>
+        }
+      </div>
+    } @else {
+      <div class="rounds-list">
+        @for (round of schedule.rounds; track round.id) {
+          <div class="round-card">
+            <div class="round-header">
+              <span class="round-number">Round {{ round.number }}</span>
+              <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+            </div>
+            <table class="matches-table">
+              <thead>
+                <tr>
+                  <th>Terrain</th>
+                  <th>Groupe</th>
+                  <th>Équipe 1</th>
+                  <th>Équipe 2</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (match of round.matches; track match.id) {
+                  <tr>
+                    <td>{{ match.field }}</td>
+                    <td>{{ match.groupName }}</td>
+                    <td>{{ match.team1.name }}</td>
+                    <td>{{ match.team2.name }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  }
+}

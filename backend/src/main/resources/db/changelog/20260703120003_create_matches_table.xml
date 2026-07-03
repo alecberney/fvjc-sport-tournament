@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20260703120003" author="aberney">
+        <createTable tableName="matches">
+            <column name="id" type="TEXT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="round_id" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="group_id" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="team1_id" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="team2_id" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

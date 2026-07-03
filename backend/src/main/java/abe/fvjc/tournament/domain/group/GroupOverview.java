@@ -9,7 +9,7 @@ import java.util.List;
 
 @Value
 @Builder
-public class GroupView {
+public class GroupOverview {
     GroupId id;
     String name;
     TournamentId tournamentId;

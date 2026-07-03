@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Générer l'horaire</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Heure de début (HH:mm)</mat-label>
+      <input matInput type="text" formControlName="startTime" placeholder="09:00" />
+      @if (form.get('startTime')?.hasError('required') || form.get('startTime')?.hasError('pattern')) {
+        <mat-error>L'heure de début est obligatoire (format HH:mm)</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Durée d'un match (minutes)</mat-label>
+      <input matInput type="number" min="1" formControlName="matchDurationMinutes" />
+      @if (form.get('matchDurationMinutes')?.hasError('required')) {
+        <mat-error>La durée d'un match est obligatoire</mat-error>
+      } @else if (form.get('matchDurationMinutes')?.hasError('min')) {
+        <mat-error>La durée d'un match doit être d'au moins 1 minute</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Durée de pause (minutes)</mat-label>
+      <input matInput type="number" min="0" formControlName="breakDurationMinutes" />
+      @if (form.get('breakDurationMinutes')?.hasError('required')) {
+        <mat-error>La durée de pause est obligatoire</mat-error>
+      } @else if (form.get('breakDurationMinutes')?.hasError('min')) {
+        <mat-error>La durée de pause ne peut pas être négative</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="submit()">
+    Générer
+  </button>
+</mat-dialog-actions>

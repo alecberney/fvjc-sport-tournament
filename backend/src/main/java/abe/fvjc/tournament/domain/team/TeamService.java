@@ -24,7 +24,7 @@ public class TeamService {
     private final TeamStore teamStore;
     private final TournamentStore tournamentStore;
 
-    public List<TeamView> registerTeams(final UUID tournamentId, final TeamRegisterRequest request) {
+    public List<TeamOverview> registerTeams(final UUID tournamentId, final TeamRegisterRequest request) {
         final var tournament = tournamentStore.findById(tournamentId)
             .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
         assertDraft(tournament.getStatus());
@@ -46,22 +46,22 @@ public class TeamService {
                     .organisationId(org.getId())
                     .tournamentId(TournamentId.of(tournamentId))
                     .build());
-                return buildTeamView(team, org);
+                return buildTeamOverview(team, org);
             })
             .toList();
     }
 
-    public List<TeamView> findAllByTournamentId(final UUID tournamentId) {
+    public List<TeamOverview> findAllByTournamentId(final UUID tournamentId) {
         return teamStore.findAllByTournamentId(tournamentId).stream()
             .map(team -> {
                 final var org = organisationStore.findById(team.getOrganisationId().value())
                     .orElseThrow(() -> new NotFoundException("Organisation", team.getOrganisationId().value()));
-                return buildTeamView(team, org);
+                return buildTeamOverview(team, org);
             })
             .toList();
     }
 
-    public TeamView updateTeam(final UUID tournamentId, final UUID teamId, final TeamUpdateRequest request) {
+    public TeamOverview updateTeam(final UUID tournamentId, final UUID teamId, final TeamUpdateRequest request) {
         final var tournament = tournamentStore.findById(tournamentId)
             .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
         assertDraft(tournament.getStatus());
@@ -73,7 +73,7 @@ public class TeamService {
         final var updatedTeam = teamStore.save(team
             .withName(request.getName())
             .withPaid(request.isPaid()));
-        return buildTeamView(updatedTeam, updatedOrg);
+        return buildTeamOverview(updatedTeam, updatedOrg);
     }
 
     public void deleteTeam(final UUID tournamentId, final UUID teamId) {
@@ -89,13 +89,13 @@ public class TeamService {
         }
     }
 
-    public TeamView markPaid(final UUID teamId, final boolean paid) {
+    public TeamOverview markPaid(final UUID teamId, final boolean paid) {
         final var team = teamStore.findById(teamId)
             .orElseThrow(() -> new NotFoundException("Team", teamId));
         final var updatedTeam = teamStore.save(team.withPaid(paid));
         final var org = organisationStore.findById(updatedTeam.getOrganisationId().value())
             .orElseThrow(() -> new NotFoundException("Organisation", updatedTeam.getOrganisationId().value()));
-        return buildTeamView(updatedTeam, org);
+        return buildTeamOverview(updatedTeam, org);
     }
 
     private static void assertDraft(final TournamentStatus status) {
@@ -105,8 +105,8 @@ public class TeamService {
         }
     }
 
-    private static TeamView buildTeamView(final Team team, final Organisation org) {
-        return TeamView.builder()
+    private static TeamOverview buildTeamOverview(final Team team, final Organisation org) {
+        return TeamOverview.builder()
             .id(team.getId())
             .name(team.getName())
             .paid(team.isPaid())

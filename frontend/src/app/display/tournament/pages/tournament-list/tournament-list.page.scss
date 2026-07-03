@@ -42,6 +42,15 @@
   }
 }
 
+.tournament-card {
+  cursor: pointer;
+  transition: box-shadow 150ms ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
 .chip-active {
   --mat-chip-elevated-container-color: var(--mat-sys-primary);
   --mat-chip-label-text-color: var(--mat-sys-on-primary);
