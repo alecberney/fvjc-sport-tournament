@@ -8,7 +8,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class TeamView {
+public class TeamOverview {
     TeamId id;
     String name;
     boolean paid;

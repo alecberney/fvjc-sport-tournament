@@ -3,20 +3,20 @@ package abe.fvjc.tournament.team.api;
 import abe.fvjc.tournament.organisation.domain.Person;
 import abe.fvjc.tournament.team.domain.TeamRegisterRequest;
 import abe.fvjc.tournament.team.domain.TeamUpdateRequest;
-import abe.fvjc.tournament.team.domain.TeamView;
+import abe.fvjc.tournament.team.domain.TeamOverview;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class TeamApiMapper {
 
-    static TeamDto toTeamDto(final TeamView view) {
+    static TeamDto toTeamDto(final TeamOverview overview) {
         return TeamDto.builder()
-                .id(view.getId().value())
-                .name(view.getName())
-                .paid(view.isPaid())
-                .organisationId(view.getOrganisationId().value())
-                .responsibleFirstName(view.getResponsible().getFirstName())
-                .responsibleLastName(view.getResponsible().getLastName())
+                .id(overview.getId().value())
+                .name(overview.getName())
+                .paid(overview.isPaid())
+                .organisationId(overview.getOrganisationId().value())
+                .responsibleFirstName(overview.getResponsible().getFirstName())
+                .responsibleLastName(overview.getResponsible().getLastName())
                 .build();
     }
 

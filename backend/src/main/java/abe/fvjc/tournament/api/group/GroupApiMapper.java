@@ -3,17 +3,17 @@ package abe.fvjc.tournament.group.api;
 import abe.fvjc.tournament.group.domain.GroupDistribution;
 import abe.fvjc.tournament.group.domain.GroupGenerateRequest;
 import abe.fvjc.tournament.group.domain.GroupSwapRequest;
-import abe.fvjc.tournament.group.domain.GroupView;
+import abe.fvjc.tournament.group.domain.GroupOverview;
 import abe.fvjc.tournament.team.domain.Team;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class GroupApiMapper {
-    static GroupDto toGroupDto(final GroupView view) {
+    static GroupDto toGroupDto(final GroupOverview overview) {
         return GroupDto.builder()
-                .id(view.getId().value())
-                .name(view.getName())
-                .teams(view.getTeams()
+                .id(overview.getId().value())
+                .name(overview.getName())
+                .teams(overview.getTeams()
                         .stream()
                         .map(GroupApiMapper::toGroupTeamDto)
                         .toList())

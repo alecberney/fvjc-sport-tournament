@@ -32,7 +32,7 @@ public class GroupService {
         return computeDistribution(teams.size(), request.getGroupSize());
     }
 
-    public List<GroupView> generate(final UUID tournamentId, final GroupGenerateRequest request) {
+    public List<GroupOverview> generate(final UUID tournamentId, final GroupGenerateRequest request) {
         final var tournament = tournamentStore.findById(tournamentId)
             .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
         assertDraft(tournament.getStatus());
@@ -61,17 +61,17 @@ public class GroupService {
             }
         }
 
-        return buildViews(groups);
+        return buildOverviews(groups);
     }
 
-    public List<GroupView> findAllByTournamentId(final UUID tournamentId) {
+    public List<GroupOverview> findAllByTournamentId(final UUID tournamentId) {
         final var groups = groupStore.findAllByTournamentId(tournamentId);
         return groups.stream()
-                .map(this::toView)
+                .map(this::toOverview)
                 .toList();
     }
 
-    public List<GroupView> swap(final UUID tournamentId, final GroupSwapRequest request) {
+    public List<GroupOverview> swap(final UUID tournamentId, final GroupSwapRequest request) {
         final var tournament = tournamentStore.findById(tournamentId)
             .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
         assertDraft(tournament.getStatus());
@@ -99,12 +99,12 @@ public class GroupService {
         teamStore.save(team1.withGroupId(group2.getId()));
         teamStore.save(team2.withGroupId(group1.getId()));
 
-        return List.of(toView(group1), toView(group2));
+        return List.of(toOverview(group1), toOverview(group2));
     }
 
-    private GroupView toView(final Group group) {
+    private GroupOverview toOverview(final Group group) {
         final var teams = teamStore.findAllByGroupId(group.getId().value());
-        return GroupView.builder()
+        return GroupOverview.builder()
             .id(group.getId())
             .name(group.getName())
             .tournamentId(group.getTournamentId())
@@ -112,8 +112,8 @@ public class GroupService {
             .build();
     }
 
-    private List<GroupView> buildViews(final List<Group> groups) {
-        return groups.stream().map(this::toView).toList();
+    private List<GroupOverview> buildOverviews(final List<Group> groups) {
+        return groups.stream().map(this::toOverview).toList();
     }
 
     private static void assertDraft(final TournamentStatus status) {
