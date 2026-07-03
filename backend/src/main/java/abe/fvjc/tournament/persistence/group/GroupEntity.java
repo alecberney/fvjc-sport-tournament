@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.team.persistence;
+package abe.fvjc.tournament.group.persistence;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,16 +10,13 @@ import lombok.Setter;
 import java.util.UUID;
 
 @Entity
-@Table(name = "teams")
+@Table(name = "groups")
 @Getter
 @Setter
 @NoArgsConstructor
-class TeamEntity {
+class GroupEntity {
     @Id
     private UUID id;
     private String name;
-    private boolean paid;
-    private UUID organisationId;
     private UUID tournamentId;
-    private UUID groupId;
 }

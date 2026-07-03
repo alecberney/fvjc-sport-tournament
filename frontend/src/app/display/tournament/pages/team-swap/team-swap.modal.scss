@@ -1,0 +1,20 @@
+.subtitle { margin-bottom: 8px; color: var(--mat-sys-on-surface-variant); }
+
+.group-section {
+  margin-bottom: 16px;
+
+  .group-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+}
+
+.team-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  text-align: left;
+}

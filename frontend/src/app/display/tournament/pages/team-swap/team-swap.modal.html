@@ -1,0 +1,21 @@
+<h2 mat-dialog-title>Échanger {{ data.team.name }}</h2>
+
+<mat-dialog-content>
+  <p class="subtitle">Groupe actuel : <strong>{{ data.currentGroupName }}</strong></p>
+  <p>Choisissez l'équipe à échanger :</p>
+
+  @for (group of otherGroups; track group.id) {
+    <div class="group-section">
+      <div class="group-label">Groupe {{ group.name }}</div>
+      @for (team of group.teams; track team.id) {
+        <button mat-stroked-button class="team-btn" (click)="swap(team)">
+          {{ team.name }}
+        </button>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+</mat-dialog-actions>

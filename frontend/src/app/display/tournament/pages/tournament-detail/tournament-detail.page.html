@@ -10,10 +10,16 @@
       </div>
     </div>
     @if (isDraft(tournament)) {
-      <button mat-raised-button color="primary" (click)="openRegisterModal()">
-        <mat-icon>group_add</mat-icon>
-        Inscrire des équipes
-      </button>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="openRegisterModal()">
+          <mat-icon>group_add</mat-icon>
+          Inscrire des équipes
+        </button>
+        <button mat-stroked-button [routerLink]="['..', tournament.id, 'groups']">
+          <mat-icon>grid_view</mat-icon>
+          Groupes
+        </button>
+      </div>
     }
   </div>
 

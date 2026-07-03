@@ -42,6 +42,14 @@ class JpaTeamStore implements TeamStore {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Team> findAllByGroupId(final UUID groupId) {
+        return teamRepository.findByGroupId(groupId).stream()
+                .map(TeamDbMapper::toTeam)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void deleteById(final UUID id) {
         teamRepository.deleteById(id);
