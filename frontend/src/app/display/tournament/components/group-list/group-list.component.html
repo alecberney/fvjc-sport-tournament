@@ -1,0 +1,18 @@
+@for (group of groups; track group.id) {
+  <div class="group-card">
+    <div class="group-header">
+      <span class="group-name">Groupe {{ group.name }}</span>
+      <span class="team-count">{{ group.teams.length }} équipes</span>
+    </div>
+    @for (team of group.teams; track team.id) {
+      <div class="team-row">
+        <span class="team-name">{{ team.name }}</span>
+        @if (isDraft) {
+          <button mat-icon-button title="Échanger" (click)="requestSwap(team, group.name)">
+            <mat-icon>swap_horiz</mat-icon>
+          </button>
+        }
+      </div>
+    }
+  </div>
+}

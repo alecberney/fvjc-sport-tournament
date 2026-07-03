@@ -12,4 +12,6 @@
     <include relativeToChangelogFile="true" file="changelog/20260701120000_create_tournaments_table.xml"/>
     <include relativeToChangelogFile="true" file="changelog/20260702120000_create_organisations_table.xml"/>
     <include relativeToChangelogFile="true" file="changelog/20260702120001_create_teams_table.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260703120000_alter_teams_add_group_id.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260703120001_create_groups_table.xml"/>
 </databaseChangeLog>

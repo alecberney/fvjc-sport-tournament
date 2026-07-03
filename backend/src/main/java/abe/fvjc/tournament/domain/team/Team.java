@@ -1,5 +1,6 @@
 package abe.fvjc.tournament.team.domain;
 
+import abe.fvjc.tournament.group.domain.GroupId;
 import abe.fvjc.tournament.organisation.domain.OrganisationId;
 import abe.fvjc.tournament.tournament.domain.TournamentId;
 import lombok.Builder;
@@ -15,4 +16,5 @@ public class Team {
     boolean paid;
     OrganisationId organisationId;
     TournamentId tournamentId;
+    @Builder.Default GroupId groupId = GroupId.empty();
 }

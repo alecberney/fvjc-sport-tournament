@@ -1,0 +1,22 @@
+<h2 mat-dialog-title>Générer les groupes</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Taille des groupes</mat-label>
+      <input matInput type="number" min="2" formControlName="groupSize" />
+      @if (form.get('groupSize')?.hasError('required')) {
+        <mat-error>La taille du groupe est obligatoire</mat-error>
+      } @else if (form.get('groupSize')?.hasError('min')) {
+        <mat-error>La taille du groupe doit être d'au moins 2</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="submit()">
+    Générer
+  </button>
+</mat-dialog-actions>
