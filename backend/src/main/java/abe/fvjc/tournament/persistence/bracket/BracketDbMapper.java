@@ -7,14 +7,14 @@ import abe.fvjc.tournament.bracket.domain.BracketRoundId;
 import abe.fvjc.tournament.schedule.domain.MatchResult;
 import abe.fvjc.tournament.schedule.domain.TeamRef;
 import abe.fvjc.tournament.team.domain.TeamId;
-
-import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
 import abe.fvjc.tournament.tournament.domain.TournamentId;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
 
 @UtilityClass
 class BracketDbMapper {
@@ -53,6 +53,9 @@ class BracketDbMapper {
         final var nextMatchId = entity.getNextMatchId() != null
                 ? BracketMatchId.of(entity.getNextMatchId())
                 : null;
+        final var loserNextMatchId = entity.getLoserNextMatchId() != null
+                ? BracketMatchId.of(entity.getLoserNextMatchId())
+                : null;
         return BracketMatch.builder()
                 .id(BracketMatchId.of(entity.getId()))
                 .roundId(BracketRoundId.of(entity.getRoundId()))
@@ -62,6 +65,8 @@ class BracketDbMapper {
                 .result(result)
                 .nextMatchId(nextMatchId)
                 .nextMatchTeamSlot(entity.getNextMatchTeamSlot())
+                .loserNextMatchId(loserNextMatchId)
+                .loserNextMatchTeamSlot(entity.getLoserNextMatchTeamSlot() != null ? entity.getLoserNextMatchTeamSlot() : 0)
                 .build();
     }
 
@@ -84,6 +89,8 @@ class BracketDbMapper {
         }
         entity.setNextMatchId(match.getNextMatchId() != null ? match.getNextMatchId().value() : null);
         entity.setNextMatchTeamSlot(match.getNextMatchTeamSlot());
+        entity.setLoserNextMatchId(match.getLoserNextMatchId() != null ? match.getLoserNextMatchId().value() : null);
+        entity.setLoserNextMatchTeamSlot(match.getLoserNextMatchTeamSlot());
         return entity;
     }
 }

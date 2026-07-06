@@ -1,8 +1,8 @@
-# UC-07 — Knockout Stage
+# UC-07 — Generate Knockout Stage Bracket
 
 ## Summary
 
-Once all group stage results are entered, the admin triggers the knockout stage by specifying the starting round. The system computes how many teams qualify per group, seeds 1st-place finishers, and randomly draws 2nd-place (and lower) finishers against them. The admin can manually swap teams in the bracket before play begins. Knockout matches follow a standard single-elimination bracket.
+Once all group stage results are entered, the admin triggers the knockout stage by specifying the starting round. The system computes how many teams qualify per group, seeds 1st-place finishers, and randomly draws 2nd-place (and lower) finishers against them. The admin can manually swap teams in the bracket before play begins. Knockout matches follow a standard single-elimination bracket, including a third-place match generated automatically.
 
 ---
 
@@ -104,7 +104,7 @@ baseQualifiers = 2, extraSpots = 0
 #### API Contract
 
 ```
-POST /api/tournaments/{tournamentId}/knockout/generate
+POST /api/tournaments/{tournamentId}/bracket/generate
 ```
 
 ```json
@@ -193,7 +193,7 @@ POST /api/tournaments/{tournamentId}/knockout/generate
 ### UC-07.2 — Get Knockout Bracket
 
 ```
-GET /api/tournaments/{tournamentId}/knockout
+GET /api/tournaments/{tournamentId}/bracket
 ```
 
 **Response — `200 OK`** — same structure as UC-07.1 response.
@@ -224,7 +224,7 @@ The admin swaps two teams in the first round of the bracket before any knockout 
 #### API Contract
 
 ```
-POST /api/tournaments/{tournamentId}/knockout/swap
+POST /api/tournaments/{tournamentId}/bracket/swap
 ```
 
 ```json
@@ -238,70 +238,10 @@ POST /api/tournaments/{tournamentId}/knockout/swap
 
 ---
 
-### UC-07.4 — Enter Knockout Match Result
-
-The admin enters the result of a knockout match. The winner automatically advances to the next match in the bracket. Draws are not allowed in knockout — if both scores are equal, the request is rejected.
-
-When a `DEMI_FINALE` result is entered:
-- The **winner** is placed in the `FINALE`.
-- The **loser** is placed in the `TROISIEME_PLACE` match.
-
-The `TROISIEME_PLACE` match behaves exactly like any other knockout match — no draws, winner determined by score.
-
-#### Validation Rules
-
-| Rule | Error message |
-|------|---------------|
-| `score1` == `score2` | "Un match éliminatoire ne peut pas se terminer sur un match nul" |
-| `score1` or `score2` null | "Les deux scores sont obligatoires" |
-| `score1` or `score2` < 0 | "Le score ne peut pas être négatif" |
-| `score1` or `score2` > 500 | "Le score ne peut pas dépasser 500" |
-| Match not found | "Match introuvable" |
-
-#### API Contract
-
-```
-PUT /api/tournaments/{tournamentId}/knockout/matches/{matchId}/result
-```
-
-```json
-{
-  "score1": 3,
-  "score2": 1
-}
-```
-
-**Response — `200 OK`**
-
-```json
-{
-  "match": {
-    "id": "uuid-km1",
-    "round": "HUITIEME",
-    "team1": { "id": "uuid-t1", "name": "Les Aigles" },
-    "team2": { "id": "uuid-t5", "name": "Les Loups" },
-    "result": { "score1": 3, "score2": 1 },
-    "winner": { "id": "uuid-t1", "name": "Les Aigles" }
-  },
-  "nextMatch": {
-    "id": "uuid-km9",
-    "round": "QUART",
-    "position": 1,
-    "team1": { "id": "uuid-t1", "name": "Les Aigles" },
-    "team2": null
-  }
-}
-```
-
----
-
 ## Domain Impact
 
-- `KnockoutMatch` is a new aggregate under a `knockout` feature package, with its own `KnockoutMatchStore`.
-- The bracket is a tree of `KnockoutMatch` entries linked by `nextMatchId`.
-- Entering a knockout result updates the `team1Id` or `team2Id` of the `nextMatch` automatically.
-- The bracket position determines which slot (team1 or team2) the winner fills in the next match: odd positions → team1, even positions → team2.
-- For `DEMI_FINALE` matches, the loser is additionally placed into the `TROISIEME_PLACE` match (first loser → team1, second loser → team2).
+- `BracketMatch` entries are linked by `nextMatchId` and `loserNextMatchId`.
 - `TROISIEME_PLACE` and `FINALE` have no `nextMatchId` — they are terminal matches.
-- Generating the knockout bracket is destructive (deletes prior bracket) only if no result has been entered.
+- The TROISIEME_PLACE round is created automatically during generation whenever totalRounds ≥ 2 (i.e., a DEMI_FINALE exists).
+- Generating the bracket is destructive (deletes prior bracket) only if no result has been entered.
 - Swapping is only allowed before the first knockout result is entered.

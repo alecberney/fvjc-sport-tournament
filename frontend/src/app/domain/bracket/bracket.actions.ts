@@ -12,3 +12,13 @@ export class GenerateBracket {
     public readonly request: BracketGenerateRequestDto,
   ) {}
 }
+
+export class EnterBracketMatchResult {
+  static readonly type = '[Bracket] Enter Match Result';
+  constructor(
+    public readonly tournamentId: string,
+    public readonly matchId: string,
+    public readonly score1: number,
+    public readonly score2: number,
+  ) {}
+}
