@@ -1,0 +1,60 @@
+@if (tournament$ | async; as tournament) {
+  <div class="page-header">
+    <h1>{{ tournament.name }}</h1>
+  </div>
+  <app-tournament-nav [tournamentId]="tournamentId" />
+
+  <div class="bracket-layout">
+    @if (hasBracket$ | async) {
+      @for (round of rounds$ | async; track round.id) {
+        <div class="round-section">
+          <div class="round-header">
+            <span class="round-name">{{ round.name }}</span>
+            <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+          </div>
+          <table class="bracket-table">
+            <thead>
+              <tr>
+                <th>Terrain</th>
+                <th>Équipe 1</th>
+                <th></th>
+                <th>Équipe 2</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (match of round.matches; track match.id) {
+                <tr>
+                  <td>T{{ match.field }}</td>
+                  <td>{{ match.team1?.name ?? 'À déterminer' }}</td>
+                  <td class="vs">vs</td>
+                  <td>{{ match.team2?.name ?? 'À déterminer' }}</td>
+                  <td>
+                    @if (match.result) {
+                      {{ match.result.score1 }} - {{ match.result.score2 }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    } @else {
+      <div class="empty-state">
+        <p>Le bracket n'a pas encore été généré.</p>
+        @if (!(hasAllResults$ | async)) {
+          <div class="warning-banner">
+            <mat-icon>warning</mat-icon>
+            <span>Tous les matchs de la phase de groupes doivent avoir un résultat avant de générer le bracket.</span>
+          </div>
+        }
+        <button mat-raised-button color="primary" (click)="openGenerateModal()">
+          Générer le bracket
+        </button>
+      </div>
+    }
+  </div>
+}

@@ -8,6 +8,8 @@ import abe.fvjc.tournament.shared.exception.NotFoundException;
 import abe.fvjc.tournament.shared.exception.ValidationException;
 import abe.fvjc.tournament.team.domain.Team;
 import abe.fvjc.tournament.team.domain.TeamId;
+
+import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
 import abe.fvjc.tournament.team.domain.TeamStore;
 import abe.fvjc.tournament.tournament.domain.TournamentId;
 import abe.fvjc.tournament.tournament.domain.TournamentStatus;
@@ -148,14 +150,8 @@ public class ScheduleService {
                                     .field(m.getField())
                                     .groupId(m.getGroupId())
                                     .groupName(groupById.get(m.getGroupId().value()).getName())
-                                    .team1(TeamRef.builder()
-                                            .id(m.getTeam1Id())
-                                            .name(teamById.get(m.getTeam1Id().value()).getName())
-                                            .build())
-                                    .team2(TeamRef.builder()
-                                            .id(m.getTeam2Id())
-                                            .name(teamById.get(m.getTeam2Id().value()).getName())
-                                            .build())
+                                    .team1(toTeamRef(m.getTeam1Id(), teamById.get(m.getTeam1Id().value()).getName()))
+                                    .team2(toTeamRef(m.getTeam2Id(), teamById.get(m.getTeam2Id().value()).getName()))
                                     .result(m.getResult())
                                     .build())
                             .toList();

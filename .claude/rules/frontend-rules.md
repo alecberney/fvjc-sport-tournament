@@ -61,7 +61,9 @@ Angular kebab-case convention:
 | NGXS state | `*.state.ts` | `tournament.state.ts` |
 | Domain service | `*.domain.service.ts` | `tournament.domain.service.ts` |
 | Page component | `*.page.ts` | `tournament-list.page.ts` |
+| Page styles | `*.page.scss` | `tournament-list.page.scss` |
 | Component | `*.component.ts` | `tournament-card.component.ts` |
+| Component styles | `*.component.scss` | `tournament-card.component.scss` |
 | Routes | `*.routes.ts` | `tournament.routes.ts` |
 
 ---
@@ -380,6 +382,7 @@ export class TournamentCardComponent {
 
 - All components are **standalone**.
 - `inject()` for dependencies — no constructor.
+- Styles go in a `.scss` file referenced via `styleUrl` — never inline `styles`.
 - Pages use `store.select()` and `store.dispatch()`.
 - Components are pure — they only receive inputs and emit outputs.
 
@@ -422,5 +425,6 @@ export const TOURNAMENT_ROUTES: Routes = [
 | Pages | Dispatch actions, select state — one per route |
 | Components | Pure — `@Input` / `@Output` only, no store access |
 | Standalone | All components are standalone |
+| Styles | Always use `styleUrl` with a `.scss` file — never inline `styles` |
 | DI | `inject()` everywhere — no constructor injection |
 | Action type | `[Feature] Action Name` format |

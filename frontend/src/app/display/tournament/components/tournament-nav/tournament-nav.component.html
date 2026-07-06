@@ -32,13 +32,13 @@
     <mat-icon>leaderboard</mat-icon>
     Classements
   </a>
-  <a mat-tab-link disabled>
-    <mat-icon>grid_view</mat-icon>
-    Groupes
-  </a>
-  <a mat-tab-link disabled>
+  <a mat-tab-link
+     [routerLink]="['/', tournamentId, 'bracket']"
+     routerLinkActive
+     #bracketLink="routerLinkActive"
+     [active]="bracketLink.isActive">
     <mat-icon>account_tree</mat-icon>
-    Arbre
+    Bracket
   </a>
 </nav>
 <mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>

@@ -9,4 +9,8 @@ import lombok.Value;
 public class TeamRef {
     TeamId id;
     String name;
+
+    public static TeamRef toTeamRef(final TeamId id, final String name) {
+        return TeamRef.builder().id(id).name(name).build();
+    }
 }

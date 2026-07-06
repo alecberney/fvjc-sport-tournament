@@ -17,4 +17,6 @@
     <include relativeToChangelogFile="true" file="changelog/20260703120002_create_rounds_table.xml"/>
     <include relativeToChangelogFile="true" file="changelog/20260703120003_create_matches_table.xml"/>
     <include relativeToChangelogFile="true" file="changelog/20260703120004_alter_matches_add_result_columns.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260706120000_create_bracket_rounds_table.xml"/>
+    <include relativeToChangelogFile="true" file="changelog/20260706120001_create_bracket_matches_table.xml"/>
 </databaseChangeLog>
