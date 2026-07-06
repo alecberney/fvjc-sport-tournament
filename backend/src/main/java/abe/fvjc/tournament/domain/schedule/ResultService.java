@@ -4,8 +4,9 @@ import abe.fvjc.tournament.group.domain.GroupStore;
 import abe.fvjc.tournament.shared.exception.ConflictException;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
 import abe.fvjc.tournament.team.domain.Team;
-import abe.fvjc.tournament.team.domain.TeamId;
 import abe.fvjc.tournament.team.domain.TeamStore;
+
+import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
 import abe.fvjc.tournament.tournament.domain.TournamentStatus;
 import abe.fvjc.tournament.tournament.domain.TournamentStore;
 import lombok.RequiredArgsConstructor;
@@ -58,16 +59,10 @@ public class ResultService {
                 .field(match.getField())
                 .groupId(match.getGroupId())
                 .groupName(groupName)
-                .team1(buildTeamRef(teamById.get(match.getTeam1Id().value())))
-                .team2(buildTeamRef(teamById.get(match.getTeam2Id().value())))
+                .team1(toTeamRef(teamById.get(match.getTeam1Id().value()).getId(), teamById.get(match.getTeam1Id().value()).getName()))
+                .team2(toTeamRef(teamById.get(match.getTeam2Id().value()).getId(), teamById.get(match.getTeam2Id().value()).getName()))
                 .result(match.getResult())
                 .build();
     }
 
-    private static TeamRef buildTeamRef(final Team team) {
-        return TeamRef.builder()
-                .id(TeamId.of(team.getId().value()))
-                .name(team.getName())
-                .build();
-    }
 }

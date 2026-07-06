@@ -5,8 +5,9 @@ import abe.fvjc.tournament.group.domain.GroupId;
 import abe.fvjc.tournament.group.domain.GroupStore;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
 import abe.fvjc.tournament.team.domain.Team;
-import abe.fvjc.tournament.team.domain.TeamId;
 import abe.fvjc.tournament.team.domain.TeamStore;
+
+import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -124,10 +125,7 @@ public class RankingService {
             }
             entries.add(GroupRankingEntry.builder()
                     .rank(rank)
-                    .team(TeamRef.builder()
-                            .id(TeamId.of(team.getId().value()))
-                            .name(team.getName())
-                            .build())
+                    .team(toTeamRef(team.getId(), team.getName()))
                     .played(s[0])
                     .wins(s[1])
                     .draws(s[2])

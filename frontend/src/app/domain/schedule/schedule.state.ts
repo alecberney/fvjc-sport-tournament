@@ -6,6 +6,7 @@ import { GenerateSchedule, LoadSchedule } from '@app/domain/schedule/schedule.ac
 import { ScheduleApiService } from '@app/api/schedule/schedule.api.service';
 import { ScheduleApiMapper } from '@app/api/schedule/schedule.api.mapper';
 import { UpdateMatchResult } from '@app/domain/result/result.actions';
+import { ScheduleDomainService } from '@app/domain/schedule/schedule.domain.service';
 
 export interface IScheduleState {
   schedule: Schedule | undefined;
@@ -23,6 +24,11 @@ export class ScheduleState {
   @Selector()
   static getSchedule(state: IScheduleState): Schedule | undefined {
     return state.schedule;
+  }
+
+  @Selector()
+  static hasAllResults(state: IScheduleState): boolean {
+    return ScheduleDomainService.hasAllResults(state.schedule);
   }
 
   @Action(LoadSchedule)
