@@ -24,6 +24,14 @@
     <mat-icon>emoji_events</mat-icon>
     Résultats
   </a>
+  <a mat-tab-link
+     [routerLink]="['/', tournamentId, 'rankings']"
+     routerLinkActive
+     #rankingsLink="routerLinkActive"
+     [active]="rankingsLink.isActive">
+    <mat-icon>leaderboard</mat-icon>
+    Classements
+  </a>
   <a mat-tab-link disabled>
     <mat-icon>grid_view</mat-icon>
     Groupes

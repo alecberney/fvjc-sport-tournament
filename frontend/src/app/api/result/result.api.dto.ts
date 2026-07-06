@@ -28,3 +28,7 @@ export interface MatchResultResponseDto {
   match: MatchDto;
   ranking: GroupRankingDto;
 }
+
+export interface GroupRankingSearchRequestDto {
+  groups?: string;
+}
