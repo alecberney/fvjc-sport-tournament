@@ -22,4 +22,6 @@ class MatchEntity {
     private UUID groupId;
     private UUID team1Id;
     private UUID team2Id;
+    private Integer resultScore1;
+    private Integer resultScore2;
 }

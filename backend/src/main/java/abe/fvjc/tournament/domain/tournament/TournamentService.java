@@ -1,5 +1,7 @@
 package abe.fvjc.tournament.tournament.domain;
 
+import abe.fvjc.tournament.schedule.domain.RoundStore;
+import abe.fvjc.tournament.shared.exception.ConflictException;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -8,11 +10,13 @@ import java.util.List;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.tournament.domain.TournamentStatus.DRAFT;
+import static abe.fvjc.tournament.tournament.domain.TournamentStatus.IN_PROGRESS;
 import static abe.fvjc.tournament.tournament.domain.TournamentValidator.validateTournamentCreateRequest;
 
 @Service
 @RequiredArgsConstructor
 public class TournamentService {
+    private final RoundStore roundStore;
     private final TournamentStore tournamentStore;
 
     public Tournament create(final TournamentCreateRequest request) {
@@ -33,6 +37,18 @@ public class TournamentService {
     public void delete(final UUID id) {
         findById(id);
         tournamentStore.deleteById(id);
+    }
+
+    public Tournament start(final UUID id) {
+        final var tournament = tournamentStore.findById(id)
+                .orElseThrow(() -> new NotFoundException("Tournament", id));
+        if (tournament.getStatus() == IN_PROGRESS) {
+            throw new ConflictException("Le tournoi est déjà démarré");
+        }
+        if (roundStore.countByTournamentId(id) == 0) {
+            throw new ConflictException("Impossible de démarrer le tournoi sans calendrier généré");
+        }
+        return tournamentStore.save(tournament.withStatus(IN_PROGRESS));
     }
 
     private static Tournament buildTournament(final TournamentCreateRequest request) {

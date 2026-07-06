@@ -1,0 +1,36 @@
+<nav mat-tab-nav-bar [tabPanel]="tabPanel">
+  <a mat-tab-link
+     [routerLink]="['/', tournamentId]"
+     routerLinkActive
+     #equipesLink="routerLinkActive"
+     [active]="equipesLink.isActive"
+     [routerLinkActiveOptions]="{ exact: true }">
+    <mat-icon>groups</mat-icon>
+    Équipes
+  </a>
+  <a mat-tab-link
+     [routerLink]="['/', tournamentId, 'schedule']"
+     routerLinkActive
+     #horaireLink="routerLinkActive"
+     [active]="horaireLink.isActive">
+    <mat-icon>calendar_month</mat-icon>
+    Horaire
+  </a>
+  <a mat-tab-link
+     [routerLink]="['/', tournamentId, 'results']"
+     routerLinkActive
+     #resultsLink="routerLinkActive"
+     [active]="resultsLink.isActive">
+    <mat-icon>emoji_events</mat-icon>
+    Résultats
+  </a>
+  <a mat-tab-link disabled>
+    <mat-icon>grid_view</mat-icon>
+    Groupes
+  </a>
+  <a mat-tab-link disabled>
+    <mat-icon>account_tree</mat-icon>
+    Arbre
+  </a>
+</nav>
+<mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>

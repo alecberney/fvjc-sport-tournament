@@ -14,13 +14,14 @@ import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { DeleteTeam, LoadTeams, MarkTeamPaid } from '@app/domain/team/team.actions';
 import { TeamRegisterModal } from '@app/display/tournament/pages/team-register/team-register.modal';
 import { TeamEditModal } from '@app/display/tournament/pages/team-edit/team-edit.modal';
+import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 
 @Component({
   selector: 'app-tournament-detail-page',
   templateUrl: './tournament-detail.page.html',
   styleUrl: './tournament-detail.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule],
+  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent],
 })
 export class TournamentDetailPage implements OnInit {
 
@@ -31,7 +32,7 @@ export class TournamentDetailPage implements OnInit {
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly groups$: Observable<TeamGroup[]> = this.store.select(TeamState.getTeamsGroupedByOrganisation);
 
-  private tournamentId!: string;
+  protected tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;

@@ -48,15 +48,15 @@ public class ScheduleService {
             throw new ValidationException(List.of(new ValidationException.FieldError(
                     "groups", "Aucun groupe n'a été généré pour ce tournoi")));
         }
-        if (matchStore.existsResultByTournamentId(tournamentId)) {
-            throw new ConflictException("Impossible de régénérer le calendrier : des résultats ont déjà été saisis");
-        }
         final var existingRounds = roundStore.findAllByTournamentId(tournamentId);
         if (!existingRounds.isEmpty()) {
-            final var roundIds = existingRounds.stream()
+            final var existingRoundIds = existingRounds.stream()
                     .map(r -> r.getId().value())
                     .toList();
-            matchStore.deleteAllByRoundIds(roundIds);
+            if (matchStore.existsResultByRoundIds(existingRoundIds)) {
+                throw new ConflictException("Impossible de régénérer le calendrier : des résultats ont déjà été saisis");
+            }
+            matchStore.deleteAllByRoundIds(existingRoundIds);
             roundStore.deleteAllByTournamentId(tournamentId);
         }
         final var allTeams = teamStore.findAllByTournamentId(tournamentId);
@@ -156,6 +156,7 @@ public class ScheduleService {
                                             .id(m.getTeam2Id())
                                             .name(teamById.get(m.getTeam2Id().value()).getName())
                                             .build())
+                                    .result(m.getResult())
                                     .build())
                             .toList();
                     return RoundOverview.builder()

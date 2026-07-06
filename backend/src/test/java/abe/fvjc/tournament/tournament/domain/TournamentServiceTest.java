@@ -1,5 +1,7 @@
 package abe.fvjc.tournament.tournament.domain;
 
+import abe.fvjc.tournament.schedule.domain.RoundStore;
+import abe.fvjc.tournament.shared.exception.ConflictException;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +15,7 @@ import static abe.fvjc.tournament.tournament.domain.IdGenerator.tournamentId;
 import static abe.fvjc.tournament.tournament.domain.TournamentFakes.buildCreateRequest;
 import static abe.fvjc.tournament.tournament.domain.TournamentFakes.buildTournament;
 import static abe.fvjc.tournament.tournament.domain.TournamentStatus.DRAFT;
+import static abe.fvjc.tournament.tournament.domain.TournamentStatus.IN_PROGRESS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,6 +24,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TournamentServiceTest {
+
+    @Mock
+    private RoundStore roundStore;
 
     @Mock
     private TournamentStore tournamentStore;
@@ -75,5 +81,59 @@ class TournamentServiceTest {
         verify(tournamentStore).findById(id);
 
         assertEquals(tournament, tournamentFound);
+    }
+
+    @Test
+    void startWhenNotFoundShouldThrowNotFoundException() {
+        final var id = tournamentId().value();
+
+        when(tournamentStore.findById(id)).thenReturn(Optional.empty());
+
+        final var exception = assertThrows(NotFoundException.class, () -> tournamentService.start(id));
+
+        verify(tournamentStore).findById(id);
+
+        assertTrue(exception.getMessage().contains("Tournament"));
+    }
+
+    @Test
+    void startWhenAlreadyInProgressShouldThrowConflictException() {
+        final var tournament = buildTournament().withStatus(IN_PROGRESS);
+
+        when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
+
+        assertThrows(ConflictException.class, () -> tournamentService.start(tournament.getId().value()));
+
+        verify(tournamentStore).findById(tournament.getId().value());
+    }
+
+    @Test
+    void startWhenNoRoundsShouldThrowConflictException() {
+        final var tournament = buildTournament();
+
+        when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
+        when(roundStore.countByTournamentId(tournament.getId().value())).thenReturn(0);
+
+        assertThrows(ConflictException.class, () -> tournamentService.start(tournament.getId().value()));
+
+        verify(tournamentStore).findById(tournament.getId().value());
+        verify(roundStore).countByTournamentId(tournament.getId().value());
+    }
+
+    @Test
+    void startWhenValidShouldTransitionToInProgress() {
+        final var tournament = buildTournament();
+
+        when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
+        when(roundStore.countByTournamentId(tournament.getId().value())).thenReturn(3);
+        when(tournamentStore.save(any(Tournament.class))).then(returnsFirstArg());
+
+        final var tournamentStarted = tournamentService.start(tournament.getId().value());
+
+        verify(tournamentStore).findById(tournament.getId().value());
+        verify(roundStore).countByTournamentId(tournament.getId().value());
+        verify(tournamentStore).save(any(Tournament.class));
+
+        assertEquals(IN_PROGRESS, tournamentStarted.getStatus());
     }
 }

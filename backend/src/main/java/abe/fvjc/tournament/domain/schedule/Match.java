@@ -16,4 +16,5 @@ public class Match {
     GroupId groupId;
     TeamId team1Id;
     TeamId team2Id;
+    MatchResult result;
 }

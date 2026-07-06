@@ -1,0 +1,106 @@
+@if (tournament$ | async; as tournament) {
+  <div class="page-header">
+    <h1>{{ tournament.name }}</h1>
+  </div>
+  <app-tournament-nav [tournamentId]="tournamentId" />
+
+  <div class="results-layout">
+    <div class="schedule-panel">
+      @if (schedule$ | async; as schedule) {
+        @for (round of schedule.rounds; track round.id) {
+          <div class="round-section">
+            <div class="round-header">
+              <span class="round-number">Round {{ round.number }}</span>
+              <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+            </div>
+            @for (match of round.matches; track match.id) {
+              <div class="match-row"
+                   [class.selected]="selectedMatchId === match.id"
+                   [class.has-result]="match.result !== null"
+                   (click)="selectMatch(match)">
+                <span class="match-field">T{{ match.field }}</span>
+                <span class="match-group">{{ match.groupName }}</span>
+                <span class="match-teams">{{ match.team1.name }} vs {{ match.team2.name }}</span>
+                @if (match.result) {
+                  <span class="match-score">{{ match.result.score1 }} - {{ match.result.score2 }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <div class="detail-panel">
+      @if (schedule$ | async; as schedule) {
+        @if (rankings$ | async; as rankings) {
+          @if (getSelectedMatch(schedule); as match) {
+            <div class="result-form">
+              <h2>{{ match.team1.name }} vs {{ match.team2.name }}</h2>
+              <p class="form-subtitle">{{ match.groupName }} — Terrain {{ match.field }}</p>
+
+              <div class="score-inputs">
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ match.team1.name }}</mat-label>
+                  <input matInput type="number" min="0" max="500" [(ngModel)]="score1">
+                </mat-form-field>
+                <span class="score-separator">—</span>
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ match.team2.name }}</mat-label>
+                  <input matInput type="number" min="0" max="500" [(ngModel)]="score2">
+                </mat-form-field>
+              </div>
+
+              <button mat-raised-button color="primary" (click)="submitResult()">
+                Enregistrer
+              </button>
+            </div>
+
+            @if (getRankingForMatch(match, rankings); as ranking) {
+              <div class="ranking-panel">
+                <h3>Classement — Groupe {{ ranking.groupName }}</h3>
+                <table class="ranking-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Équipe</th>
+                      <th>J</th>
+                      <th>V</th>
+                      <th>N</th>
+                      <th>D</th>
+                      <th>BP</th>
+                      <th>BC</th>
+                      <th>Diff</th>
+                      <th>Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (entry of ranking.entries; track entry.team.id) {
+                      <tr>
+                        <td>{{ entry.rank }}</td>
+                        <td>{{ entry.team.name }}</td>
+                        <td>{{ entry.played }}</td>
+                        <td>{{ entry.wins }}</td>
+                        <td>{{ entry.draws }}</td>
+                        <td>{{ entry.defeats }}</td>
+                        <td>{{ entry.goalsFor }}</td>
+                        <td>{{ entry.goalsAgainst }}</td>
+                        <td>{{ entry.goalDifference }}</td>
+                        <td><strong>{{ entry.points }}</strong></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          } @else {
+            <div class="empty-detail">
+              <mat-icon>touch_app</mat-icon>
+              <p>Sélectionnez un match pour saisir le résultat</p>
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+}

@@ -16,4 +16,5 @@ public class MatchDto {
     String groupName;
     MatchTeamDto team1;
     MatchTeamDto team2;
+    MatchResultDto result;
 }
