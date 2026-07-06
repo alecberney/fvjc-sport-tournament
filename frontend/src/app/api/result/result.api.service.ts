@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TournamentDto } from '@app/api/tournament/tournament.api.dto';
-import { GroupRankingDto, MatchResultResponseDto, SubmitMatchResultRequestDto } from '@app/api/result/result.api.dto';
+import { GroupRankingDto, GroupRankingSearchRequestDto, MatchResultResponseDto, SubmitMatchResultRequestDto } from '@app/api/result/result.api.dto';
 
 @Injectable({ providedIn: 'root' })
 export class ResultApiService {
@@ -19,5 +19,13 @@ export class ResultApiService {
 
   loadGroupRanking$(tournamentId: string, groupId: string): Observable<GroupRankingDto> {
     return this.http.get<GroupRankingDto>(`/api/tournaments/${tournamentId}/groups/${groupId}/ranking`);
+  }
+
+  loadAllGroupRankings$(tournamentId: string, request: GroupRankingSearchRequestDto): Observable<GroupRankingDto[]> {
+    let params = new HttpParams();
+    if (request.groups) {
+      params = params.set('groups', request.groups);
+    }
+    return this.http.get<GroupRankingDto[]>(`/api/tournaments/${tournamentId}/groups/rankings`, { params });
   }
 }

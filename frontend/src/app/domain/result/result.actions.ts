@@ -1,3 +1,5 @@
+import { GroupRankingSearchRequestDto } from '@app/api/result/result.api.dto';
+
 export class StartTournament {
   static readonly type = '[Result] Start Tournament';
   constructor(public readonly tournamentId: string) {}
@@ -18,6 +20,14 @@ export class LoadGroupRanking {
   constructor(
     public readonly tournamentId: string,
     public readonly groupId: string,
+  ) {}
+}
+
+export class LoadAllGroupRankings {
+  static readonly type = '[Result] Load All Group Rankings';
+  constructor(
+    public readonly tournamentId: string,
+    public readonly request: GroupRankingSearchRequestDto,
   ) {}
 }
 

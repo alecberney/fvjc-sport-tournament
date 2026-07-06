@@ -189,4 +189,71 @@ class RankingServiceTest {
 
         assertTrue(rankingFound.getEntries().stream().allMatch(e -> e.getRank() == 1));
     }
+
+    @Test
+    void computeAllGroupRankingsWhenNoFilterShouldReturnAllGroups() {
+        final var tournamentId = UUID.randomUUID();
+        final var groupIdA = GroupId.of(UUID.randomUUID());
+        final var groupIdB = GroupId.of(UUID.randomUUID());
+        final var org = OrganisationId.of(UUID.randomUUID());
+        final var groupA = GroupFakes.buildGroup(null).withId(groupIdA).withName("A");
+        final var groupB = GroupFakes.buildGroup(null).withId(groupIdB).withName("B");
+        final var t1 = TeamFakes.buildTeam(org, null).withGroupId(groupIdA);
+        final var t2 = TeamFakes.buildTeam(org, null).withGroupId(groupIdB);
+
+        when(groupStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(groupA, groupB));
+        when(teamStore.findAllByGroupId(groupIdA.value())).thenReturn(List.of(t1));
+        when(teamStore.findAllByGroupId(groupIdB.value())).thenReturn(List.of(t2));
+        when(matchStore.findAllByGroupId(groupIdA.value())).thenReturn(List.of());
+        when(matchStore.findAllByGroupId(groupIdB.value())).thenReturn(List.of());
+
+        final var rankingsFound = rankingService.computeAllGroupRankings(tournamentId, List.of());
+
+        verify(groupStore).findAllByTournamentId(tournamentId);
+        verify(teamStore).findAllByGroupId(groupIdA.value());
+        verify(teamStore).findAllByGroupId(groupIdB.value());
+        verify(matchStore).findAllByGroupId(groupIdA.value());
+        verify(matchStore).findAllByGroupId(groupIdB.value());
+
+        assertEquals(2, rankingsFound.size());
+    }
+
+    @Test
+    void computeAllGroupRankingsWhenFilterAppliedShouldReturnMatchingGroups() {
+        final var tournamentId = UUID.randomUUID();
+        final var groupIdA = GroupId.of(UUID.randomUUID());
+        final var groupIdB = GroupId.of(UUID.randomUUID());
+        final var org = OrganisationId.of(UUID.randomUUID());
+        final var groupA = GroupFakes.buildGroup(null).withId(groupIdA).withName("A");
+        final var groupB = GroupFakes.buildGroup(null).withId(groupIdB).withName("B");
+        final var t1 = TeamFakes.buildTeam(org, null).withGroupId(groupIdA);
+
+        when(groupStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(groupA, groupB));
+        when(teamStore.findAllByGroupId(groupIdA.value())).thenReturn(List.of(t1));
+        when(matchStore.findAllByGroupId(groupIdA.value())).thenReturn(List.of());
+
+        final var rankingsFound = rankingService.computeAllGroupRankings(tournamentId, List.of("A"));
+
+        verify(groupStore).findAllByTournamentId(tournamentId);
+        verify(teamStore).findAllByGroupId(groupIdA.value());
+        verify(matchStore).findAllByGroupId(groupIdA.value());
+
+        assertEquals(1, rankingsFound.size());
+        assertEquals("A", rankingsFound.get(0).getGroupName());
+    }
+
+    @Test
+    void computeAllGroupRankingsWhenFilterMatchesNoneShouldReturnEmptyList() {
+        final var tournamentId = UUID.randomUUID();
+        final var groupIdA = GroupId.of(UUID.randomUUID());
+        final var groupA = GroupFakes.buildGroup(null).withId(groupIdA).withName("A");
+
+        when(groupStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(groupA));
+
+        final var rankingsFound = rankingService.computeAllGroupRankings(tournamentId, List.of("Z"));
+
+        verify(groupStore).findAllByTournamentId(tournamentId);
+
+        assertEquals(0, rankingsFound.size());
+    }
 }

@@ -1,0 +1,62 @@
+@if (tournament$ | async; as tournament) {
+  <div class="page-header">
+    <h1>{{ tournament.name }}</h1>
+  </div>
+  <app-tournament-nav [tournamentId]="tournamentId" />
+
+  <div class="rankings-layout">
+    @if (groups$ | async; as groups) {
+      <div class="rankings-filter">
+        <mat-form-field appearance="outline">
+          <mat-label>Groupe</mat-label>
+          <mat-select [(ngModel)]="selectedGroup" (ngModelChange)="onGroupFilterChange()">
+            <mat-option [value]="null">Tous les groupes</mat-option>
+            @for (group of groups; track group.id) {
+              <mat-option [value]="group.name">Groupe {{ group.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (rankings$ | async; as rankings) {
+        @for (ranking of getRankingsToDisplay(groups, rankings); track ranking.groupId) {
+          <div class="group-ranking">
+            <h2>Groupe {{ ranking.groupName }}</h2>
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Équipe</th>
+                  <th>J</th>
+                  <th>V</th>
+                  <th>N</th>
+                  <th>D</th>
+                  <th>BP</th>
+                  <th>BC</th>
+                  <th>Diff</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of ranking.entries; track entry.team.id) {
+                  <tr>
+                    <td>{{ entry.rank }}</td>
+                    <td>{{ entry.team.name }}</td>
+                    <td>{{ entry.played }}</td>
+                    <td>{{ entry.wins }}</td>
+                    <td>{{ entry.draws }}</td>
+                    <td>{{ entry.defeats }}</td>
+                    <td>{{ entry.goalsFor }}</td>
+                    <td>{{ entry.goalsAgainst }}</td>
+                    <td>{{ entry.goalDifference }}</td>
+                    <td><strong>{{ entry.points }}</strong></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    }
+  </div>
+}

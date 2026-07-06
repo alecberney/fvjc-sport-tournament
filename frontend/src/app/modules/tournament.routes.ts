@@ -10,6 +10,7 @@ import { TournamentDetailPage } from '../display/tournament/pages/tournament-det
 import { TournamentGroupsPage } from '../display/tournament/pages/tournament-groups/tournament-groups.page';
 import { TournamentSchedulePage } from '../display/tournament/pages/tournament-schedule/tournament-schedule.page';
 import { TournamentResultsPage } from '../display/tournament/pages/tournament-results/tournament-results.page';
+import { TournamentRankingsPage } from '../display/tournament/pages/tournament-rankings/tournament-rankings.page';
 
 export const TOURNAMENT_ROUTES: Routes = [
   {
@@ -21,6 +22,7 @@ export const TOURNAMENT_ROUTES: Routes = [
       { path: ':id/groups', component: TournamentGroupsPage },
       { path: ':id/schedule', component: TournamentSchedulePage },
       { path: ':id/results', component: TournamentResultsPage },
+      { path: ':id/rankings', component: TournamentRankingsPage },
     ],
   },
 ];

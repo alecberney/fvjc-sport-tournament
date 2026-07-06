@@ -1,5 +1,6 @@
 package abe.fvjc.tournament.schedule.domain;
 
+import abe.fvjc.tournament.group.domain.Group;
 import abe.fvjc.tournament.group.domain.GroupId;
 import abe.fvjc.tournament.group.domain.GroupStore;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
@@ -29,13 +30,29 @@ public class RankingService {
                 .filter(g -> g.getId().value().equals(groupId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Group", groupId));
-        final var teams = teamStore.findAllByGroupId(groupId);
-        final var matches = matchStore.findAllByGroupId(groupId);
+        return computeRankingForGroup(group);
+    }
+
+    public List<GroupRanking> computeAllGroupRankings(final UUID tournamentId, final List<String> groupNameFilter) {
+        final var groups = groupStore.findAllByTournamentId(tournamentId);
+        final var filtered = (groupNameFilter == null || groupNameFilter.isEmpty())
+                ? groups
+                : groups.stream()
+                        .filter(g -> groupNameFilter.contains(g.getName()))
+                        .toList();
+        return filtered.stream()
+                .map(this::computeRankingForGroup)
+                .toList();
+    }
+
+    private GroupRanking computeRankingForGroup(final Group group) {
+        final var teams = teamStore.findAllByGroupId(group.getId().value());
+        final var matches = matchStore.findAllByGroupId(group.getId().value());
         final var statsMap = buildStatsMap(teams);
         accumulateStats(matches, statsMap);
         final var entries = buildRankedEntries(teams, statsMap);
         return GroupRanking.builder()
-                .groupId(GroupId.of(groupId))
+                .groupId(group.getId())
                 .groupName(group.getName())
                 .entries(entries)
                 .build();
@@ -44,7 +61,7 @@ public class RankingService {
     private static Map<UUID, int[]> buildStatsMap(final List<Team> teams) {
         final var map = new HashMap<UUID, int[]>();
         for (final var team : teams) {
-            map.put(team.getId().value(), new int[6]); // [played, wins, draws, defeats, goalsFor, goalsAgainst]
+            map.put(team.getId().value(), new int[6]);
         }
         return map;
     }

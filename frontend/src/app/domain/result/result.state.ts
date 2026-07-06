@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { tap } from 'rxjs';
 import { GroupRanking } from '@app/domain/result/result.model';
-import { LoadGroupRanking, StartTournament, SubmitResult, UpdateMatchResult } from '@app/domain/result/result.actions';
+import { LoadAllGroupRankings, LoadGroupRanking, StartTournament, SubmitResult, UpdateMatchResult } from '@app/domain/result/result.actions';
 import { ResultApiService } from '@app/api/result/result.api.service';
 import { ResultApiMapper } from '@app/api/result/result.api.mapper';
 import { PatchSelectedStatus } from '@app/domain/tournament/tournament.actions';
@@ -62,6 +62,20 @@ export class ResultState {
         ctx.patchState({
           rankings: { ...ctx.getState().rankings, [ranking.groupId]: ranking },
         });
+      })
+    );
+  }
+
+  @Action(LoadAllGroupRankings)
+  loadAllGroupRankings(ctx: StateContext<IResultState>, { tournamentId, request }: LoadAllGroupRankings) {
+    return this.resultApiService.loadAllGroupRankings$(tournamentId, request).pipe(
+      tap((dtos) => {
+        const newRankings = { ...ctx.getState().rankings };
+        dtos.forEach(dto => {
+          const ranking = ResultApiMapper.toGroupRankingDomain(dto);
+          newRankings[ranking.groupId] = ranking;
+        });
+        ctx.patchState({ rankings: newRankings });
       })
     );
   }
