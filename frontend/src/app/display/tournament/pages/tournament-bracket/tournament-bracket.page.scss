@@ -4,7 +4,16 @@
 }
 
 .bracket-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
   padding: 16px 24px;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+.bracket-panel {
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -41,9 +50,65 @@
 
   th { font-size: 0.75rem; color: #888; text-transform: uppercase; }
   .vs { color: #aaa; text-align: center; }
+
+  tr.playable {
+    cursor: pointer;
+    &:hover { background: var(--mat-sys-surface-variant); }
+  }
+
+  tr.selected {
+    background: var(--mat-sys-primary-container);
+    border-left: 3px solid var(--mat-sys-primary);
+  }
+}
+
+.detail-panel {
+  overflow-y: auto;
+}
+
+.result-form {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  padding: 24px;
+
+  h2 {
+    margin: 0 0 20px;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.score-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  mat-form-field { flex: 1; }
+}
+
+.score-separator {
+  font-size: 1.25rem;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.empty-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #aaa;
+  gap: 8px;
+
+  mat-icon { font-size: 36px; height: 36px; width: 36px; }
+  p { margin: 0; font-size: 0.875rem; }
 }
 
 .empty-state {
+  grid-column: 1 / -1;
   text-align: center;
   padding: 48px 24px;
   p { color: #666; margin-bottom: 16px; }

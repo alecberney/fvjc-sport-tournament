@@ -27,4 +27,6 @@ class BracketMatchEntity {
     private Integer score2;
     private UUID nextMatchId;
     private int nextMatchTeamSlot;
+    private UUID loserNextMatchId;
+    private Integer loserNextMatchTeamSlot;
 }

@@ -2,6 +2,7 @@ package abe.fvjc.tournament.bracket.api;
 
 import abe.fvjc.tournament.bracket.domain.BracketGenerateRequest;
 import abe.fvjc.tournament.bracket.domain.BracketMatch;
+import abe.fvjc.tournament.bracket.domain.BracketMatchResultRequest;
 import abe.fvjc.tournament.bracket.domain.BracketRound;
 import lombok.experimental.UtilityClass;
 
@@ -57,6 +58,13 @@ public class BracketApiMapper {
                 .startTime(dto.getStartTime())
                 .matchDurationMinutes(dto.getMatchDurationMinutes())
                 .breakDurationMinutes(dto.getBreakDurationMinutes())
+                .build();
+    }
+
+    static BracketMatchResultRequest toBracketMatchResultRequest(final BracketMatchResultRequestDto dto) {
+        return BracketMatchResultRequest.builder()
+                .score1(dto.getScore1())
+                .score2(dto.getScore2())
                 .build();
     }
 }

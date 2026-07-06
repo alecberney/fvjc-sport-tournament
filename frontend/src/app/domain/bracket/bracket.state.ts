@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
-import { tap } from 'rxjs';
+import { switchMap, tap } from 'rxjs';
 import { BracketApiService } from '@app/api/bracket/bracket.api.service';
 import { BracketApiMapper } from '@app/api/bracket/bracket.api.mapper';
 import { BracketRound } from './bracket.model';
-import { GenerateBracket, LoadBracket } from './bracket.actions';
+import { EnterBracketMatchResult, GenerateBracket, LoadBracket } from './bracket.actions';
 
 export interface IBracketState {
   rounds: BracketRound[];
@@ -43,6 +43,14 @@ export class BracketState {
       tap((dtos) => {
         ctx.patchState({ rounds: dtos.map(BracketApiMapper.toRoundDomain) });
       }),
+    );
+  }
+
+  @Action(EnterBracketMatchResult)
+  enterMatchResult(ctx: StateContext<IBracketState>, { tournamentId, matchId, score1, score2 }: EnterBracketMatchResult) {
+    const request = BracketApiMapper.toSubmitResultRequest(score1, score2);
+    return this.bracketApiService.submitBracketMatchResult$(tournamentId, matchId, request).pipe(
+      switchMap(() => ctx.dispatch(new LoadBracket(tournamentId))),
     );
   }
 }

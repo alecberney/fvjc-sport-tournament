@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.bracket.api.BracketApiMapper.toBracketGenerateRequest;
+import static abe.fvjc.tournament.bracket.api.BracketApiMapper.toBracketMatchDto;
+import static abe.fvjc.tournament.bracket.api.BracketApiMapper.toBracketMatchResultRequest;
 import static abe.fvjc.tournament.bracket.api.BracketApiMapper.toBracketRoundDto;
 
 @RestController
@@ -33,5 +35,13 @@ class BracketController {
         return bracketService.findAll(tournamentId).stream()
                 .map(BracketApiMapper::toBracketRoundDto)
                 .toList();
+    }
+
+    @PutMapping("/matches/{matchId}/result")
+    public BracketMatchDto enterResult(
+            @PathVariable final UUID tournamentId,
+            @PathVariable final UUID matchId,
+            @RequestBody @Valid final BracketMatchResultRequestDto request) {
+        return toBracketMatchDto(bracketService.enterResult(matchId, toBracketMatchResultRequest(request)));
     }
 }

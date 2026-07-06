@@ -6,42 +6,74 @@
 
   <div class="bracket-layout">
     @if (hasBracket$ | async) {
-      @for (round of rounds$ | async; track round.id) {
-        <div class="round-section">
-          <div class="round-header">
-            <span class="round-name">{{ round.name }}</span>
-            <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
-          </div>
-          <table class="bracket-table">
-            <thead>
-              <tr>
-                <th>Terrain</th>
-                <th>Équipe 1</th>
-                <th></th>
-                <th>Équipe 2</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (match of round.matches; track match.id) {
+      <div class="bracket-panel">
+        @for (round of rounds$ | async; track round.id) {
+          <div class="round-section">
+            <div class="round-header">
+              <span class="round-name">{{ round.name }}</span>
+              <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+            </div>
+            <table class="bracket-table">
+              <thead>
                 <tr>
-                  <td>T{{ match.field }}</td>
-                  <td>{{ match.team1?.name ?? 'À déterminer' }}</td>
-                  <td class="vs">vs</td>
-                  <td>{{ match.team2?.name ?? 'À déterminer' }}</td>
-                  <td>
-                    @if (match.result) {
-                      {{ match.result.score1 }} - {{ match.result.score2 }}
-                    } @else {
-                      —
-                    }
-                  </td>
+                  <th>Terrain</th>
+                  <th>Équipe 1</th>
+                  <th></th>
+                  <th>Équipe 2</th>
+                  <th>Score</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+              </thead>
+              <tbody>
+                @for (match of round.matches; track match.id) {
+                  <tr
+                    [class.selected]="selectedMatch?.id === match.id"
+                    [class.playable]="match.team1 && match.team2"
+                    (click)="selectMatch(match)">
+                    <td>T{{ match.field }}</td>
+                    <td>{{ match.team1?.name ?? 'À déterminer' }}</td>
+                    <td class="vs">vs</td>
+                    <td>{{ match.team2?.name ?? 'À déterminer' }}</td>
+                    <td>
+                      @if (match.result) {
+                        {{ match.result.score1 }} - {{ match.result.score2 }}
+                      } @else {
+                        —
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="detail-panel">
+        @if (selectedMatch) {
+          <div class="result-form">
+            <h2>{{ selectedMatch.team1?.name }} vs {{ selectedMatch.team2?.name }}</h2>
+            <div class="score-inputs">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ selectedMatch.team1?.name }}</mat-label>
+                <input matInput type="number" min="0" max="500" [(ngModel)]="score1">
+              </mat-form-field>
+              <span class="score-separator">—</span>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ selectedMatch.team2?.name }}</mat-label>
+                <input matInput type="number" min="0" max="500" [(ngModel)]="score2">
+              </mat-form-field>
+            </div>
+            <button mat-raised-button color="primary" (click)="submitResult()">
+              Enregistrer
+            </button>
+          </div>
+        } @else {
+          <div class="empty-detail">
+            <mat-icon>touch_app</mat-icon>
+            <p>Sélectionnez un match pour saisir le résultat</p>
+          </div>
+        }
+      </div>
     } @else {
       <div class="empty-state">
         <p>Le bracket n'a pas encore été généré.</p>

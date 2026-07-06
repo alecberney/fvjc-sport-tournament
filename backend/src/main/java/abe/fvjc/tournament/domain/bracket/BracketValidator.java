@@ -49,4 +49,27 @@ public class BracketValidator {
             throw new ValidationException(errors);
         }
     }
+
+    public static void validateBracketMatchResult(final BracketMatchResultRequest request) {
+        final var errors = new ArrayList<ValidationException.FieldError>();
+
+        if (request.getScore1() == null || request.getScore2() == null) {
+            errors.add(new ValidationException.FieldError("scores", "Les deux scores sont obligatoires"));
+        } else {
+            if (request.getScore1() < 0 || request.getScore2() < 0) {
+                errors.add(new ValidationException.FieldError("scores", "Le score ne peut pas être négatif"));
+            }
+            if (request.getScore1() > 500 || request.getScore2() > 500) {
+                errors.add(new ValidationException.FieldError("scores", "Le score ne peut pas dépasser 500"));
+            }
+            if (request.getScore1().equals(request.getScore2())) {
+                errors.add(new ValidationException.FieldError("scores",
+                        "Un match éliminatoire ne peut pas se terminer sur un match nul"));
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException(errors);
+        }
+    }
 }

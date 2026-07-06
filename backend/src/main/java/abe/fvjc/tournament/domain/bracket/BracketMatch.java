@@ -18,4 +18,6 @@ public class BracketMatch {
     MatchResult result;
     BracketMatchId nextMatchId;
     int nextMatchTeamSlot;
+    BracketMatchId loserNextMatchId;
+    int loserNextMatchTeamSlot;
 }

@@ -31,3 +31,8 @@ export interface BracketGenerateRequestDto {
   matchDurationMinutes: number;
   breakDurationMinutes: number;
 }
+
+export interface BracketMatchResultRequestDto {
+  score1: number;
+  score2: number;
+}

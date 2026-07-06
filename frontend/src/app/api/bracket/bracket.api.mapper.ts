@@ -1,5 +1,5 @@
 import { BracketMatch, BracketMatchResult, BracketRound, BracketTeam } from '@app/domain/bracket/bracket.model';
-import { BracketMatchDto, BracketRoundDto } from '@app/api/bracket/bracket.api.dto';
+import { BracketMatchDto, BracketMatchResultRequestDto, BracketRoundDto } from '@app/api/bracket/bracket.api.dto';
 
 export class BracketApiMapper {
   static toRoundDomain(dto: BracketRoundDto): BracketRound {
@@ -20,5 +20,9 @@ export class BracketApiMapper {
       team2: dto.team2 ? ({ id: dto.team2.id, name: dto.team2.name } as BracketTeam) : null,
       result: dto.result ? ({ score1: dto.result.score1, score2: dto.result.score2 } as BracketMatchResult) : null,
     };
+  }
+
+  static toSubmitResultRequest(score1: number, score2: number): BracketMatchResultRequestDto {
+    return { score1, score2 };
   }
 }
