@@ -1,9 +1,10 @@
-package abe.fvjc.tournament.schedule.api;
+package abe.fvjc.tournament.api.schedule;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,6 @@ import java.util.UUID;
 public class RoundDto {
     UUID id;
     int number;
-    String startTime;
+    LocalDateTime startTime;
     List<MatchDto> matches;
 }

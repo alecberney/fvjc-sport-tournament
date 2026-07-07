@@ -1,12 +1,16 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
+
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface BracketRoundStore {
     BracketRound save(BracketRound round);
-    Optional<BracketRound> findById(UUID id);
-    List<BracketRound> findAllByTournamentId(UUID tournamentId);
-    void deleteAllByTournamentId(UUID tournamentId);
+
+    Optional<BracketRound> findById(BracketRoundId id);
+
+    List<BracketRound> findAllByTournamentId(TournamentId tournamentId);
+
+    void deleteAllByTournamentId(TournamentId tournamentId);
 }

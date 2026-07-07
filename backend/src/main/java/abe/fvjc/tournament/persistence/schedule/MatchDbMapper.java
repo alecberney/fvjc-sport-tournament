@@ -1,11 +1,11 @@
-package abe.fvjc.tournament.schedule.persistence;
+package abe.fvjc.tournament.persistence.schedule;
 
-import abe.fvjc.tournament.group.domain.GroupId;
-import abe.fvjc.tournament.schedule.domain.Match;
-import abe.fvjc.tournament.schedule.domain.MatchId;
-import abe.fvjc.tournament.schedule.domain.MatchResult;
-import abe.fvjc.tournament.schedule.domain.RoundId;
-import abe.fvjc.tournament.team.domain.TeamId;
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.schedule.Match;
+import abe.fvjc.tournament.domain.schedule.MatchId;
+import abe.fvjc.tournament.domain.schedule.MatchResult;
+import abe.fvjc.tournament.domain.schedule.RoundId;
+import abe.fvjc.tournament.domain.team.TeamId;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass

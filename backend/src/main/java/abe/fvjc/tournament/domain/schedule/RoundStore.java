@@ -1,11 +1,15 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
+
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface RoundStore {
     void saveAll(List<Round> rounds);
-    List<Round> findAllByTournamentId(UUID tournamentId);
-    void deleteAllByTournamentId(UUID tournamentId);
-    int countByTournamentId(UUID tournamentId);
+
+    List<Round> findAllByTournamentId(TournamentId tournamentId);
+
+    void deleteAllByTournamentId(TournamentId tournamentId);
+
+    int countByTournamentId(TournamentId tournamentId);
 }

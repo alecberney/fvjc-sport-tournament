@@ -104,12 +104,12 @@ assertFalse(condition);
 assertThrows(ExceptionClass.class, () -> methodUnderTest());
 ```
 
-For exception tests, assign `assertThrows` to a `var` and assert on the exception — `verify(...)` comes after:
+`assertThrows` is **never** used bare — always capture its return into `final var exception` and assert on it. A test that only checks the thrown type is incomplete. `verify(...)` comes between the capture and the final assertion.
 
 ```java
 @Test
 void findByIdWhenNotFoundShouldThrowNotFoundException() {
-    final var id = IdGenerator.tournamentId().value();
+    final var id = UUID.randomUUID();
 
     when(tournamentStore.findById(id)).thenReturn(Optional.empty());
 
@@ -121,20 +121,33 @@ void findByIdWhenNotFoundShouldThrowNotFoundException() {
 }
 ```
 
+What to assert on the captured exception, by type:
+
+- `NotFoundException` — `assertTrue(exception.getMessage().contains("<Entity>"))`.
+- `ConflictException` / `BusinessException` — `assertEquals("<exact message>", exception.getMessage())`.
+- `ValidationException` — assert the offending field: `assertEquals("<field>", exception.getErrors().getFirst().field())`.
+
 ---
 
 ## Fakes
 
 Fakes are `@UtilityClass` classes that build domain objects with sensible defaults.  
-One Fakes class per feature, located in the test source tree under the same package as the domain class.
+All Fakes live together in a single **`domain.fakes`** package (`src/test/java/abe/fvjc/tournament/domain/fakes/`) — one `XxxFakes` class per feature, never colocated with the tests that use them. Fakes classes are `public` so any test can import them.
 
 ```
-src/test/java/abe/fvjc/tournament/
-└── team/
-    └── domain/
-        ├── IdGenerator.java
-        ├── TeamFakes.java
-        └── TeamServiceTest.java
+src/test/java/abe/fvjc/tournament/domain/
+├── fakes/
+│   ├── IdGenerator.java      ← the single, shared IdGenerator
+│   ├── BracketFakes.java
+│   ├── GroupFakes.java
+│   ├── OrganisationFakes.java
+│   ├── PersonFakes.java
+│   ├── ScheduleFakes.java
+│   ├── TeamFakes.java
+│   └── TournamentFakes.java
+├── team/
+│   └── TeamServiceTest.java  ← tests import fakes from domain.fakes
+└── ...
 ```
 
 ### Naming
@@ -148,19 +161,27 @@ TeamFakes.buildCreateRequest()
 
 ### IdGenerator
 
-Each feature has a package-private `IdGenerator` `@UtilityClass` in its test domain package. It generates typed ID instances for use in fakes only. All methods are package-private.
+There is exactly **one** `IdGenerator` for the whole test suite, a package-private `@UtilityClass` living in the `domain.fakes` package alongside the Fakes. It generates typed ID instances for use by the Fakes only, with one package-protected (package-private) `static` method per typed ID. Each method is named `random` + the ID type: `randomTeamId()`, `randomTournamentId()`, `randomGroupId()`, …
 
 ```java
-// team/domain/IdGenerator.java
+// domain/fakes/IdGenerator.java
 @UtilityClass
 class IdGenerator {
-    static TeamId teamId() {
+
+    static TeamId randomTeamId() {
         return TeamId.of(UUID.randomUUID());
     }
+
+    static TournamentId randomTournamentId() {
+        return TournamentId.of(UUID.randomUUID());
+    }
+    // ... one method per typed ID (randomGroupId, randomMatchId, randomBracketRoundId, ...)
 }
 ```
 
-- Package-private — only Fakes and tests in the same package can use it.
+- Method naming: `random` + typed ID name — `randomTeamId()`, `randomMatchId()`, `randomBracketRoundId()`.
+- Package-private class with package-protected methods — usable only by the Fakes in the same `domain.fakes` package, never by tests directly.
+- One shared generator for all features — never a per-feature `IdGenerator`.
 - Generates a new random UUID-based ID on every call.
 - Never pass a UUID from outside — IDs are always generated internally.
 
@@ -175,13 +196,13 @@ TournamentFakes.buildTournament().withId(TournamentId.empty())
 ```
 
 ```java
-// team/domain/TeamFakes.java
+// domain/fakes/TeamFakes.java
 @UtilityClass
 public class TeamFakes {
 
     public static Team buildTeam() {
         return Team.builder()
-            .id(IdGenerator.teamId())
+            .id(randomTeamId())
             .name("Les Aigles")
             .sport(FOOTBALL)
             .tournamentId(TournamentId.of(UUID.randomUUID()))
@@ -235,6 +256,7 @@ final var tournamentFound   = tournamentService.findById(id);
 | Test naming | `methodTestedNameWhenXxxxShouldXxx` |
 | No comments | No `// setup`, `// when`, `// call`, `// verify`, `// assert` comments |
 | Assertions | JUnit 5 only — never AssertJ |
+| `assertThrows` | Never bare — capture into `final var exception` and assert on it (message for `NotFoundException`/`ConflictException`/`BusinessException`, `getErrors().getFirst().field()` for `ValidationException`) |
 | Mocking | Mockito with `@Mock` + `@InjectMocks` + `@ExtendWith(MockitoExtension.class)` |
 | `@Mock` visibility | `@Mock private` — all mock fields are `private` |
 | `@InjectMocks` visibility | `private` — the class under test field is `private` |
@@ -244,11 +266,11 @@ final var tournamentFound   = tournamentService.findById(id);
 | Verify / assert separation | Blank line between the verify block and the assert block |
 | Result variable naming | Named `<model><Action>`: `tournamentCreated`, `tournamentFound` |
 | Fake variable naming | Named after the model: `tournament`, `request` — not `saved`, `tournamentWithId` |
-| Fakes | `@UtilityClass` per feature in `src/test/`, named `XxxFakes` |
+| Fakes location | All `XxxFakes` in the single `domain.fakes` package (`src/test/`), never colocated with tests; `public @UtilityClass` |
 | Fakes method naming | Prefix `build`: `buildTeam()`, `buildCreateRequest()` |
-| Fakes always have ID | `buildXxx()` always uses `IdGenerator.xxxId()` — no `buildXxxWithId()` variant |
+| Fakes always have ID | `buildXxx()` always uses `IdGenerator.randomXxxId()` — no `buildXxxWithId()` variant |
 | Empty ID in tests | Use Lombok `@With`: `TournamentFakes.buildTournament().withId(TournamentId.empty())` |
-| IdGenerator | Package-private `@UtilityClass` per feature — generates typed IDs, used only by Fakes/tests |
+| IdGenerator | Exactly one package-private `@UtilityClass` in `domain.fakes` with package-protected `random<TypedId>()` methods (e.g. `randomTeamId()`) — never per-feature, used only by Fakes |
 | No `toBuilder` | Use Lombok `@With` for field overrides — never `toBuilder()` |
-| Static imports | Enum values, Fakes methods, and `IdGenerator` methods always statically imported in tests |
+| Static imports | Enum values and Fakes methods statically imported in tests; `IdGenerator` methods statically imported within the Fakes |
 | `final var` | All local variables use `final var` |

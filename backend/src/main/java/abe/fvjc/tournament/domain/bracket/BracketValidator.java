@@ -1,11 +1,8 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
-import abe.fvjc.tournament.shared.exception.ValidationException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
 import lombok.experimental.UtilityClass;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 
 @UtilityClass
@@ -25,12 +22,6 @@ public class BracketValidator {
 
         if (request.getStartTime() == null) {
             errors.add(new ValidationException.FieldError("startTime", "L'heure de début est obligatoire"));
-        } else {
-            try {
-                LocalTime.parse(request.getStartTime(), DateTimeFormatter.ofPattern("HH:mm"));
-            } catch (DateTimeParseException e) {
-                errors.add(new ValidationException.FieldError("startTime", "Format d'heure invalide (HH:mm attendu)"));
-            }
         }
 
         if (request.getMatchDurationMinutes() == null) {

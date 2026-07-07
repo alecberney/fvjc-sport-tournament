@@ -1,66 +1,57 @@
-package abe.fvjc.tournament.tournament.domain;
+package abe.fvjc.tournament.domain.tournament;
 
-import abe.fvjc.tournament.schedule.domain.RoundStore;
-import abe.fvjc.tournament.shared.exception.ConflictException;
-import abe.fvjc.tournament.shared.exception.NotFoundException;
+import abe.fvjc.tournament.domain.schedule.RoundStore;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
-import static abe.fvjc.tournament.tournament.domain.TournamentStatus.DRAFT;
-import static abe.fvjc.tournament.tournament.domain.TournamentStatus.IN_PROGRESS;
-import static abe.fvjc.tournament.tournament.domain.TournamentValidator.validateTournamentCreateRequest;
+import static abe.fvjc.tournament.domain.tournament.TournamentValidator.validateTournamentCreateRequest;
 
 @Service
 @RequiredArgsConstructor
 public class TournamentService {
     private final RoundStore roundStore;
     private final TournamentStore tournamentStore;
+    private final TournamentSearchService tournamentSearchService;
 
     public Tournament create(final TournamentCreateRequest request) {
         validateTournamentCreateRequest(request);
+
         final var tournament = buildTournament(request);
         return tournamentStore.save(tournament);
     }
 
-    public Tournament findById(final UUID id) {
-        return tournamentStore.findById(id)
-            .orElseThrow(() -> new NotFoundException("Tournament", id));
-    }
-
-    public List<Tournament> findAll() {
-        return tournamentStore.findAll();
-    }
-
     public void delete(final UUID id) {
-        findById(id);
-        tournamentStore.deleteById(id);
+        tournamentSearchService.findById(id);
+        tournamentStore.deleteById(TournamentId.of(id));
     }
 
     public Tournament start(final UUID id) {
-        final var tournament = tournamentStore.findById(id)
-                .orElseThrow(() -> new NotFoundException("Tournament", id));
-        if (tournament.getStatus() == IN_PROGRESS) {
+        final var tournament = tournamentSearchService.findById(id);
+
+        if (tournament.getStatus() == TournamentStatus.IN_PROGRESS) {
             throw new ConflictException("Le tournoi est déjà démarré");
         }
-        if (roundStore.countByTournamentId(id) == 0) {
+        if (roundStore.countByTournamentId(TournamentId.of(id)) == 0) {
             throw new ConflictException("Impossible de démarrer le tournoi sans calendrier généré");
         }
-        return tournamentStore.save(tournament.withStatus(IN_PROGRESS));
+
+        final var tournamentInProgress = tournament.withStatus(TournamentStatus.IN_PROGRESS);
+        return tournamentStore.save(tournamentInProgress);
     }
 
     private static Tournament buildTournament(final TournamentCreateRequest request) {
         return Tournament.builder()
-            .id(TournamentId.of(UUID.randomUUID()))
-            .name(request.getName())
-            .sport(request.getSport())
-            .numberOfFields(request.getNumberOfFields())
-            .minPlayersPerTeam(request.getMinPlayersPerTeam())
-            .maxPlayersPerTeam(request.getMaxPlayersPerTeam())
-            .date(request.getDate())
-            .status(DRAFT)
-            .build();
+                .id(TournamentId.of(UUID.randomUUID()))
+                .name(request.getName())
+                .sport(request.getSport())
+                .numberOfFields(request.getNumberOfFields())
+                .minPlayersPerTeam(request.getMinPlayersPerTeam())
+                .maxPlayersPerTeam(request.getMaxPlayersPerTeam())
+                .date(request.getDate())
+                .status(TournamentStatus.DRAFT)
+                .build();
     }
 }

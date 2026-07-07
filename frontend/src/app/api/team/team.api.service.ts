@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TeamDto, TeamPaidRequestDto, TeamRegisterRequestDto, TeamUpdateRequestDto } from '@app/api/team/team.api.dto';
+import { TeamDto, TeamPaymentRequestDto, TeamRegisterRequestDto, TeamUpdateRequestDto } from '@app/api/team/team.api.dto';
 
 @Injectable({ providedIn: 'root' })
 export class TeamApiService {
@@ -29,7 +29,7 @@ export class TeamApiService {
   }
 
   markPaid$(tournamentId: string, teamId: string, paid: boolean): Observable<TeamDto> {
-    const body: TeamPaidRequestDto = { paid };
+    const body: TeamPaymentRequestDto = { paid };
     return this.http.patch<TeamDto>(`${this.baseUrl(tournamentId)}/${teamId}/paid`, body);
   }
 }

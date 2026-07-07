@@ -39,8 +39,8 @@ export class TeamEditModal implements OnInit, OnDestroy {
     const { team } = this.data;
     this.form = this.fb.group({
       name: [team.name, [Validators.required, Validators.maxLength(250)]],
-      responsibleFirstName: [team.responsibleFirstName, [Validators.required, Validators.maxLength(100)]],
-      responsibleLastName: [team.responsibleLastName, [Validators.required, Validators.maxLength(100)]],
+      responsibleFirstName: [team.responsible.firstName, [Validators.required, Validators.maxLength(100)]],
+      responsibleLastName: [team.responsible.lastName, [Validators.required, Validators.maxLength(100)]],
       paid: [team.paid],
     });
 

@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.team.api;
+package abe.fvjc.tournament.api.team;
 
 import lombok.Builder;
 import lombok.Value;
@@ -14,6 +14,4 @@ public class TeamDto {
     String name;
     boolean paid;
     UUID organisationId;
-    String responsibleFirstName;
-    String responsibleLastName;
 }

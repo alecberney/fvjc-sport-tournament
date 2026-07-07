@@ -8,8 +8,7 @@ export class TeamFakes {
       name: 'Les Aigles',
       paid: false,
       organisationId: 'org-id-1',
-      responsibleFirstName: 'Jean',
-      responsibleLastName: 'Dupont',
+      responsible: { firstName: 'Jean', lastName: 'Dupont' },
       ...overrides,
     };
   }

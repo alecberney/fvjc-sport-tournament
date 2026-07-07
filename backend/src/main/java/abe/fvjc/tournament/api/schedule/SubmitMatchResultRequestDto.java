@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.schedule.api;
+package abe.fvjc.tournament.api.schedule;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,6 +11,12 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 public class SubmitMatchResultRequestDto {
-    @NotNull @Min(0) @Max(500) Integer score1;
-    @NotNull @Min(0) @Max(500) Integer score2;
+    @NotNull
+    @Min(0)
+    @Max(500)
+    Integer score1;
+    @NotNull
+    @Min(0)
+    @Max(500)
+    Integer score2;
 }

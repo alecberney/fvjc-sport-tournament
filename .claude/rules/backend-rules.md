@@ -99,6 +99,33 @@ return repository.findAll().stream()
         .toList();
 ```
 
+### `.map` Is Pure — Never Throws
+
+A `.map(...)` step (on a `Stream` or `Optional`) performs **simple mapping only** — a pure transformation from one value to another. It must never contain logic that can throw an exception: no validation, no `orElseThrow`, no `findById`, no lookups that can fail, no business rules. Mapping is total (defined for every input).
+
+Anything that can throw — validation, "not found" checks, business invariants — belongs before or after the stream, not inside `.map`.
+
+```java
+// WRONG — .map hides a throwing lookup
+return teamIds.stream()
+        .map(id -> teamStore.findById(id).orElseThrow(() -> new NotFoundException("Team", id)))
+        .toList();
+
+// WRONG — .map validates
+return requests.stream()
+        .map(request -> {
+            validateTeamCreateRequest(request);
+            return buildTeam(request);
+        })
+        .toList();
+
+// CORRECT — validate first, then map purely
+requests.forEach(TeamValidator::validateTeamCreateRequest);
+return requests.stream()
+        .map(TeamService::buildTeam)
+        .toList();
+```
+
 ### Ternary Operator
 
 Multi-line ternary: condition on first line, `?` and `:` each on their own line.
@@ -165,6 +192,25 @@ private final TournamentRepository repository;
 
 ## Style: Imports
 
+### No Wildcard Imports
+
+Wildcard imports (`.*`) are **forbidden** — regular and static alike. Every imported type, method, or field is listed explicitly, one per import. This applies to `src/main` and `src/test` equally.
+
+```java
+// WRONG
+import jakarta.persistence.*;
+import org.springframework.web.bind.annotation.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static abe.fvjc.tournament.api.team.TeamApiMapper.*;
+
+// CORRECT
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static abe.fvjc.tournament.api.team.TeamApiMapper.toTeamDto;
+```
+
 ### Static Imports — Public Static Methods
 
 All `public static` methods from utility classes and mappers are used via static import.
@@ -196,12 +242,12 @@ Usage: `DRAFT`, not `TournamentStatus.DRAFT`.
 
 ### Domain Classes
 
-Use Lombok `@Value` + `@Builder` + `@With` — all domain objects are immutable. `@With` generates `withFieldName(value)` methods returning a new instance with that field changed — used in tests to override specific fields (e.g., `buildTournament().withId(TournamentId.empty())`). Avoid `@Builder(toBuilder = true)` — build fresh instances instead.
+Use Lombok `@Value` + `@With` + `@Builder`, **in that order** — all domain objects are immutable. `@With` generates `withFieldName(value)` methods returning a new instance with that field changed — used in tests to override specific fields (e.g., `buildTournament().withId(TournamentId.empty())`). Avoid `@Builder(toBuilder = true)` — build fresh instances instead.
 
 ```java
 @Value
-@Builder
 @With
+@Builder
 public class Team {
     TeamId id;
     String name;
@@ -239,12 +285,14 @@ public record TeamId(UUID value) {
 
 Repository interfaces belong to the domain — no Spring or JPA imports.
 
+Store methods take **typed ID records** — never raw `UUID`. Every ID parameter uses the typed ID that matches the field it identifies: the entity's own ID for `findById` / `deleteById`, and the foreign-key's typed ID for `findAllByXxxId` (e.g. `TournamentId tournamentId`, `GroupId groupId`). Collections of IDs use `List<XxxId>`, never `List<UUID>`. The `JpaXxxStore` unwraps `.value()` when delegating to the Spring Data repository; callers pass a typed ID (constructed via `XxxId.of(uuid)` when they only hold a raw `UUID`).
+
 ```java
 public interface TeamStore {
     Team save(Team team);
-    Optional<Team> findById(UUID id);
-    List<Team> findAll();
-    void deleteById(UUID id);
+    Optional<Team> findById(TeamId id);
+    List<Team> findAllByTournamentId(TournamentId tournamentId);
+    void deleteById(TeamId id);
 }
 ```
 
@@ -328,7 +376,7 @@ public class TeamService {
     }
 
     public Team findById(final UUID id) {
-        return teamStore.findById(id)
+        return teamStore.findById(TeamId.of(id))
             .orElseThrow(() -> new NotFoundException("Team", id));
     }
 
@@ -344,7 +392,7 @@ public class TeamService {
 
     public void delete(final UUID id) {
         findById(id);
-        teamStore.deleteById(id);
+        teamStore.deleteById(TeamId.of(id));
     }
 }
 ```
@@ -418,23 +466,23 @@ class JpaTeamStore implements TeamStore {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Team> findById(UUID id) {
-        return teamRepository.findById(id)
+    public Optional<Team> findById(TeamId id) {
+        return teamRepository.findById(id.value())
                 .map(TeamDbMapper::toTeam);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Team> findAll() {
-        return teamRepository.findAll().stream()
+    public List<Team> findAllByTournamentId(TournamentId tournamentId) {
+        return teamRepository.findByTournamentId(tournamentId.value()).stream()
                 .map(TeamDbMapper::toTeam)
                 .toList();
     }
 
     @Override
     @Transactional
-    public void deleteById(UUID id) {
-        teamRepository.deleteById(id);
+    public void deleteById(TeamId id) {
+        teamRepository.deleteById(id.value());
     }
 }
 ```
@@ -489,6 +537,8 @@ Controllers are thin — one service call per endpoint, no business logic. Use `
 | `PUT` / `PATCH` | `updateXxx` | `updateStatus(...)` |
 | `DELETE` | `delete` | `delete(UUID id)` |
 
+A `@RequestBody` parameter of type `XxxRequestDto` (or `XxxCreateRequestDto` / `XxxUpdateRequestDto`) is always named `requestDto` — never `request`. The name `request` is reserved for the mapped domain request object. Endpoints returning a list delegate to the mapper's plural `toXxxDtos(...)` method — never stream inline.
+
 ```java
 @RestController
 @RequestMapping("/api/teams")
@@ -498,9 +548,7 @@ class TeamController {
 
     @GetMapping
     public List<TeamDto> getAll() {
-        return teamService.findAll().stream()
-                .map(TeamApiMapper::toTeamDto)
-                .toList();
+        return toTeamDtos(teamService.findAll());
     }
 
     @GetMapping("/{id}")
@@ -510,13 +558,13 @@ class TeamController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TeamDto create(@RequestBody @Valid TeamCreateRequestDto request) {
-        return toTeamDto(teamService.create(toTeamCreateRequest(request)));
+    public TeamDto create(@RequestBody @Valid TeamCreateRequestDto requestDto) {
+        return toTeamDto(teamService.create(toTeamCreateRequest(requestDto)));
     }
 
     @PutMapping("/{id}")
-    public TeamDto updateName(@PathVariable UUID id, @RequestBody @Valid TeamUpdateRequestDto request) {
-        return toTeamDto(teamService.update(toTeamUpdateRequest(request), id));
+    public TeamDto updateName(@PathVariable UUID id, @RequestBody @Valid TeamUpdateRequestDto requestDto) {
+        return toTeamDto(teamService.update(toTeamUpdateRequest(requestDto), id));
     }
 
     @DeleteMapping("/{id}")
@@ -569,6 +617,12 @@ public class TeamApiMapper {
             .build();
     }
 
+    static List<TeamDto> toTeamDtos(final List<Team> teams) {
+        return emptyIfNull(teams).stream()
+            .map(TeamApiMapper::toTeamDto)
+            .toList();
+    }
+
     static TeamCreateRequest toTeamCreateRequest(TeamCreateRequestDto dto) {
         return TeamCreateRequest.builder()
             .name(dto.getName())
@@ -582,6 +636,24 @@ public class TeamApiMapper {
 - Method name = `to` + target type: `toTeamDto(Team)`, `toTeamCreateRequest(TeamCreateRequestDto)`
 - Always use explicit `static` keyword on methods
 - Visibility ladder: `private` → package-private → `protected` → `public` — use the lowest that satisfies callers
+
+#### Collection methods
+
+Every `to` + type mapping that a caller needs for a list has a matching **plural** method named `toXxxDtos`, taking `List<Domain>` and returning `List<Dto>`. It always wraps the source with `emptyIfNull` (from `org.apache.commons.collections4.CollectionUtils`, static import) before streaming, so a `null` collection maps to an empty list instead of throwing.
+
+```java
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+
+static List<TeamDto> toTeamDtos(final List<Team> teams) {
+    return emptyIfNull(teams).stream()
+        .map(TeamApiMapper::toTeamDto)
+        .toList();
+}
+```
+
+- **Every** collection streamed inside a mapper — top-level lists and nested lists built inside a `toXxxDto` — goes through `emptyIfNull(...)`. Never call `.stream()` directly on a collection getter.
+- A nested list is mapped via its own plural method: `.matches(toBracketMatchDtos(round.getMatches()))`, not an inline stream.
+- The plural method takes the same visibility as its singular counterpart (package-private by default; `private` when used only internally).
 
 ---
 
@@ -634,7 +706,7 @@ public Tournament create(final TournamentCreateRequest request) {
 }
 
 public Tournament findById(final UUID id) {
-    return tournamentStore.findById(id)
+    return tournamentStore.findById(TournamentId.of(id))
         .orElseThrow(() -> new NotFoundException("Tournament", id));
 }
 ```
@@ -655,24 +727,30 @@ public Tournament findById(final UUID id) {
 | `buildXxx` in service | Domain object construction extracted into a `private static buildXxx(XxxCreateRequest)` method |
 | JPA entities | `@Getter` + `@Setter` + `@NoArgsConstructor`, package-private |
 | Typed IDs | Every entity has a typed ID record with `.of()` and `.empty()` |
+| Store ID parameters | Store methods take typed ID records — never raw `UUID`; collections use `List<XxxId>`. `JpaXxxStore` unwraps `.value()`; callers wrap raw UUIDs via `XxxId.of(uuid)` |
 | `@RequiredArgsConstructor` | Used on services, controllers, and store implementations — no explicit constructors |
 | `@Transactional` | Per method on `JpaXxxStore` only — never on the class, never on services or controllers; use `readOnly = true` on reads |
 | Mappers | `@UtilityClass` with explicit `static` methods, named `to` + target type |
 | Mapper visibility | Minimum necessary: `private` → package-private → `protected` → `public` |
 | API mapper | `TeamApiMapper` in `api/`, public class, methods package-private by default |
+| Mapper collection methods | Every list mapping has a plural `toXxxDtos(List<Domain>)` method; every streamed collection (top-level and nested) is wrapped in `emptyIfNull(...)` — never `.stream()` on a raw getter |
 | Persistence mapper | `TeamDbMapper` in `persistence/`, package-private class and methods |
 | Controller methods | Always `public`; named by HTTP verb: `getAll`, `getById`, `create`, `updateXxx`, `delete` |
+| `@RequestBody` naming | A `XxxRequestDto` body parameter is named `requestDto` — never `request` (reserved for the mapped domain request) |
+| Controller list returns | Delegate to the mapper's plural `toXxxDtos(...)` — never stream inline in the controller |
 | No leaking | `TeamEntity` and `TeamRepository` are package-private |
 | No mapping in DTOs | No `from()` or `toDomain()` on DTOs — mappers own all conversions |
 | Services in domain | `TeamService` lives in `domain/`, not in `api/` |
 | Exceptions | `NotFoundException`, `BusinessException`, `ValidationException` thrown from services/validators |
 | Method parameters | Always `final` — never mutate a parameter, produce and return a new instance |
-| `@With` on domain classes | `@Value @Builder @With` — enables `obj.withField(value)` for test overrides without `toBuilder` |
+| `@With` on domain classes | `@Value @With @Builder` (in that order) — enables `obj.withField(value)` for test overrides without `toBuilder` |
 | `final var` | All local variables use `final var`; use `var` only when reassigned |
 | One operation per line | Never nest calls — break into `final var` steps |
 | Stream chains | One method per line, chained with indentation |
+| `.map` is pure | `.map(...)` does simple mapping only — never throws (no validation, `orElseThrow`, failing lookups, or business rules); do those before/after the stream |
 | Ternary | Condition on line 1; `?` and `:` each on their own line |
 | No blank line after `{` | First field immediately follows the class opening brace |
 | Field order | Stores → Services → Others, each group alphabetical |
 | Bean naming | Field name = camelCase of class name (no abbreviation) |
 | Static imports | `public static` methods and enum values always imported statically |
+| No wildcard imports | `.*` imports forbidden (regular and static) — list every type/method explicitly, in `src/main` and `src/test` |

@@ -1,25 +1,23 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
-import abe.fvjc.tournament.group.domain.Group;
-import abe.fvjc.tournament.group.domain.GroupId;
-import abe.fvjc.tournament.group.domain.GroupStore;
-import abe.fvjc.tournament.shared.exception.ConflictException;
-import abe.fvjc.tournament.shared.exception.NotFoundException;
-import abe.fvjc.tournament.shared.exception.ValidationException;
-import abe.fvjc.tournament.team.domain.Team;
-import abe.fvjc.tournament.team.domain.TeamId;
+import abe.fvjc.tournament.domain.group.Group;
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.group.GroupStore;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
+import abe.fvjc.tournament.domain.team.Team;
+import abe.fvjc.tournament.domain.team.TeamId;
 
-import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
-import abe.fvjc.tournament.team.domain.TeamStore;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
-import abe.fvjc.tournament.tournament.domain.TournamentStatus;
-import abe.fvjc.tournament.tournament.domain.TournamentStore;
+import static abe.fvjc.tournament.domain.group.GroupRef.toGroupRef;
+import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
+import abe.fvjc.tournament.domain.team.TeamStore;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
+import abe.fvjc.tournament.domain.tournament.TournamentStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static abe.fvjc.tournament.schedule.domain.ScheduleValidator.validateScheduleGenerateRequest;
+import static abe.fvjc.tournament.domain.schedule.ScheduleValidator.validateScheduleGenerateRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -36,32 +34,31 @@ public class ScheduleService {
     private final MatchStore matchStore;
     private final RoundStore roundStore;
     private final TeamStore teamStore;
-    private final TournamentStore tournamentStore;
+    private final TournamentSearchService tournamentSearchService;
 
     public ScheduleOverview generate(final UUID tournamentId, final ScheduleGenerateRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-                .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
+        final var tournament = tournamentSearchService.findById(tournamentId);
         if (tournament.getStatus() != TournamentStatus.DRAFT) {
             throw new ConflictException("Le calendrier ne peut être généré que pour un tournoi en préparation");
         }
         validateScheduleGenerateRequest(request);
-        final var groups = groupStore.findAllByTournamentId(tournamentId);
+        final var groups = groupStore.findAllByTournamentId(TournamentId.of(tournamentId));
         if (groups.isEmpty()) {
             throw new ValidationException(List.of(new ValidationException.FieldError(
                     "groups", "Aucun groupe n'a été généré pour ce tournoi")));
         }
-        final var existingRounds = roundStore.findAllByTournamentId(tournamentId);
+        final var existingRounds = roundStore.findAllByTournamentId(TournamentId.of(tournamentId));
         if (!existingRounds.isEmpty()) {
             final var existingRoundIds = existingRounds.stream()
-                    .map(r -> r.getId().value())
+                    .map(Round::getId)
                     .toList();
             if (matchStore.existsResultByRoundIds(existingRoundIds)) {
                 throw new ConflictException("Impossible de régénérer le calendrier : des résultats ont déjà été saisis");
             }
             matchStore.deleteAllByRoundIds(existingRoundIds);
-            roundStore.deleteAllByTournamentId(tournamentId);
+            roundStore.deleteAllByTournamentId(TournamentId.of(tournamentId));
         }
-        final var allTeams = teamStore.findAllByTournamentId(tournamentId);
+        final var allTeams = teamStore.findAllByTournamentId(TournamentId.of(tournamentId));
         final var teamsByGroupId = allTeams.stream()
                 .collect(Collectors.groupingBy(t -> t.getGroupId().value()));
         final var teamById = allTeams.stream()
@@ -79,8 +76,7 @@ public class ScheduleService {
                 .mapToInt(List::size)
                 .max()
                 .orElse(0);
-        final var startTime = LocalTime.parse(request.getStartTime(), DateTimeFormatter.ofPattern("HH:mm"));
-        final var firstRoundStart = LocalDateTime.of(tournament.getDate(), startTime);
+        final var firstRoundStart = LocalDateTime.of(tournament.getDate(), request.getStartTime());
         final var rounds = new ArrayList<Round>();
         final var matches = new ArrayList<Match>();
         for (int r = 0; r < totalRounds; r++) {
@@ -115,20 +111,17 @@ public class ScheduleService {
     }
 
     public ScheduleOverview findByTournamentId(final UUID tournamentId) {
-        final var rounds = roundStore.findAllByTournamentId(tournamentId);
+        final var rounds = roundStore.findAllByTournamentId(TournamentId.of(tournamentId));
         if (rounds.isEmpty()) {
-            return ScheduleOverview.builder()
-                    .totalRounds(0)
-                    .totalMatches(0)
-                    .rounds(List.of())
-                    .build();
+            return ScheduleOverview.empty();
         }
-        final var roundIds = rounds.stream().map(r -> r.getId().value()).toList();
+
+        final var roundIds = rounds.stream().map(Round::getId).toList();
         final var matches = matchStore.findAllByRoundIds(roundIds);
-        final var groups = groupStore.findAllByTournamentId(tournamentId);
+        final var groups = groupStore.findAllByTournamentId(TournamentId.of(tournamentId));
         final var groupById = groups.stream()
                 .collect(Collectors.toMap(g -> g.getId().value(), g -> g));
-        final var allTeams = teamStore.findAllByTournamentId(tournamentId);
+        final var allTeams = teamStore.findAllByTournamentId(TournamentId.of(tournamentId));
         final var teamById = allTeams.stream()
                 .collect(Collectors.toMap(t -> t.getId().value(), t -> t));
         return buildScheduleOverview(rounds, matches, groupById, teamById);
@@ -145,22 +138,9 @@ public class ScheduleService {
                 .map(r -> {
                     final var roundMatches = matchesByRoundId.getOrDefault(r.getId().value(), List.of());
                     final var matchOverviews = roundMatches.stream()
-                            .map(m -> MatchOverview.builder()
-                                    .id(m.getId())
-                                    .field(m.getField())
-                                    .groupId(m.getGroupId())
-                                    .groupName(groupById.get(m.getGroupId().value()).getName())
-                                    .team1(toTeamRef(m.getTeam1Id(), teamById.get(m.getTeam1Id().value()).getName()))
-                                    .team2(toTeamRef(m.getTeam2Id(), teamById.get(m.getTeam2Id().value()).getName()))
-                                    .result(m.getResult())
-                                    .build())
+                            .map(m -> toMatchOverview(groupById, teamById, m))
                             .toList();
-                    return RoundOverview.builder()
-                            .id(r.getId())
-                            .number(r.getNumber())
-                            .startTime(r.getStartTime())
-                            .matches(matchOverviews)
-                            .build();
+                    return toScheduleOverview(r, matchOverviews);
                 })
                 .toList();
         return ScheduleOverview.builder()
@@ -170,7 +150,28 @@ public class ScheduleService {
                 .build();
     }
 
-    private record MatchPair(GroupId groupId, TeamId team1Id, TeamId team2Id) {}
+    private static RoundOverview toScheduleOverview(final Round round, final List<MatchOverview> matches) {
+        return RoundOverview.builder()
+                .id(round.getId())
+                .number(round.getNumber())
+                .startTime(round.getStartTime())
+                .matches(matches)
+                .build();
+    }
+
+    private static MatchOverview toMatchOverview(
+            final Map<UUID, Group> groupById,
+            final Map<UUID, Team> teamById,
+            final Match match) {
+        return MatchOverview.builder()
+                .id(match.getId())
+                .field(match.getField())
+                .group(toGroupRef(match.getGroupId(), groupById.get(match.getGroupId().value()).getName()))
+                .team1(toTeamRef(match.getTeam1Id(), teamById.get(match.getTeam1Id().value()).getName()))
+                .team2(toTeamRef(match.getTeam2Id(), teamById.get(match.getTeam2Id().value()).getName()))
+                .result(match.getResult())
+                .build();
+    }
 
     private static List<MatchPair> generateGroupMatches(final GroupId groupId, final List<TeamId> teams) {
         final var circle = new ArrayList<>(teams);

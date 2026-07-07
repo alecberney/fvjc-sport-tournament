@@ -17,7 +17,7 @@ describe('TeamDomainService', () => {
 
     it('should group teams from the same organisation into one group', () => {
       // setup
-      const teams = TeamFakes.aList(2, { organisationId: 'org-1', responsibleFirstName: 'Jean', responsibleLastName: 'Dupont' });
+      const teams = TeamFakes.aList(2, { organisationId: 'org-1', responsible: { firstName: 'Jean', lastName: 'Dupont' } });
 
       // call
       const result = TeamDomainService.groupByOrganisation(teams);
@@ -31,8 +31,8 @@ describe('TeamDomainService', () => {
 
     it('should create separate groups for different organisations', () => {
       // setup
-      const team1 = TeamFakes.aTeam({ organisationId: 'org-1', responsibleFirstName: 'Jean', responsibleLastName: 'Dupont' });
-      const team2 = TeamFakes.aTeam({ id: 'team-id-2', organisationId: 'org-2', responsibleFirstName: 'Marie', responsibleLastName: 'Martin' });
+      const team1 = TeamFakes.aTeam({ organisationId: 'org-1', responsible: { firstName: 'Jean', lastName: 'Dupont' } });
+      const team2 = TeamFakes.aTeam({ id: 'team-id-2', organisationId: 'org-2', responsible: { firstName: 'Marie', lastName: 'Martin' } });
 
       // call
       const result = TeamDomainService.groupByOrganisation([team1, team2]);

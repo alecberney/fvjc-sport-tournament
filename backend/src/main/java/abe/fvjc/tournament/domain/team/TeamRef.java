@@ -1,6 +1,5 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.team;
 
-import abe.fvjc.tournament.team.domain.TeamId;
 import lombok.Builder;
 import lombok.Value;
 
@@ -11,6 +10,9 @@ public class TeamRef {
     String name;
 
     public static TeamRef toTeamRef(final TeamId id, final String name) {
-        return TeamRef.builder().id(id).name(name).build();
+        return TeamRef.builder()
+                .id(id)
+                .name(name)
+                .build();
     }
 }

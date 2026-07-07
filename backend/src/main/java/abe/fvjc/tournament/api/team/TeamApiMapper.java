@@ -1,47 +1,65 @@
-package abe.fvjc.tournament.team.api;
+package abe.fvjc.tournament.api.team;
 
-import abe.fvjc.tournament.organisation.domain.Person;
-import abe.fvjc.tournament.team.domain.TeamRegisterRequest;
-import abe.fvjc.tournament.team.domain.TeamUpdateRequest;
-import abe.fvjc.tournament.team.domain.TeamOverview;
+import abe.fvjc.tournament.domain.organisation.Person;
+import abe.fvjc.tournament.domain.team.Team;
+import abe.fvjc.tournament.domain.team.TeamRef;
+import abe.fvjc.tournament.domain.team.TeamRegisterRequest;
+import abe.fvjc.tournament.domain.team.TeamUpdateRequest;
 import lombok.experimental.UtilityClass;
+
+import java.util.List;
+
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 @UtilityClass
 public class TeamApiMapper {
-
-    static TeamDto toTeamDto(final TeamOverview overview) {
-        return TeamDto.builder()
-                .id(overview.getId().value())
-                .name(overview.getName())
-                .paid(overview.isPaid())
-                .organisationId(overview.getOrganisationId().value())
-                .responsibleFirstName(overview.getResponsible().getFirstName())
-                .responsibleLastName(overview.getResponsible().getLastName())
+    public static TeamRefDto toTeamRefDto(TeamRef team) {
+        if (team == null) {
+            return null;
+        }
+        return TeamRefDto.builder()
+                .id(team.getId().value())
+                .name(team.getName())
                 .build();
     }
 
-    static TeamRegisterRequest toTeamRegisterRequest(final TeamRegisterRequestDto dto) {
+    static List<TeamDto> toTeamDtos(final List<Team> teams) {
+        return emptyIfNull(teams).stream()
+                .map(TeamApiMapper::toTeamDto)
+                .toList();
+    }
+
+    static TeamDto toTeamDto(final Team team) {
+        return TeamDto.builder()
+                .id(team.getId().value())
+                .name(team.getName())
+                .paid(team.isPaid())
+                .organisationId(team.getOrganisationId().value())
+                .build();
+    }
+
+    static TeamRegisterRequest toTeamRegisterRequest(final TeamRegisterRequestDto requestDto) {
         final var responsible = Person.builder()
-                .firstName(dto.getResponsibleFirstName())
-                .lastName(dto.getResponsibleLastName())
+                .firstName(requestDto.getResponsibleFirstName())
+                .lastName(requestDto.getResponsibleLastName())
                 .build();
         return TeamRegisterRequest.builder()
-                .name(dto.getName())
+                .name(requestDto.getName())
                 .responsible(responsible)
-                .count(dto.getCount())
-                .paid(dto.getPaid())
+                .count(requestDto.getCount())
+                .paid(requestDto.getPaid())
                 .build();
     }
 
-    static TeamUpdateRequest toTeamUpdateRequest(final TeamUpdateRequestDto dto) {
+    static TeamUpdateRequest toTeamUpdateRequest(final TeamUpdateRequestDto requestDto) {
         final var responsible = Person.builder()
-                .firstName(dto.getResponsibleFirstName())
-                .lastName(dto.getResponsibleLastName())
+                .firstName(requestDto.getResponsibleFirstName())
+                .lastName(requestDto.getResponsibleLastName())
                 .build();
         return TeamUpdateRequest.builder()
-                .name(dto.getName())
+                .name(requestDto.getName())
                 .responsible(responsible)
-                .paid(dto.getPaid())
+                .paid(requestDto.getPaid())
                 .build();
     }
 }

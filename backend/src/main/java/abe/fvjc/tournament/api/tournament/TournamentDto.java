@@ -1,7 +1,7 @@
-package abe.fvjc.tournament.tournament.api;
+package abe.fvjc.tournament.api.tournament;
 
-import abe.fvjc.tournament.tournament.domain.Sport;
-import abe.fvjc.tournament.tournament.domain.TournamentStatus;
+import abe.fvjc.tournament.domain.tournament.Sport;
+import abe.fvjc.tournament.domain.tournament.TournamentStatus;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;

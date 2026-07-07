@@ -1,118 +1,109 @@
-package abe.fvjc.tournament.team.domain;
+package abe.fvjc.tournament.domain.team;
 
-import abe.fvjc.tournament.organisation.domain.Organisation;
-import abe.fvjc.tournament.organisation.domain.OrganisationId;
-import abe.fvjc.tournament.organisation.domain.OrganisationStore;
-import abe.fvjc.tournament.shared.exception.ConflictException;
-import abe.fvjc.tournament.shared.exception.NotFoundException;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
-import abe.fvjc.tournament.tournament.domain.TournamentStatus;
-import abe.fvjc.tournament.tournament.domain.TournamentStore;
+import abe.fvjc.tournament.domain.organisation.Organisation;
+import abe.fvjc.tournament.domain.organisation.OrganisationService;
+import abe.fvjc.tournament.domain.organisation.OrganisationStore;
+import abe.fvjc.tournament.domain.common.problem.NotFoundException;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
-import static abe.fvjc.tournament.team.domain.TeamValidator.validateTeamRegisterRequest;
+import static abe.fvjc.tournament.domain.team.TeamValidator.validateCurrentStatusIsDraft;
+import static abe.fvjc.tournament.domain.team.TeamValidator.validateTeamRegisterRequest;
 
 @Service
 @RequiredArgsConstructor
 public class TeamService {
     private final OrganisationStore organisationStore;
     private final TeamStore teamStore;
-    private final TournamentStore tournamentStore;
+    private final OrganisationService organisationService;
+    private final TournamentSearchService tournamentSearchService;
 
-    public List<TeamOverview> registerTeams(final UUID tournamentId, final TeamRegisterRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-            .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
-        assertDraft(tournament.getStatus());
+    public List<Team> registerTeams(final UUID tournamentId, final TeamRegisterRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
+        validateCurrentStatusIsDraft(tournament.getStatus());
         validateTeamRegisterRequest(request);
-        final var org = organisationStore.save(Organisation.builder()
-            .id(OrganisationId.of(UUID.randomUUID()))
-            .responsible(request.getResponsible())
-            .tournamentId(TournamentId.of(tournamentId))
-            .build());
-        return IntStream.rangeClosed(1, request.getCount())
-            .mapToObj(i -> {
-                final var name = request.getCount() == 1
-                    ? request.getName()
-                    : request.getName() + " " + i;
-                final var team = teamStore.save(Team.builder()
-                    .id(TeamId.of(UUID.randomUUID()))
-                    .name(name)
-                    .paid(request.getPaid().get(i - 1))
-                    .organisationId(org.getId())
-                    .tournamentId(TournamentId.of(tournamentId))
-                    .build());
-                return buildTeamOverview(team, org);
-            })
-            .toList();
+
+        final var organisationSaved = organisationService.create(request.getResponsible(), tournament.getId());
+
+        final var teams = new ArrayList<Team>();
+        for (int teamNumber = 1; teamNumber <= request.getCount(); teamNumber++) {
+            final var team = createTeam(tournament.getId(), request, teamNumber, organisationSaved);
+            teams.add(team);
+        }
+        return teams;
     }
 
-    public List<TeamOverview> findAllByTournamentId(final UUID tournamentId) {
-        return teamStore.findAllByTournamentId(tournamentId).stream()
-            .map(team -> {
-                final var org = organisationStore.findById(team.getOrganisationId().value())
-                    .orElseThrow(() -> new NotFoundException("Organisation", team.getOrganisationId().value()));
-                return buildTeamOverview(team, org);
-            })
-            .toList();
+    private Team createTeam(
+            final TournamentId tournamentId,
+            final TeamRegisterRequest request,
+            final int teamNumber,
+            final Organisation organisationSaved) {
+        final var name = request.getCount() == 1
+            ? request.getName()
+            : request.getName() + " " + teamNumber;
+        final var build = buildTeam(tournamentId, request, teamNumber, name, organisationSaved);
+        return teamStore.save(build);
     }
 
-    public TeamOverview updateTeam(final UUID tournamentId, final UUID teamId, final TeamUpdateRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-            .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
-        assertDraft(tournament.getStatus());
-        final var team = teamStore.findById(teamId)
-            .orElseThrow(() -> new NotFoundException("Team", teamId));
-        final var org = organisationStore.findById(team.getOrganisationId().value())
-            .orElseThrow(() -> new NotFoundException("Organisation", team.getOrganisationId().value()));
-        final var updatedOrg = organisationStore.save(org.withResponsible(request.getResponsible()));
-        final var updatedTeam = teamStore.save(team
-            .withName(request.getName())
-            .withPaid(request.isPaid()));
-        return buildTeamOverview(updatedTeam, updatedOrg);
+    public List<Team> findAllByTournamentId(final UUID tournamentId) {
+        return teamStore.findAllByTournamentId(TournamentId.of(tournamentId));
+    }
+
+    public Team updateTeam(final UUID tournamentId, final UUID teamId, final TeamUpdateRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
+        validateCurrentStatusIsDraft(tournament.getStatus());
+
+        final var team = findById(teamId);
+
+        organisationService.updateResponsible(request.getResponsible(), team.getOrganisationId());
+
+        final var updatedTeam = team.withName(request.getName())
+                .withPaid(request.isPaid());
+        return teamStore.save(updatedTeam);
     }
 
     public void deleteTeam(final UUID tournamentId, final UUID teamId) {
-        final var tournament = tournamentStore.findById(tournamentId)
-            .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
-        assertDraft(tournament.getStatus());
-        final var team = teamStore.findById(teamId)
-            .orElseThrow(() -> new NotFoundException("Team", teamId));
-        teamStore.deleteById(teamId);
-        final var remaining = teamStore.countByOrganisationId(team.getOrganisationId().value());
+        final var tournament = tournamentSearchService.findById(tournamentId);
+        validateCurrentStatusIsDraft(tournament.getStatus());
+
+        final var team = findById(teamId);
+        teamStore.deleteById(TeamId.of(teamId));
+
+        final var remaining = teamStore.countByOrganisationId(team.getOrganisationId());
         if (remaining == 0) {
-            organisationStore.deleteById(team.getOrganisationId().value());
+            organisationStore.deleteById(team.getOrganisationId());
         }
     }
 
-    public TeamOverview markPaid(final UUID teamId, final boolean paid) {
-        final var team = teamStore.findById(teamId)
-            .orElseThrow(() -> new NotFoundException("Team", teamId));
-        final var updatedTeam = teamStore.save(team.withPaid(paid));
-        final var org = organisationStore.findById(updatedTeam.getOrganisationId().value())
-            .orElseThrow(() -> new NotFoundException("Organisation", updatedTeam.getOrganisationId().value()));
-        return buildTeamOverview(updatedTeam, org);
+    public Team markPaid(final UUID teamId, final boolean paid) {
+        final var team = findById(teamId);
+        final var teamPaid = team.withPaid(paid);
+        return teamStore.save(teamPaid);
     }
 
-    private static void assertDraft(final TournamentStatus status) {
-        if (status != TournamentStatus.DRAFT) {
-            throw new ConflictException(
-                "Les équipes ne peuvent être inscrites que pour un tournoi en cours de préparation");
-        }
+    private Team findById(UUID teamId) {
+        return teamStore.findById(TeamId.of(teamId))
+                .orElseThrow(() -> new NotFoundException("Team", teamId));
     }
 
-    private static TeamOverview buildTeamOverview(final Team team, final Organisation org) {
-        return TeamOverview.builder()
-            .id(team.getId())
-            .name(team.getName())
-            .paid(team.isPaid())
-            .organisationId(team.getOrganisationId())
-            .responsible(org.getResponsible())
-            .tournamentId(team.getTournamentId())
-            .build();
+    private static Team buildTeam(
+            final TournamentId tournamentId,
+            final TeamRegisterRequest request,
+            final int i,
+            final String name,
+            final Organisation org) {
+        return Team.builder()
+                .id(TeamId.of(UUID.randomUUID()))
+                .name(name)
+                .paid(request.getPaid().get(i - 1))
+                .organisationId(org.getId())
+                .tournamentId(tournamentId)
+                .build();
     }
 }

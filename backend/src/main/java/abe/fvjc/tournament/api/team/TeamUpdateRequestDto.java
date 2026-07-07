@@ -1,16 +1,16 @@
-package abe.fvjc.tournament.team.api;
+package abe.fvjc.tournament.api.team;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
-import tools.jackson.databind.annotation.JsonDeserialize;
-import tools.jackson.databind.annotation.JsonPOJOBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 @Value
 @Builder
-@JsonDeserialize(builder = TeamUpdateRequestDto.TeamUpdateRequestDtoBuilder.class)
+@Jacksonized
 public class TeamUpdateRequestDto {
-
     @NotBlank(message = "Le nom de l'équipe est obligatoire")
     @Size(max = 250, message = "Le nom ne peut pas dépasser 250 caractères")
     String name;
@@ -25,7 +25,4 @@ public class TeamUpdateRequestDto {
 
     @NotNull(message = "Le statut de paiement est obligatoire")
     Boolean paid;
-
-    @JsonPOJOBuilder(withPrefix = "")
-    public static class TeamUpdateRequestDtoBuilder {}
 }

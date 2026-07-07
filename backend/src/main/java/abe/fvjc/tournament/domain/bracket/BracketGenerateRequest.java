@@ -1,16 +1,18 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 
+import java.time.LocalTime;
+
 @Value
-@Builder
 @With
+@Builder
 public class BracketGenerateRequest {
     int totalQualifiedTeams;
     TieBreaker tieBreaker;
-    String startTime;
+    LocalTime startTime;
     Integer matchDurationMinutes;
     Integer breakDurationMinutes;
 }

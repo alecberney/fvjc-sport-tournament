@@ -18,8 +18,7 @@ export class GroupApiMapper {
       name: dto.name,
       organisationId: dto.organisationId,
       paid: false,
-      responsibleFirstName: '',
-      responsibleLastName: '',
+      responsible: { firstName: '', lastName: '' },
     };
   }
 }

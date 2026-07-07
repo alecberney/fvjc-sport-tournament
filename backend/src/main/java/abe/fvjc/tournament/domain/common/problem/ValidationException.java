@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.shared.exception;
+package abe.fvjc.tournament.domain.common.problem;
 
 import java.util.List;
 

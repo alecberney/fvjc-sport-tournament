@@ -1,8 +1,8 @@
-package abe.fvjc.tournament.schedule.persistence;
+package abe.fvjc.tournament.persistence.schedule;
 
-import abe.fvjc.tournament.schedule.domain.Round;
-import abe.fvjc.tournament.schedule.domain.RoundId;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.schedule.Round;
+import abe.fvjc.tournament.domain.schedule.RoundId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDateTime;

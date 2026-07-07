@@ -1,19 +1,21 @@
-package abe.fvjc.tournament.tournament.api;
+package abe.fvjc.tournament.api.tournament;
 
-import abe.fvjc.tournament.tournament.domain.Sport;
-import jakarta.validation.constraints.*;
+import abe.fvjc.tournament.domain.tournament.Sport;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
-import tools.jackson.databind.annotation.JsonDeserialize;
-import tools.jackson.databind.annotation.JsonPOJOBuilder;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDate;
 
 @Value
 @Builder
-@JsonDeserialize(builder = TournamentCreateRequestDto.TournamentCreateRequestDtoBuilder.class)
+@Jacksonized
 public class TournamentCreateRequestDto {
-
     @NotBlank(message = "Le nom est obligatoire")
     @Size(max = 250, message = "Le nom ne peut pas dépasser 250 caractères")
     String name;
@@ -35,7 +37,4 @@ public class TournamentCreateRequestDto {
 
     @NotNull(message = "La date est obligatoire")
     LocalDate date;
-
-    @JsonPOJOBuilder(withPrefix = "")
-    public static class TournamentCreateRequestDtoBuilder {}
 }

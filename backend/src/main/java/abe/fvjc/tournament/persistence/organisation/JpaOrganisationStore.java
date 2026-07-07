@@ -1,17 +1,16 @@
-package abe.fvjc.tournament.organisation.persistence;
+package abe.fvjc.tournament.persistence.organisation;
 
-import abe.fvjc.tournament.organisation.domain.Organisation;
-import abe.fvjc.tournament.organisation.domain.OrganisationStore;
+import abe.fvjc.tournament.domain.organisation.Organisation;
+import abe.fvjc.tournament.domain.organisation.OrganisationId;
+import abe.fvjc.tournament.domain.organisation.OrganisationStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-import static abe.fvjc.tournament.organisation.persistence.OrganisationDbMapper.toOrganisation;
-import static abe.fvjc.tournament.organisation.persistence.OrganisationDbMapper.toOrganisationEntity;
+import static abe.fvjc.tournament.persistence.organisation.OrganisationDbMapper.toOrganisation;
+import static abe.fvjc.tournament.persistence.organisation.OrganisationDbMapper.toOrganisationEntity;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,14 +27,14 @@ class JpaOrganisationStore implements OrganisationStore {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Organisation> findById(final UUID id) {
-        return organisationRepository.findById(id)
+    public Optional<Organisation> findById(final OrganisationId id) {
+        return organisationRepository.findById(id.value())
                 .map(OrganisationDbMapper::toOrganisation);
     }
 
     @Override
     @Transactional
-    public void deleteById(final UUID id) {
-        organisationRepository.deleteById(id);
+    public void deleteById(final OrganisationId id) {
+        organisationRepository.deleteById(id.value());
     }
 }

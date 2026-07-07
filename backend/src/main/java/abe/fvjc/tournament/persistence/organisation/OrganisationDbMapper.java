@@ -1,9 +1,9 @@
-package abe.fvjc.tournament.organisation.persistence;
+package abe.fvjc.tournament.persistence.organisation;
 
-import abe.fvjc.tournament.organisation.domain.Organisation;
-import abe.fvjc.tournament.organisation.domain.OrganisationId;
-import abe.fvjc.tournament.organisation.domain.Person;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.organisation.Organisation;
+import abe.fvjc.tournament.domain.organisation.OrganisationId;
+import abe.fvjc.tournament.domain.organisation.Person;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.experimental.UtilityClass;
 
 import java.util.UUID;
@@ -13,14 +13,14 @@ class OrganisationDbMapper {
 
     static Organisation toOrganisation(final OrganisationEntity entity) {
         final var responsible = Person.builder()
-            .firstName(entity.getResponsibleFirstName())
-            .lastName(entity.getResponsibleLastName())
-            .build();
+                .firstName(entity.getResponsibleFirstName())
+                .lastName(entity.getResponsibleLastName())
+                .build();
         return Organisation.builder()
-            .id(OrganisationId.of(entity.getId()))
-            .responsible(responsible)
-            .tournamentId(TournamentId.of(entity.getTournamentId()))
-            .build();
+                .id(OrganisationId.of(entity.getId()))
+                .responsible(responsible)
+                .tournamentId(TournamentId.of(entity.getTournamentId()))
+                .build();
     }
 
     static OrganisationEntity toOrganisationEntity(final Organisation organisation) {

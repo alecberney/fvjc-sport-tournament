@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.shared.exception;
+package abe.fvjc.tournament.domain.common.problem;
 
 import tools.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpStatus;
@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
-import static abe.fvjc.tournament.shared.exception.ValidationErrorResponse.FieldError;
-import abe.fvjc.tournament.shared.exception.ConflictException;
-import abe.fvjc.tournament.shared.exception.ConflictErrorResponse;
+import static abe.fvjc.tournament.domain.common.problem.ValidationErrorResponse.FieldError;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
+import abe.fvjc.tournament.domain.common.problem.ConflictErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

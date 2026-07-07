@@ -1,14 +1,15 @@
-package abe.fvjc.tournament.bracket.persistence;
+package abe.fvjc.tournament.persistence.bracket;
 
-import abe.fvjc.tournament.bracket.domain.BracketMatch;
-import abe.fvjc.tournament.bracket.domain.BracketMatchStore;
+import abe.fvjc.tournament.domain.bracket.BracketMatch;
+import abe.fvjc.tournament.domain.bracket.BracketMatchId;
+import abe.fvjc.tournament.domain.bracket.BracketMatchStore;
+import abe.fvjc.tournament.domain.bracket.BracketRoundId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -25,22 +26,22 @@ class JpaBracketMatchStore implements BracketMatchStore {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<BracketMatch> findById(final UUID id) {
-        return bracketMatchRepository.findById(id)
+    public Optional<BracketMatch> findById(final BracketMatchId id) {
+        return bracketMatchRepository.findById(id.value())
                 .map(BracketDbMapper::toBracketMatch);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BracketMatch> findAllByRoundId(final UUID roundId) {
-        return bracketMatchRepository.findAllByRoundId(roundId).stream()
+    public List<BracketMatch> findAllByRoundId(final BracketRoundId roundId) {
+        return bracketMatchRepository.findAllByRoundId(roundId.value()).stream()
                 .map(BracketDbMapper::toBracketMatch)
                 .toList();
     }
 
     @Override
     @Transactional
-    public void deleteAllByRoundId(final UUID roundId) {
-        bracketMatchRepository.deleteAllByRoundId(roundId);
+    public void deleteAllByRoundId(final BracketRoundId roundId) {
+        bracketMatchRepository.deleteAllByRoundId(roundId.value());
     }
 }

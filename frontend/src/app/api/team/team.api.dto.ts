@@ -3,8 +3,6 @@ export interface TeamDto {
   name: string;
   paid: boolean;
   organisationId: string;
-  responsibleFirstName: string;
-  responsibleLastName: string;
 }
 
 export interface TeamRegisterRequestDto {
@@ -22,6 +20,6 @@ export interface TeamUpdateRequestDto {
   paid: boolean;
 }
 
-export interface TeamPaidRequestDto {
+export interface TeamPaymentRequestDto {
   paid: boolean;
 }

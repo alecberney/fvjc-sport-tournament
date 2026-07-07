@@ -1,12 +1,11 @@
-package abe.fvjc.tournament.tournament.domain;
+package abe.fvjc.tournament.domain.tournament;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface TournamentStore {
     Tournament save(Tournament tournament);
-    Optional<Tournament> findById(UUID id);
+    Optional<Tournament> findById(TournamentId id);
     List<Tournament> findAll();
-    void deleteById(UUID id);
+    void deleteById(TournamentId id);
 }

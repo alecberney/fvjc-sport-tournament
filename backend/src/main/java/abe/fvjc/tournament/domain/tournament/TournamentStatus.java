@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.tournament.domain;
+package abe.fvjc.tournament.domain.tournament;
 
 public enum TournamentStatus {
     DRAFT,

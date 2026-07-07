@@ -1,9 +1,10 @@
-package abe.fvjc.tournament.bracket.api;
+package abe.fvjc.tournament.api.bracket;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,6 @@ public class BracketRoundDto {
     UUID id;
     int number;
     String name;
-    String startTime;
+    LocalDateTime startTime;
     List<BracketMatchDto> matches;
 }

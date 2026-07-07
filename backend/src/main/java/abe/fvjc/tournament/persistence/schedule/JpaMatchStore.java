@@ -1,14 +1,16 @@
-package abe.fvjc.tournament.schedule.persistence;
+package abe.fvjc.tournament.persistence.schedule;
 
-import abe.fvjc.tournament.schedule.domain.Match;
-import abe.fvjc.tournament.schedule.domain.MatchStore;
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.schedule.Match;
+import abe.fvjc.tournament.domain.schedule.MatchId;
+import abe.fvjc.tournament.domain.schedule.MatchStore;
+import abe.fvjc.tournament.domain.schedule.RoundId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,36 +36,39 @@ class JpaMatchStore implements MatchStore {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Match> findById(final UUID matchId) {
-        return matchRepository.findById(matchId)
+    public Optional<Match> findById(final MatchId matchId) {
+        return matchRepository.findById(matchId.value())
                 .map(MatchDbMapper::toMatch);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Match> findAllByRoundIds(final List<UUID> roundIds) {
-        return matchRepository.findByRoundIdIn(roundIds).stream()
+    public List<Match> findAllByRoundIds(final List<RoundId> roundIds) {
+        final var ids = roundIds.stream().map(RoundId::value).toList();
+        return matchRepository.findByRoundIdIn(ids).stream()
                 .map(MatchDbMapper::toMatch)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Match> findAllByGroupId(final UUID groupId) {
-        return matchRepository.findByGroupId(groupId).stream()
+    public List<Match> findAllByGroupId(final GroupId groupId) {
+        return matchRepository.findByGroupId(groupId.value()).stream()
                 .map(MatchDbMapper::toMatch)
                 .toList();
     }
 
     @Override
     @Transactional
-    public void deleteAllByRoundIds(final List<UUID> roundIds) {
-        matchRepository.deleteByRoundIdIn(roundIds);
+    public void deleteAllByRoundIds(final List<RoundId> roundIds) {
+        final var ids = roundIds.stream().map(RoundId::value).toList();
+        matchRepository.deleteByRoundIdIn(ids);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean existsResultByRoundIds(final List<UUID> roundIds) {
-        return matchRepository.existsByRoundIdInAndResultScore1IsNotNull(roundIds);
+    public boolean existsResultByRoundIds(final List<RoundId> roundIds) {
+        final var ids = roundIds.stream().map(RoundId::value).toList();
+        return matchRepository.existsByRoundIdInAndResultScore1IsNotNull(ids);
     }
 }

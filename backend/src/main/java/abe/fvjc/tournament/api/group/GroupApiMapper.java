@@ -1,26 +1,48 @@
-package abe.fvjc.tournament.group.api;
+package abe.fvjc.tournament.api.group;
 
-import abe.fvjc.tournament.group.domain.GroupDistribution;
-import abe.fvjc.tournament.group.domain.GroupGenerateRequest;
-import abe.fvjc.tournament.group.domain.GroupSwapRequest;
-import abe.fvjc.tournament.group.domain.GroupOverview;
-import abe.fvjc.tournament.team.domain.Team;
+import abe.fvjc.tournament.domain.group.GroupDistribution;
+import abe.fvjc.tournament.domain.group.GroupGenerateRequest;
+import abe.fvjc.tournament.domain.group.GroupSwapRequest;
+import abe.fvjc.tournament.domain.group.GroupOverview;
+import abe.fvjc.tournament.domain.group.GroupRef;
+import abe.fvjc.tournament.domain.team.Team;
 import lombok.experimental.UtilityClass;
+
+import java.util.List;
+
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 @UtilityClass
 public class GroupApiMapper {
-    static GroupDto toGroupDto(final GroupOverview overview) {
-        return GroupDto.builder()
-                .id(overview.getId().value())
-                .name(overview.getName())
-                .teams(overview.getTeams()
-                        .stream()
-                        .map(GroupApiMapper::toGroupTeamDto)
-                        .toList())
+
+    public static GroupRefDto toGroupRefDto(final GroupRef group) {
+        return GroupRefDto.builder()
+                .id(group.getId().value())
+                .name(group.getName())
                 .build();
     }
 
-    static GroupTeamDto toGroupTeamDto(final Team team) {
+    static List<GroupDto> toGroupDtos(final List<GroupOverview> groups) {
+        return emptyIfNull(groups).stream()
+                .map(GroupApiMapper::toGroupDto)
+                .toList();
+    }
+
+    private static GroupDto toGroupDto(final GroupOverview group) {
+        return GroupDto.builder()
+                .id(group.getId().value())
+                .name(group.getName())
+                .teams(toGroupTeamDtos(group.getTeams()))
+                .build();
+    }
+
+    private static List<GroupTeamDto> toGroupTeamDtos(final List<Team> teams) {
+        return emptyIfNull(teams).stream()
+                .map(GroupApiMapper::toGroupTeamDto)
+                .toList();
+    }
+
+    private static GroupTeamDto toGroupTeamDto(final Team team) {
         return GroupTeamDto.builder()
                 .id(team.getId().value())
                 .name(team.getName())
@@ -38,16 +60,16 @@ public class GroupApiMapper {
                 .build();
     }
 
-    static GroupGenerateRequest toGroupGenerateRequest(final GroupGenerateRequestDto dto) {
+    static GroupGenerateRequest toGroupGenerateRequest(final GroupGenerateRequestDto requestDto) {
         return GroupGenerateRequest.builder()
-                .groupSize(dto.getGroupSize())
+                .groupSize(requestDto.getGroupSize())
                 .build();
     }
 
-    static GroupSwapRequest toGroupSwapRequest(final GroupSwapRequestDto dto) {
+    static GroupSwapRequest toGroupSwapRequest(final GroupSwapRequestDto requestDto) {
         return GroupSwapRequest.builder()
-                .teamId1(dto.getTeamId1())
-                .teamId2(dto.getTeamId2())
+                .teamId1(requestDto.getTeamId1())
+                .teamId2(requestDto.getTeamId2())
                 .build();
     }
 }

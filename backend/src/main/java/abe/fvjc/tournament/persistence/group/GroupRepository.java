@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.group.persistence;
+package abe.fvjc.tournament.persistence.group;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

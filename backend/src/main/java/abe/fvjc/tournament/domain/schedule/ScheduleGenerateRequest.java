@@ -1,12 +1,14 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
 import lombok.Builder;
 import lombok.Value;
 
+import java.time.LocalTime;
+
 @Value
 @Builder
 public class ScheduleGenerateRequest {
-    String startTime;
+    LocalTime startTime;
     Integer matchDurationMinutes;
     Integer breakDurationMinutes;
 }

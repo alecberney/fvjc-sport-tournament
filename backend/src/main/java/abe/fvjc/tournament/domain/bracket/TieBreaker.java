@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
 public enum TieBreaker {
     POINTS_SCORED,

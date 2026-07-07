@@ -1,10 +1,14 @@
+export interface Person {
+  firstName: string;
+  lastName: string;
+}
+
 export interface Team {
   id: string;
   name: string;
   paid: boolean;
   organisationId: string;
-  responsibleFirstName: string;
-  responsibleLastName: string;
+  responsible: Person;
 }
 
 export interface TeamRegistration {

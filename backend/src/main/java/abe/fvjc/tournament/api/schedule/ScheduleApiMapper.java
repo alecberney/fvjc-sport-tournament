@@ -1,13 +1,14 @@
-package abe.fvjc.tournament.schedule.api;
+package abe.fvjc.tournament.api.schedule;
 
-import abe.fvjc.tournament.schedule.domain.MatchOverview;
-import abe.fvjc.tournament.schedule.domain.RoundOverview;
-import abe.fvjc.tournament.schedule.domain.ScheduleGenerateRequest;
-import abe.fvjc.tournament.schedule.domain.ScheduleOverview;
-import abe.fvjc.tournament.schedule.domain.TeamRef;
+import abe.fvjc.tournament.domain.schedule.RoundOverview;
+import abe.fvjc.tournament.domain.schedule.ScheduleGenerateRequest;
+import abe.fvjc.tournament.domain.schedule.ScheduleOverview;
 import lombok.experimental.UtilityClass;
 
-import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import static abe.fvjc.tournament.api.schedule.MatchApiMapper.toMatchDtos;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 @UtilityClass
 public class ScheduleApiMapper {
@@ -24,45 +25,22 @@ public class ScheduleApiMapper {
         return ScheduleDto.builder()
                 .totalRounds(overview.getTotalRounds())
                 .totalMatches(overview.getTotalMatches())
-                .rounds(overview.getRounds().stream()
-                        .map(ScheduleApiMapper::toRoundDto)
-                        .toList())
+                .rounds(toRoundDtos(overview.getRounds()))
                 .build();
+    }
+
+    private static List<RoundDto> toRoundDtos(final List<RoundOverview> overviews) {
+        return emptyIfNull(overviews).stream()
+                .map(ScheduleApiMapper::toRoundDto)
+                .toList();
     }
 
     private static RoundDto toRoundDto(final RoundOverview overview) {
         return RoundDto.builder()
                 .id(overview.getId().value())
                 .number(overview.getNumber())
-                .startTime(overview.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                .matches(overview.getMatches().stream()
-                        .map(ScheduleApiMapper::toMatchDto)
-                        .toList())
-                .build();
-    }
-
-    static MatchDto toMatchDto(final MatchOverview overview) {
-        final var result = overview.getResult() != null
-                ? MatchResultDto.builder()
-                        .score1(overview.getResult().getScore1())
-                        .score2(overview.getResult().getScore2())
-                        .build()
-                : null;
-        return MatchDto.builder()
-                .id(overview.getId().value())
-                .field(overview.getField())
-                .groupId(overview.getGroupId().value())
-                .groupName(overview.getGroupName())
-                .team1(toMatchTeamDto(overview.getTeam1()))
-                .team2(toMatchTeamDto(overview.getTeam2()))
-                .result(result)
-                .build();
-    }
-
-    private static MatchTeamDto toMatchTeamDto(final TeamRef ref) {
-        return MatchTeamDto.builder()
-                .id(ref.getId().value())
-                .name(ref.getName())
+                .startTime(overview.getStartTime())
+                .matches(toMatchDtos(overview.getMatches()))
                 .build();
     }
 }

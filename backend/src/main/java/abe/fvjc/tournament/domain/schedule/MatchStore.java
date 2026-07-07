@@ -1,15 +1,22 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
+
+import abe.fvjc.tournament.domain.group.GroupId;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface MatchStore {
     void saveAll(List<Match> matches);
+
     Match save(Match match);
-    Optional<Match> findById(UUID matchId);
-    List<Match> findAllByRoundIds(List<UUID> roundIds);
-    List<Match> findAllByGroupId(UUID groupId);
-    void deleteAllByRoundIds(List<UUID> roundIds);
-    boolean existsResultByRoundIds(List<UUID> roundIds);
+
+    Optional<Match> findById(MatchId matchId);
+
+    List<Match> findAllByRoundIds(List<RoundId> roundIds);
+
+    List<Match> findAllByGroupId(GroupId groupId);
+
+    void deleteAllByRoundIds(List<RoundId> roundIds);
+
+    boolean existsResultByRoundIds(List<RoundId> roundIds);
 }

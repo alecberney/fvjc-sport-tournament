@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.organisation.persistence;
+package abe.fvjc.tournament.persistence.organisation;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

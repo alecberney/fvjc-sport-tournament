@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.group.api;
+package abe.fvjc.tournament.api.group;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -11,6 +11,8 @@ import java.util.UUID;
 @Builder
 @Jacksonized
 public class GroupSwapRequestDto {
-    @NotNull UUID teamId1;
-    @NotNull UUID teamId2;
+    @NotNull
+    UUID teamId1;
+    @NotNull
+    UUID teamId2;
 }

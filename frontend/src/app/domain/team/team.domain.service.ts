@@ -10,7 +10,7 @@ export class TeamDomainService {
       if (!map.has(team.organisationId)) {
         map.set(team.organisationId, {
           organisationId: team.organisationId,
-          responsibleName: `${team.responsibleFirstName} ${team.responsibleLastName}`,
+          responsibleName: `${team.responsible.firstName} ${team.responsible.lastName}`,
           teams: [],
         });
       }

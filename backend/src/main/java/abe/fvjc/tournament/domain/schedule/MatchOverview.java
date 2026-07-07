@@ -1,6 +1,7 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
-import abe.fvjc.tournament.group.domain.GroupId;
+import abe.fvjc.tournament.domain.group.GroupRef;
+import abe.fvjc.tournament.domain.team.TeamRef;
 import lombok.Builder;
 import lombok.Value;
 
@@ -9,8 +10,7 @@ import lombok.Value;
 public class MatchOverview {
     MatchId id;
     int field;
-    GroupId groupId;
-    String groupName;
+    GroupRef group;
     TeamRef team1;
     TeamRef team2;
     MatchResult result;
