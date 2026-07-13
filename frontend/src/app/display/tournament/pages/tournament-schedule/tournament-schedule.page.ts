@@ -1,6 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,13 +16,14 @@ import { StartTournament } from '@app/domain/result/result.actions';
 import { ScheduleGenerateModal } from '@app/display/tournament/pages/schedule-generate/schedule-generate.modal';
 import { TournamentStartConfirmModal } from './tournament-start-confirm.modal';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
+import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
 
 @Component({
   selector: 'app-tournament-schedule-page',
   templateUrl: './tournament-schedule.page.html',
   styleUrl: './tournament-schedule.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent],
+  imports: [AsyncPipe, DatePipe, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent],
 })
 export class TournamentSchedulePage implements OnInit {
 

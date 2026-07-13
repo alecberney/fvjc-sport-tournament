@@ -1,21 +1,12 @@
 @if (tournament$ | async; as tournament) {
-  <div class="page-header">
-    <div class="header-left">
-      <button mat-icon-button routerLink="..">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      <div>
-        <h1>{{ tournament.name }}</h1>
-        <span class="subtitle">{{ tournament.sport }} · {{ tournament.date | date:'dd MMM yyyy' }}</span>
-      </div>
-    </div>
+  <app-tournament-header [tournament]="tournament">
     @if (isDraft(tournament)) {
       <button mat-raised-button color="primary" (click)="openRegisterModal()">
         <mat-icon>group_add</mat-icon>
         Inscrire des équipes
       </button>
     }
-  </div>
+  </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
   <section class="teams-section">

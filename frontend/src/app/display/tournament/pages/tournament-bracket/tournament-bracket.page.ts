@@ -18,6 +18,7 @@ import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { EnterBracketMatchResult, LoadBracket } from '@app/domain/bracket/bracket.actions';
 import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
+import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
 import { BracketGenerateModal } from '@app/display/tournament/components/bracket-generate-modal/bracket-generate-modal.component';
 
 @Component({
@@ -34,6 +35,7 @@ import { BracketGenerateModal } from '@app/display/tournament/components/bracket
     MatIconModule,
     MatInputModule,
     TournamentNavComponent,
+    TournamentHeaderComponent,
   ],
 })
 export class TournamentBracketPage implements OnInit {

@@ -1,6 +1,6 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,13 +15,14 @@ import { DeleteTeam, LoadTeams, MarkTeamPaid } from '@app/domain/team/team.actio
 import { TeamRegisterModal } from '@app/display/tournament/pages/team-register/team-register.modal';
 import { TeamEditModal } from '@app/display/tournament/pages/team-edit/team-edit.modal';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
+import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
 
 @Component({
   selector: 'app-tournament-detail-page',
   templateUrl: './tournament-detail.page.html',
   styleUrl: './tournament-detail.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent],
+  imports: [AsyncPipe, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent],
 })
 export class TournamentDetailPage implements OnInit {
 

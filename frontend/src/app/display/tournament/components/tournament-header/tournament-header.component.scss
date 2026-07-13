@@ -1,0 +1,16 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+
+  .header-left {
+    h1 { margin: 0; font-size: 24px; }
+    .subtitle { color: var(--mat-sys-on-surface-variant); font-size: 14px; }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+}

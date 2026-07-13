@@ -1,0 +1,9 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1>{{ tournament.name }}</h1>
+    <span class="subtitle">{{ tournament.sport }} · {{ tournament.date | date:'dd MMM yyyy' }}</span>
+  </div>
+  <div class="header-actions">
+    <ng-content></ng-content>
+  </div>
+</div>
