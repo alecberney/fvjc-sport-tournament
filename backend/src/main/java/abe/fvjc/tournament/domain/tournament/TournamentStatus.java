@@ -1,6 +1,7 @@
-package abe.fvjc.tournament.tournament.domain;
+package abe.fvjc.tournament.domain.tournament;
 
 public enum TournamentStatus {
     DRAFT,
-    IN_PROGRESS
+    IN_PROGRESS,
+    ENDED
 }

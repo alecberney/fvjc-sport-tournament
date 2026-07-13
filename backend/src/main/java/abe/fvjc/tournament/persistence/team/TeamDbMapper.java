@@ -1,10 +1,10 @@
-package abe.fvjc.tournament.team.persistence;
+package abe.fvjc.tournament.persistence.team;
 
-import abe.fvjc.tournament.group.domain.GroupId;
-import abe.fvjc.tournament.organisation.domain.OrganisationId;
-import abe.fvjc.tournament.team.domain.Team;
-import abe.fvjc.tournament.team.domain.TeamId;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.organisation.OrganisationId;
+import abe.fvjc.tournament.domain.team.Team;
+import abe.fvjc.tournament.domain.team.TeamId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.experimental.UtilityClass;
 
 import java.util.UUID;

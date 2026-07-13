@@ -1,7 +1,11 @@
-package abe.fvjc.tournament.tournament.api;
+package abe.fvjc.tournament.api.tournament;
 
-import abe.fvjc.tournament.tournament.domain.Sport;
-import jakarta.validation.constraints.*;
+import abe.fvjc.tournament.domain.tournament.Sport;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Value;
 import tools.jackson.databind.annotation.JsonDeserialize;

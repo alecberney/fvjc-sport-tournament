@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
 import lombok.Builder;
 import lombok.Value;

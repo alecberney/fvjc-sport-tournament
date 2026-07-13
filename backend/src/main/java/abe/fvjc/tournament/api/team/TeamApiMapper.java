@@ -1,13 +1,25 @@
-package abe.fvjc.tournament.team.api;
+package abe.fvjc.tournament.api.team;
 
-import abe.fvjc.tournament.organisation.domain.Person;
-import abe.fvjc.tournament.team.domain.TeamRegisterRequest;
-import abe.fvjc.tournament.team.domain.TeamUpdateRequest;
-import abe.fvjc.tournament.team.domain.TeamOverview;
+import abe.fvjc.tournament.domain.organisation.Person;
+import abe.fvjc.tournament.domain.team.TeamRef;
+import abe.fvjc.tournament.domain.team.TeamRegisterRequest;
+import abe.fvjc.tournament.domain.team.TeamUpdateRequest;
+import abe.fvjc.tournament.domain.team.TeamOverview;
 import lombok.experimental.UtilityClass;
+
+import java.util.List;
+
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 @UtilityClass
 public class TeamApiMapper {
+
+    public static TeamRefDto toTeamRefDto(final TeamRef team) {
+        return TeamRefDto.builder()
+                .id(team.getId().value())
+                .name(team.getName())
+                .build();
+    }
 
     static TeamDto toTeamDto(final TeamOverview overview) {
         return TeamDto.builder()
@@ -18,6 +30,12 @@ public class TeamApiMapper {
                 .responsibleFirstName(overview.getResponsible().getFirstName())
                 .responsibleLastName(overview.getResponsible().getLastName())
                 .build();
+    }
+
+    static List<TeamDto> toTeamDtos(final List<TeamOverview> overviews) {
+        return emptyIfNull(overviews).stream()
+                .map(TeamApiMapper::toTeamDto)
+                .toList();
     }
 
     static TeamRegisterRequest toTeamRegisterRequest(final TeamRegisterRequestDto dto) {

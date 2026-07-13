@@ -1,11 +1,15 @@
-package abe.fvjc.tournament.organisation.domain;
+package abe.fvjc.tournament.domain.organisation;
+
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface OrganisationStore {
     Organisation save(Organisation organisation);
-    Optional<Organisation> findById(UUID id);
-    void deleteById(UUID id);
-    void deleteAllByTournamentId(UUID tournamentId);
+
+    Optional<Organisation> findById(OrganisationId id);
+
+    void deleteById(OrganisationId id);
+
+    void deleteAllByTournamentId(TournamentId tournamentId);
 }

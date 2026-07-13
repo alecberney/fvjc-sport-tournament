@@ -1,15 +1,14 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
-import abe.fvjc.tournament.group.domain.GroupStore;
-import abe.fvjc.tournament.schedule.domain.GroupRanking;
-import abe.fvjc.tournament.schedule.domain.GroupRankingEntry;
-import abe.fvjc.tournament.schedule.domain.MatchResult;
-import abe.fvjc.tournament.schedule.domain.RankingService;
-import abe.fvjc.tournament.schedule.domain.TeamRef;
-import abe.fvjc.tournament.shared.exception.BusinessException;
-import abe.fvjc.tournament.shared.exception.NotFoundException;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
-import abe.fvjc.tournament.tournament.domain.TournamentStore;
+import abe.fvjc.tournament.domain.group.GroupStore;
+import abe.fvjc.tournament.domain.group.GroupRanking;
+import abe.fvjc.tournament.domain.group.GroupRankingEntry;
+import abe.fvjc.tournament.domain.schedule.MatchResult;
+import abe.fvjc.tournament.domain.group.GroupRankingService;
+import abe.fvjc.tournament.domain.team.TeamRef;
+import abe.fvjc.tournament.domain.common.problem.BusinessException;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +21,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import static abe.fvjc.tournament.bracket.domain.BracketValidator.validateBracketGenerateRequest;
-import static abe.fvjc.tournament.bracket.domain.BracketValidator.validateBracketMatchResult;
+import static abe.fvjc.tournament.domain.bracket.BracketValidator.validateBracketGenerateRequest;
+import static abe.fvjc.tournament.domain.bracket.BracketValidator.validateBracketMatchResult;
 
 @Service
 @RequiredArgsConstructor
@@ -31,14 +30,14 @@ public class BracketService {
     private final BracketMatchStore bracketMatchStore;
     private final BracketRoundStore bracketRoundStore;
     private final GroupStore groupStore;
-    private final TournamentStore tournamentStore;
-    private final RankingService rankingService;
+    private final BracketMatchSearchService bracketMatchSearchService;
+    private final GroupRankingService groupRankingService;
+    private final TournamentSearchService tournamentSearchService;
 
-    public List<BracketRound> generate(final UUID tournamentId, final BracketGenerateRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-                .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
+    public List<BracketRound> generate(final TournamentId tournamentId, final BracketGenerateRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
         final var groups = groupStore.findAllByTournamentId(tournamentId);
-        final var groupRankings = rankingService.computeAllGroupRankings(tournamentId, List.of());
+        final var groupRankings = groupRankingService.computeAllGroupRankings(tournamentId, List.of());
         validateBracketGenerateRequest(request, groups.size());
 
         final var qualifiersPerGroup = request.getTotalQualifiedTeams() / groups.size();
@@ -73,14 +72,7 @@ public class BracketService {
                     (long) r * (request.getMatchDurationMinutes() + request.getBreakDurationMinutes()));
             final var teamsInRound = totalTeams / (int) Math.pow(2, r);
             final var isDemiFinale = teamsInRound == 4;
-            final var roundToSave = BracketRound.builder()
-                    .id(BracketRoundId.of(UUID.randomUUID()))
-                    .tournamentId(TournamentId.of(tournamentId))
-                    .number(r + 1)
-                    .name(roundName(teamsInRound))
-                    .startTime(roundStart)
-                    .matches(List.of())
-                    .build();
+            final var roundToSave = buildBracketRound(tournamentId, r + 1, roundName(teamsInRound), roundStart);
             final var round = bracketRoundStore.save(roundToSave);
 
             final var matchIds = matchIdsByRound.get(r);
@@ -97,18 +89,9 @@ public class BracketService {
                 final var loserNextMatchId = isDemiFinale ? troisiemePlaceMatchId : null;
                 final var loserNextMatchTeamSlot = isDemiFinale ? slot : 0;
 
-                final var matchToSave = BracketMatch.builder()
-                        .id(matchIds.get(m))
-                        .roundId(round.getId())
-                        .field(field)
-                        .team1(team1)
-                        .team2(team2)
-                        .result(null)
-                        .nextMatchId(nextMatchId)
-                        .nextMatchTeamSlot(slot)
-                        .loserNextMatchId(loserNextMatchId)
-                        .loserNextMatchTeamSlot(loserNextMatchTeamSlot)
-                        .build();
+                final var matchToSave = buildBracketMatch(
+                        matchIds.get(m), round.getId(), field, team1, team2,
+                        nextMatchId, slot, loserNextMatchId, loserNextMatchTeamSlot);
                 final var match = bracketMatchStore.save(matchToSave);
                 roundMatches.add(match);
             }
@@ -119,26 +102,11 @@ public class BracketService {
         if (totalRounds >= 2) {
             final var troisiemePlaceStart = firstRoundStart.plusMinutes(
                     (long) totalRounds * (request.getMatchDurationMinutes() + request.getBreakDurationMinutes()));
-            final var troisiemePlaceRound = bracketRoundStore.save(BracketRound.builder()
-                    .id(BracketRoundId.of(UUID.randomUUID()))
-                    .tournamentId(TournamentId.of(tournamentId))
-                    .number(totalRounds + 1)
-                    .name("Troisième place")
-                    .startTime(troisiemePlaceStart)
-                    .matches(List.of())
-                    .build());
-            final var troisiemePlaceMatch = bracketMatchStore.save(BracketMatch.builder()
-                    .id(troisiemePlaceMatchId)
-                    .roundId(troisiemePlaceRound.getId())
-                    .field(1)
-                    .team1(null)
-                    .team2(null)
-                    .result(null)
-                    .nextMatchId(null)
-                    .nextMatchTeamSlot(0)
-                    .loserNextMatchId(null)
-                    .loserNextMatchTeamSlot(0)
-                    .build());
+            final var troisiemePlaceRound = bracketRoundStore.save(
+                    buildBracketRound(tournamentId, totalRounds + 1, "Troisième place", troisiemePlaceStart));
+            final var troisiemePlaceMatch = bracketMatchStore.save(buildBracketMatch(
+                    troisiemePlaceMatchId, troisiemePlaceRound.getId(), 1, null, null,
+                    null, 0, null, 0));
             savedRounds.add(troisiemePlaceRound);
             matchesByRound.add(List.of(troisiemePlaceMatch));
         }
@@ -148,28 +116,24 @@ public class BracketService {
                 .toList();
     }
 
-    public void deleteAllByTournamentId(final UUID tournamentId) {
+    public void deleteAllByTournamentId(final TournamentId tournamentId) {
         final var existingRounds = bracketRoundStore.findAllByTournamentId(tournamentId);
-        existingRounds.forEach(r -> bracketMatchStore.deleteAllByRoundId(r.getId().value()));
+        existingRounds.forEach(r -> bracketMatchStore.deleteAllByRoundId(r.getId()));
         bracketRoundStore.deleteAllByTournamentId(tournamentId);
     }
 
-    public List<BracketRound> findAll(final UUID tournamentId) {
+    public List<BracketRound> findAll(final TournamentId tournamentId) {
         return bracketRoundStore.findAllByTournamentId(tournamentId).stream()
-                .map(r -> r.withMatches(bracketMatchStore.findAllByRoundId(r.getId().value())))
+                .map(r -> r.withMatches(bracketMatchStore.findAllByRoundId(r.getId())))
                 .toList();
     }
 
-    public BracketMatch enterResult(final UUID matchId, final BracketMatchResultRequest request) {
+    public BracketMatch enterResult(final BracketMatchId matchId, final BracketMatchResultRequest request) {
         validateBracketMatchResult(request);
 
-        final var match = bracketMatchStore.findById(matchId)
-                .orElseThrow(() -> new NotFoundException("Match", matchId));
+        final var match = bracketMatchSearchService.findById(matchId);
 
-        final var result = MatchResult.builder()
-                .score1(request.getScore1())
-                .score2(request.getScore2())
-                .build();
+        final var result = buildMatchResult(request);
         final var savedMatch = bracketMatchStore.save(match.withResult(result));
 
         final var winner = request.getScore1() > request.getScore2()
@@ -180,8 +144,7 @@ public class BracketService {
                 : match.getTeam1();
 
         if (savedMatch.getNextMatchId() != null) {
-            final var nextMatch = bracketMatchStore.findById(savedMatch.getNextMatchId().value())
-                    .orElseThrow(() -> new NotFoundException("Match", savedMatch.getNextMatchId().value()));
+            final var nextMatch = bracketMatchSearchService.findById(savedMatch.getNextMatchId());
             final var updatedNextMatch = savedMatch.getNextMatchTeamSlot() == 1
                     ? nextMatch.withTeam1(winner)
                     : nextMatch.withTeam2(winner);
@@ -189,8 +152,7 @@ public class BracketService {
         }
 
         if (savedMatch.getLoserNextMatchId() != null) {
-            final var loserMatch = bracketMatchStore.findById(savedMatch.getLoserNextMatchId().value())
-                    .orElseThrow(() -> new NotFoundException("Match", savedMatch.getLoserNextMatchId().value()));
+            final var loserMatch = bracketMatchSearchService.findById(savedMatch.getLoserNextMatchId());
             final var updatedLoserMatch = savedMatch.getLoserNextMatchTeamSlot() == 1
                     ? loserMatch.withTeam1(loser)
                     : loserMatch.withTeam2(loser);
@@ -198,6 +160,52 @@ public class BracketService {
         }
 
         return savedMatch;
+    }
+
+    private static BracketRound buildBracketRound(
+            final TournamentId tournamentId,
+            final int number,
+            final String name,
+            final LocalDateTime startTime) {
+        return BracketRound.builder()
+                .id(BracketRoundId.of(UUID.randomUUID()))
+                .tournamentId(tournamentId)
+                .number(number)
+                .name(name)
+                .startTime(startTime)
+                .matches(List.of())
+                .build();
+    }
+
+    private static BracketMatch buildBracketMatch(
+            final BracketMatchId id,
+            final BracketRoundId roundId,
+            final int field,
+            final TeamRef team1,
+            final TeamRef team2,
+            final BracketMatchId nextMatchId,
+            final int nextMatchTeamSlot,
+            final BracketMatchId loserNextMatchId,
+            final int loserNextMatchTeamSlot) {
+        return BracketMatch.builder()
+                .id(id)
+                .roundId(roundId)
+                .field(field)
+                .team1(team1)
+                .team2(team2)
+                .result(null)
+                .nextMatchId(nextMatchId)
+                .nextMatchTeamSlot(nextMatchTeamSlot)
+                .loserNextMatchId(loserNextMatchId)
+                .loserNextMatchTeamSlot(loserNextMatchTeamSlot)
+                .build();
+    }
+
+    private static MatchResult buildMatchResult(final BracketMatchResultRequest request) {
+        return MatchResult.builder()
+                .score1(request.getScore1())
+                .score2(request.getScore2())
+                .build();
     }
 
     private static List<List<BracketMatchId>> preassignMatchIds(final int round1Count, final int totalRounds) {

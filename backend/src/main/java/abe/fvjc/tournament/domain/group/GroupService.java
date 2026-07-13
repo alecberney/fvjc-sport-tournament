@@ -1,12 +1,15 @@
-package abe.fvjc.tournament.group.domain;
+package abe.fvjc.tournament.domain.group;
 
-import abe.fvjc.tournament.shared.exception.ConflictException;
-import abe.fvjc.tournament.shared.exception.NotFoundException;
-import abe.fvjc.tournament.shared.exception.ValidationException;
-import abe.fvjc.tournament.team.domain.Team;
-import abe.fvjc.tournament.team.domain.TeamStore;
-import abe.fvjc.tournament.tournament.domain.TournamentStatus;
-import abe.fvjc.tournament.tournament.domain.TournamentStore;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
+import abe.fvjc.tournament.domain.common.problem.NotFoundException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
+import abe.fvjc.tournament.domain.team.Team;
+import abe.fvjc.tournament.domain.team.TeamId;
+import abe.fvjc.tournament.domain.team.TeamSearchService;
+import abe.fvjc.tournament.domain.team.TeamStore;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentStatus;
+import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,24 +20,24 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static abe.fvjc.tournament.group.domain.GroupValidator.validateGroupGenerateRequest;
+import static abe.fvjc.tournament.domain.group.GroupValidator.validateGroupGenerateRequest;
 
 @Service
 @RequiredArgsConstructor
 public class GroupService {
     private final GroupStore groupStore;
     private final TeamStore teamStore;
-    private final TournamentStore tournamentStore;
+    private final TeamSearchService teamSearchService;
+    private final TournamentSearchService tournamentSearchService;
 
-    public GroupDistribution distribution(final UUID tournamentId, final GroupGenerateRequest request) {
+    public GroupDistribution distribution(final TournamentId tournamentId, final GroupGenerateRequest request) {
         final var teams = teamStore.findAllByTournamentId(tournamentId);
         validateGroupGenerateRequest(request, teams.size());
         return computeDistribution(teams.size(), request.getGroupSize());
     }
 
-    public List<GroupOverview> generate(final UUID tournamentId, final GroupGenerateRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-            .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
+    public List<GroupOverview> generate(final TournamentId tournamentId, final GroupGenerateRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
         assertDraft(tournament.getStatus());
 
         final var teams = teamStore.findAllByTournamentId(tournamentId);
@@ -46,11 +49,7 @@ public class GroupService {
         final var draws = computeDraw(teams, request.getGroupSize());
         final var groups = new ArrayList<Group>();
         for (int i = 0; i < draws.size(); i++) {
-            groups.add(Group.builder()
-                .id(GroupId.of(UUID.randomUUID()))
-                .name(groupName(i))
-                .tournamentId(tournament.getId())
-                .build());
+            groups.add(buildGroup(tournament.getId(), groupName(i)));
         }
         groupStore.saveAll(groups);
 
@@ -64,27 +63,24 @@ public class GroupService {
         return buildOverviews(groups);
     }
 
-    public List<GroupOverview> findAllByTournamentId(final UUID tournamentId) {
+    public List<GroupOverview> findAllByTournamentId(final TournamentId tournamentId) {
         final var groups = groupStore.findAllByTournamentId(tournamentId);
         return groups.stream()
-                .map(this::toOverview)
+                .map(this::toGroupOverview)
                 .toList();
     }
 
-    public void deleteAllByTournamentId(final UUID tournamentId) {
+    public void deleteAllByTournamentId(final TournamentId tournamentId) {
         groupStore.deleteAllByTournamentId(tournamentId);
     }
 
-    public List<GroupOverview> swap(final UUID tournamentId, final GroupSwapRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-            .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
+    public List<GroupOverview> swap(final TournamentId tournamentId, final GroupSwapRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
         assertDraft(tournament.getStatus());
 
         final var groups = groupStore.findAllByTournamentId(tournamentId);
-        final var team1 = teamStore.findById(request.getTeamId1())
-            .orElseThrow(() -> new NotFoundException("Team", request.getTeamId1()));
-        final var team2 = teamStore.findById(request.getTeamId2())
-            .orElseThrow(() -> new NotFoundException("Team", request.getTeamId2()));
+        final var team1 = teamSearchService.findById(TeamId.of(request.getTeamId1()));
+        final var team2 = teamSearchService.findById(TeamId.of(request.getTeamId2()));
 
         final var group1 = groups.stream()
             .filter(g -> g.getId().equals(team1.getGroupId()))
@@ -103,11 +99,11 @@ public class GroupService {
         teamStore.save(team1.withGroupId(group2.getId()));
         teamStore.save(team2.withGroupId(group1.getId()));
 
-        return List.of(toOverview(group1), toOverview(group2));
+        return List.of(toGroupOverview(group1), toGroupOverview(group2));
     }
 
-    private GroupOverview toOverview(final Group group) {
-        final var teams = teamStore.findAllByGroupId(group.getId().value());
+    private GroupOverview toGroupOverview(final Group group) {
+        final var teams = teamStore.findAllByGroupId(group.getId());
         return GroupOverview.builder()
             .id(group.getId())
             .name(group.getName())
@@ -117,7 +113,15 @@ public class GroupService {
     }
 
     private List<GroupOverview> buildOverviews(final List<Group> groups) {
-        return groups.stream().map(this::toOverview).toList();
+        return groups.stream().map(this::toGroupOverview).toList();
+    }
+
+    private static Group buildGroup(final TournamentId tournamentId, final String name) {
+        return Group.builder()
+            .id(GroupId.of(UUID.randomUUID()))
+            .name(name)
+            .tournamentId(tournamentId)
+            .build();
     }
 
     private static void assertDraft(final TournamentStatus status) {

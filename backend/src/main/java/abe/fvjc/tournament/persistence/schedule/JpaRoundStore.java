@@ -1,13 +1,13 @@
-package abe.fvjc.tournament.schedule.persistence;
+package abe.fvjc.tournament.persistence.schedule;
 
-import abe.fvjc.tournament.schedule.domain.Round;
-import abe.fvjc.tournament.schedule.domain.RoundStore;
+import abe.fvjc.tournament.domain.schedule.Round;
+import abe.fvjc.tournament.domain.schedule.RoundStore;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -25,21 +25,21 @@ class JpaRoundStore implements RoundStore {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Round> findAllByTournamentId(final UUID tournamentId) {
-        return roundRepository.findByTournamentId(tournamentId).stream()
+    public List<Round> findAllByTournamentId(final TournamentId tournamentId) {
+        return roundRepository.findByTournamentId(tournamentId.value()).stream()
                 .map(RoundDbMapper::toRound)
                 .toList();
     }
 
     @Override
     @Transactional
-    public void deleteAllByTournamentId(final UUID tournamentId) {
-        roundRepository.deleteByTournamentId(tournamentId);
+    public void deleteAllByTournamentId(final TournamentId tournamentId) {
+        roundRepository.deleteByTournamentId(tournamentId.value());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public int countByTournamentId(final UUID tournamentId) {
-        return roundRepository.countByTournamentId(tournamentId);
+    public int countByTournamentId(final TournamentId tournamentId) {
+        return roundRepository.countByTournamentId(tournamentId.value());
     }
 }

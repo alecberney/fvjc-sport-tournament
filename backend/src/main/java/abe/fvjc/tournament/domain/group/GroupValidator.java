@@ -1,6 +1,6 @@
-package abe.fvjc.tournament.group.domain;
+package abe.fvjc.tournament.domain.group;
 
-import abe.fvjc.tournament.shared.exception.ValidationException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.team.api;
+package abe.fvjc.tournament.api.team;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;

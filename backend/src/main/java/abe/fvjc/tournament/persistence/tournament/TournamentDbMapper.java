@@ -1,9 +1,9 @@
-package abe.fvjc.tournament.tournament.persistence;
+package abe.fvjc.tournament.persistence.tournament;
 
-import abe.fvjc.tournament.tournament.domain.Sport;
-import abe.fvjc.tournament.tournament.domain.Tournament;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
-import abe.fvjc.tournament.tournament.domain.TournamentStatus;
+import abe.fvjc.tournament.domain.tournament.Sport;
+import abe.fvjc.tournament.domain.tournament.Tournament;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentStatus;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDate;

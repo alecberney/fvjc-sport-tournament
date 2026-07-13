@@ -1,12 +1,12 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 
 @Value
-@Builder
 @With
+@Builder
 public class BracketGenerateRequest {
     int totalQualifiedTeams;
     TieBreaker tieBreaker;

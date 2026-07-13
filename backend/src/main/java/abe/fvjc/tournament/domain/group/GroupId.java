@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.group.domain;
+package abe.fvjc.tournament.domain.group;
 
 import java.util.UUID;
 

@@ -1,6 +1,6 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
-import abe.fvjc.tournament.shared.exception.ValidationException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalTime;

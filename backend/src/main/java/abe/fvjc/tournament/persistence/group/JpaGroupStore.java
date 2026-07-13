@@ -1,16 +1,16 @@
-package abe.fvjc.tournament.group.persistence;
+package abe.fvjc.tournament.persistence.group;
 
-import abe.fvjc.tournament.group.domain.Group;
-import abe.fvjc.tournament.group.domain.GroupStore;
+import abe.fvjc.tournament.domain.group.Group;
+import abe.fvjc.tournament.domain.group.GroupStore;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
-import static abe.fvjc.tournament.group.persistence.GroupDbMapper.toGroup;
-import static abe.fvjc.tournament.group.persistence.GroupDbMapper.toGroupEntity;
+import static abe.fvjc.tournament.persistence.group.GroupDbMapper.toGroup;
+import static abe.fvjc.tournament.persistence.group.GroupDbMapper.toGroupEntity;
 
 @Repository
 @RequiredArgsConstructor
@@ -36,15 +36,15 @@ class JpaGroupStore implements GroupStore {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Group> findAllByTournamentId(final UUID tournamentId) {
-        return groupRepository.findByTournamentId(tournamentId).stream()
+    public List<Group> findAllByTournamentId(final TournamentId tournamentId) {
+        return groupRepository.findByTournamentId(tournamentId.value()).stream()
             .map(GroupDbMapper::toGroup)
             .toList();
     }
 
     @Override
     @Transactional
-    public void deleteAllByTournamentId(final UUID tournamentId) {
-        groupRepository.deleteByTournamentId(tournamentId);
+    public void deleteAllByTournamentId(final TournamentId tournamentId) {
+        groupRepository.deleteByTournamentId(tournamentId.value());
     }
 }

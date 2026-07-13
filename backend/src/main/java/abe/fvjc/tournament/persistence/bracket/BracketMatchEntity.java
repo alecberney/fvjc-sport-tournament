@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.bracket.persistence;
+package abe.fvjc.tournament.persistence.bracket;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

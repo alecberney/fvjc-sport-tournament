@@ -1,12 +1,15 @@
-package abe.fvjc.tournament.bracket.api;
+package abe.fvjc.tournament.api.bracket;
 
-import abe.fvjc.tournament.bracket.domain.BracketGenerateRequest;
-import abe.fvjc.tournament.bracket.domain.BracketMatch;
-import abe.fvjc.tournament.bracket.domain.BracketMatchResultRequest;
-import abe.fvjc.tournament.bracket.domain.BracketRound;
+import abe.fvjc.tournament.domain.bracket.BracketGenerateRequest;
+import abe.fvjc.tournament.domain.bracket.BracketMatch;
+import abe.fvjc.tournament.domain.bracket.BracketMatchResultRequest;
+import abe.fvjc.tournament.domain.bracket.BracketRound;
 import lombok.experimental.UtilityClass;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 @UtilityClass
 public class BracketApiMapper {
@@ -17,10 +20,14 @@ public class BracketApiMapper {
                 .number(round.getNumber())
                 .name(round.getName())
                 .startTime(round.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                .matches(round.getMatches().stream()
-                        .map(BracketApiMapper::toBracketMatchDto)
-                        .toList())
+                .matches(toBracketMatchDtos(round.getMatches()))
                 .build();
+    }
+
+    static List<BracketRoundDto> toBracketRoundDtos(final List<BracketRound> rounds) {
+        return emptyIfNull(rounds).stream()
+                .map(BracketApiMapper::toBracketRoundDto)
+                .toList();
     }
 
     static BracketMatchDto toBracketMatchDto(final BracketMatch match) {
@@ -49,6 +56,12 @@ public class BracketApiMapper {
                 .team2(team2)
                 .result(result)
                 .build();
+    }
+
+    static List<BracketMatchDto> toBracketMatchDtos(final List<BracketMatch> matches) {
+        return emptyIfNull(matches).stream()
+                .map(BracketApiMapper::toBracketMatchDto)
+                .toList();
     }
 
     static BracketGenerateRequest toBracketGenerateRequest(final BracketGenerateRequestDto dto) {

@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.bracket.api;
+package abe.fvjc.tournament.api.bracket;
 
 import lombok.Builder;
 import lombok.Value;

@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.shared.exception;
+package abe.fvjc.tournament.domain.common.problem;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String entity, Object id) {

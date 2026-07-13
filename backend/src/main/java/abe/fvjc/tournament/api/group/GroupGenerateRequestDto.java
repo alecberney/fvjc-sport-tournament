@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.group.api;
+package abe.fvjc.tournament.api.group;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -9,5 +9,6 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 public class GroupGenerateRequestDto {
-    @NotNull Integer groupSize;
+    @NotNull
+    Integer groupSize;
 }

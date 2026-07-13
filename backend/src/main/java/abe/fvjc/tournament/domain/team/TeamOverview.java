@@ -1,8 +1,8 @@
-package abe.fvjc.tournament.team.domain;
+package abe.fvjc.tournament.domain.team;
 
-import abe.fvjc.tournament.organisation.domain.OrganisationId;
-import abe.fvjc.tournament.organisation.domain.Person;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.organisation.OrganisationId;
+import abe.fvjc.tournament.domain.organisation.Person;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.Builder;
 import lombok.Value;
 

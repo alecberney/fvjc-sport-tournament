@@ -1,5 +1,6 @@
-package abe.fvjc.tournament.schedule.api;
+package abe.fvjc.tournament.api.schedule;
 
+import abe.fvjc.tournament.api.team.TeamRefDto;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
@@ -14,7 +15,7 @@ public class MatchDto {
     int field;
     UUID groupId;
     String groupName;
-    MatchTeamDto team1;
-    MatchTeamDto team2;
+    TeamRefDto team1;
+    TeamRefDto team2;
     MatchResultDto result;
 }

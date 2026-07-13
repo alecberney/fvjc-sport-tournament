@@ -1,14 +1,14 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
-import abe.fvjc.tournament.schedule.domain.MatchResult;
-import abe.fvjc.tournament.schedule.domain.TeamRef;
+import abe.fvjc.tournament.domain.schedule.MatchResult;
+import abe.fvjc.tournament.domain.team.TeamRef;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 
 @Value
-@Builder
 @With
+@Builder
 public class BracketMatch {
     BracketMatchId id;
     BracketRoundId roundId;

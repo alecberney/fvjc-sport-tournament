@@ -1,6 +1,6 @@
-package abe.fvjc.tournament.bracket.domain;
+package abe.fvjc.tournament.domain.bracket;
 
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Value
-@Builder
 @With
+@Builder
 public class BracketRound {
     BracketRoundId id;
     TournamentId tournamentId;

@@ -1,14 +1,14 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
-import abe.fvjc.tournament.group.domain.GroupId;
-import abe.fvjc.tournament.team.domain.TeamId;
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.team.TeamId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 
 @Value
-@Builder
 @With
+@Builder
 public class Match {
     MatchId id;
     RoundId roundId;

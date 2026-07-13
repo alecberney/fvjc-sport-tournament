@@ -1,19 +1,17 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
-import abe.fvjc.tournament.group.domain.Group;
-import abe.fvjc.tournament.group.domain.GroupId;
-import abe.fvjc.tournament.group.domain.GroupStore;
-import abe.fvjc.tournament.shared.exception.ConflictException;
-import abe.fvjc.tournament.shared.exception.NotFoundException;
-import abe.fvjc.tournament.shared.exception.ValidationException;
-import abe.fvjc.tournament.team.domain.Team;
-import abe.fvjc.tournament.team.domain.TeamId;
+import abe.fvjc.tournament.domain.group.Group;
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.group.GroupStore;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
+import abe.fvjc.tournament.domain.team.Team;
+import abe.fvjc.tournament.domain.team.TeamId;
 
-import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
-import abe.fvjc.tournament.team.domain.TeamStore;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
-import abe.fvjc.tournament.tournament.domain.TournamentStatus;
-import abe.fvjc.tournament.tournament.domain.TournamentStore;
+import abe.fvjc.tournament.domain.team.TeamStore;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentStatus;
+import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +26,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static abe.fvjc.tournament.schedule.domain.ScheduleValidator.validateScheduleGenerateRequest;
+import static abe.fvjc.tournament.domain.schedule.ScheduleValidator.validateScheduleGenerateRequest;
+import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
 
 @Service
 @RequiredArgsConstructor
@@ -37,11 +36,10 @@ public class ScheduleService {
     private final MatchStore matchStore;
     private final RoundStore roundStore;
     private final TeamStore teamStore;
-    private final TournamentStore tournamentStore;
+    private final TournamentSearchService tournamentSearchService;
 
-    public ScheduleOverview generate(final UUID tournamentId, final ScheduleGenerateRequest request) {
-        final var tournament = tournamentStore.findById(tournamentId)
-                .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));
+    public ScheduleOverview generate(final TournamentId tournamentId, final ScheduleGenerateRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
         if (tournament.getStatus() != TournamentStatus.DRAFT) {
             throw new ConflictException("Le calendrier ne peut être généré que pour un tournoi en préparation");
         }
@@ -54,7 +52,7 @@ public class ScheduleService {
         final var existingRounds = roundStore.findAllByTournamentId(tournamentId);
         if (!existingRounds.isEmpty()) {
             final var existingRoundIds = existingRounds.stream()
-                    .map(r -> r.getId().value())
+                    .map(Round::getId)
                     .toList();
             if (matchStore.existsResultByRoundIds(existingRoundIds)) {
                 throw new ConflictException("Impossible de régénérer le calendrier : des résultats ont déjà été saisis");
@@ -84,52 +82,36 @@ public class ScheduleService {
             final var roundStart = firstRoundStart.plusMinutes(
                     (long) r * (request.getMatchDurationMinutes() + request.getBreakDurationMinutes()));
             final var roundId = RoundId.of(UUID.randomUUID());
-            rounds.add(Round.builder()
-                    .id(roundId)
-                    .tournamentId(TournamentId.of(tournamentId))
-                    .number(r + 1)
-                    .startTime(roundStart)
-                    .build());
+            rounds.add(buildRound(tournamentId, roundId, r + 1, roundStart));
             final var roundMatches = packedRounds.get(r);
             for (int f = 0; f < roundMatches.size(); f++) {
                 final var pair = roundMatches.get(f);
-                matches.add(Match.builder()
-                        .id(MatchId.of(UUID.randomUUID()))
-                        .roundId(roundId)
-                        .field(f + 1)
-                        .groupId(pair.groupId())
-                        .team1Id(pair.team1Id())
-                        .team2Id(pair.team2Id())
-                        .build());
+                matches.add(buildMatch(roundId, f + 1, pair));
             }
         }
         roundStore.saveAll(rounds);
         matchStore.saveAll(matches);
-        return buildScheduleOverview(rounds, matches, groupById, teamById);
+        return toScheduleOverview(rounds, matches, groupById, teamById);
     }
 
-    public void deleteAllByTournamentId(final UUID tournamentId) {
+    public void deleteAllByTournamentId(final TournamentId tournamentId) {
         final var existingRounds = roundStore.findAllByTournamentId(tournamentId);
         if (existingRounds.isEmpty()) {
             return;
         }
         final var existingRoundIds = existingRounds.stream()
-                .map(r -> r.getId().value())
+                .map(Round::getId)
                 .toList();
         matchStore.deleteAllByRoundIds(existingRoundIds);
         roundStore.deleteAllByTournamentId(tournamentId);
     }
 
-    public ScheduleOverview findByTournamentId(final UUID tournamentId) {
+    public ScheduleOverview findByTournamentId(final TournamentId tournamentId) {
         final var rounds = roundStore.findAllByTournamentId(tournamentId);
         if (rounds.isEmpty()) {
-            return ScheduleOverview.builder()
-                    .totalRounds(0)
-                    .totalMatches(0)
-                    .rounds(List.of())
-                    .build();
+            return ScheduleOverview.empty();
         }
-        final var roundIds = rounds.stream().map(r -> r.getId().value()).toList();
+        final var roundIds = rounds.stream().map(Round::getId).toList();
         final var matches = matchStore.findAllByRoundIds(roundIds);
         final var groups = groupStore.findAllByTournamentId(tournamentId);
         final var groupById = groups.stream()
@@ -137,10 +119,34 @@ public class ScheduleService {
         final var allTeams = teamStore.findAllByTournamentId(tournamentId);
         final var teamById = allTeams.stream()
                 .collect(Collectors.toMap(t -> t.getId().value(), t -> t));
-        return buildScheduleOverview(rounds, matches, groupById, teamById);
+        return toScheduleOverview(rounds, matches, groupById, teamById);
     }
 
-    private static ScheduleOverview buildScheduleOverview(
+    private static Round buildRound(
+            final TournamentId tournamentId,
+            final RoundId roundId,
+            final int number,
+            final LocalDateTime startTime) {
+        return Round.builder()
+                .id(roundId)
+                .tournamentId(tournamentId)
+                .number(number)
+                .startTime(startTime)
+                .build();
+    }
+
+    private static Match buildMatch(final RoundId roundId, final int field, final MatchPair pair) {
+        return Match.builder()
+                .id(MatchId.of(UUID.randomUUID()))
+                .roundId(roundId)
+                .field(field)
+                .groupId(pair.groupId())
+                .team1Id(pair.team1Id())
+                .team2Id(pair.team2Id())
+                .build();
+    }
+
+    private static ScheduleOverview toScheduleOverview(
             final List<Round> rounds,
             final List<Match> matches,
             final Map<UUID, Group> groupById,
@@ -148,31 +154,42 @@ public class ScheduleService {
         final var matchesByRoundId = matches.stream()
                 .collect(Collectors.groupingBy(m -> m.getRoundId().value()));
         final var roundOverviews = rounds.stream()
-                .map(r -> {
-                    final var roundMatches = matchesByRoundId.getOrDefault(r.getId().value(), List.of());
+                .map(round -> {
+                    final var roundMatches = matchesByRoundId.getOrDefault(round.getId().value(), List.<Match>of());
                     final var matchOverviews = roundMatches.stream()
-                            .map(m -> MatchOverview.builder()
-                                    .id(m.getId())
-                                    .field(m.getField())
-                                    .groupId(m.getGroupId())
-                                    .groupName(groupById.get(m.getGroupId().value()).getName())
-                                    .team1(toTeamRef(m.getTeam1Id(), teamById.get(m.getTeam1Id().value()).getName()))
-                                    .team2(toTeamRef(m.getTeam2Id(), teamById.get(m.getTeam2Id().value()).getName()))
-                                    .result(m.getResult())
-                                    .build())
+                            .map(match -> toMatchOverview(match, groupById, teamById))
                             .toList();
-                    return RoundOverview.builder()
-                            .id(r.getId())
-                            .number(r.getNumber())
-                            .startTime(r.getStartTime())
-                            .matches(matchOverviews)
-                            .build();
+                    return toRoundOverview(round, matchOverviews);
                 })
                 .toList();
         return ScheduleOverview.builder()
                 .totalRounds(rounds.size())
                 .totalMatches(matches.size())
                 .rounds(roundOverviews)
+                .build();
+    }
+
+    private static MatchOverview toMatchOverview(
+            final Match match,
+            final Map<UUID, Group> groupById,
+            final Map<UUID, Team> teamById) {
+        return MatchOverview.builder()
+                .id(match.getId())
+                .field(match.getField())
+                .groupId(match.getGroupId())
+                .groupName(groupById.get(match.getGroupId().value()).getName())
+                .team1(toTeamRef(match.getTeam1Id(), teamById.get(match.getTeam1Id().value()).getName()))
+                .team2(toTeamRef(match.getTeam2Id(), teamById.get(match.getTeam2Id().value()).getName()))
+                .result(match.getResult())
+                .build();
+    }
+
+    private static RoundOverview toRoundOverview(final Round round, final List<MatchOverview> matches) {
+        return RoundOverview.builder()
+                .id(round.getId())
+                .number(round.getNumber())
+                .startTime(round.getStartTime())
+                .matches(matches)
                 .build();
     }
 
@@ -261,8 +278,10 @@ public class ScheduleService {
     // previous round. Such matches are only used to fill a field that would
     // otherwise sit empty. MIN_VALUE default keeps never-played teams from matching
     // the previous round (-1) in the very first round.
-    private static boolean isBackToBack(final MatchPair pair, final Map<TeamId, Integer> lastPlayedRound,
-                                        final int roundIndex) {
+    private static boolean isBackToBack(
+            final MatchPair pair,
+            final Map<TeamId, Integer> lastPlayedRound,
+            final int roundIndex) {
         final var previousRound = roundIndex - 1;
         return lastPlayedRound.getOrDefault(pair.team1Id(), Integer.MIN_VALUE) == previousRound
                 || lastPlayedRound.getOrDefault(pair.team2Id(), Integer.MIN_VALUE) == previousRound;
@@ -271,8 +290,10 @@ public class ScheduleService {
     // Rest = rounds since a team last played (a never-played team counts as fully
     // rested via the -1 default). A match's rest is the minimum across its two
     // teams, so the more starved team drives how urgently the match is scheduled.
-    private static int minRest(final MatchPair pair, final Map<TeamId, Integer> lastPlayedRound,
-                               final int roundIndex) {
+    private static int minRest(
+            final MatchPair pair,
+            final Map<TeamId, Integer> lastPlayedRound,
+            final int roundIndex) {
         final var rest1 = roundIndex - lastPlayedRound.getOrDefault(pair.team1Id(), -1);
         final var rest2 = roundIndex - lastPlayedRound.getOrDefault(pair.team2Id(), -1);
         return Math.min(rest1, rest2);

@@ -1,11 +1,15 @@
-package abe.fvjc.tournament.group.domain;
+package abe.fvjc.tournament.domain.group;
+
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface GroupStore {
     Group save(Group group);
+
     void saveAll(List<Group> groups);
-    List<Group> findAllByTournamentId(UUID tournamentId);
-    void deleteAllByTournamentId(UUID tournamentId);
+
+    List<Group> findAllByTournamentId(TournamentId tournamentId);
+
+    void deleteAllByTournamentId(TournamentId tournamentId);
 }

@@ -1,6 +1,6 @@
-package abe.fvjc.tournament.schedule.domain;
+package abe.fvjc.tournament.domain.schedule;
 
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -8,8 +8,8 @@ import lombok.With;
 import java.time.LocalDateTime;
 
 @Value
-@Builder
 @With
+@Builder
 public class Round {
     RoundId id;
     TournamentId tournamentId;

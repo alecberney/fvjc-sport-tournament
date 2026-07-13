@@ -99,6 +99,33 @@ return repository.findAll().stream()
         .toList();
 ```
 
+### `.map` Is Pure — Never Throws
+
+A `.map(...)` step (on a `Stream` or `Optional`) performs **simple mapping only** — a pure transformation from one value to another. It must never contain logic that can throw an exception: no validation, no `orElseThrow`, no `findById`, no lookups that can fail, no business rules. Mapping is total (defined for every input).
+
+Anything that can throw — validation, "not found" checks, business invariants — belongs before or after the stream, not inside `.map`.
+
+```java
+// WRONG — .map hides a throwing lookup
+return teamIds.stream()
+        .map(id -> teamStore.findById(id).orElseThrow(() -> new NotFoundException("Team", id)))
+        .toList();
+
+// WRONG — .map validates
+return requests.stream()
+        .map(request -> {
+            validateTeamCreateRequest(request);
+            return buildTeam(request);
+        })
+        .toList();
+
+// CORRECT — validate first, then map purely
+requests.forEach(TeamValidator::validateTeamCreateRequest);
+return requests.stream()
+        .map(TeamService::buildTeam)
+        .toList();
+```
+
 ### Ternary Operator
 
 Multi-line ternary: condition on first line, `?` and `:` each on their own line.
@@ -165,6 +192,25 @@ private final TournamentRepository repository;
 
 ## Style: Imports
 
+### No Wildcard Imports
+
+Wildcard imports (`.*`) are **forbidden** — regular and static alike. Every imported type, method, or field is listed explicitly, one per import. This applies to `src/main` and `src/test` equally.
+
+```java
+// WRONG
+import jakarta.persistence.*;
+import org.springframework.web.bind.annotation.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static abe.fvjc.tournament.api.team.TeamApiMapper.*;
+
+// CORRECT
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static abe.fvjc.tournament.api.team.TeamApiMapper.toTeamDto;
+```
+
 ### Static Imports — Public Static Methods
 
 All `public static` methods from utility classes and mappers are used via static import.
@@ -196,12 +242,12 @@ Usage: `DRAFT`, not `TournamentStatus.DRAFT`.
 
 ### Domain Classes
 
-Use Lombok `@Value` + `@Builder` + `@With` — all domain objects are immutable. `@With` generates `withFieldName(value)` methods returning a new instance with that field changed — used in tests to override specific fields (e.g., `buildTournament().withId(TournamentId.empty())`). Avoid `@Builder(toBuilder = true)` — build fresh instances instead.
+Use Lombok `@Value` + `@With` + `@Builder`, **in that order** — all domain objects are immutable. `@With` generates `withFieldName(value)` methods returning a new instance with that field changed — used in tests to override specific fields (e.g., `buildTournament().withId(TournamentId.empty())`). Avoid `@Builder(toBuilder = true)` — build fresh instances instead.
 
 ```java
 @Value
-@Builder
 @With
+@Builder
 public class Team {
     TeamId id;
     String name;
@@ -234,17 +280,25 @@ public record TeamId(UUID value) {
 - `.of(UUID)` — normal constructor
 - `.empty()` — signals a not-yet-persisted entity
 - `.isEmpty()` — checks if the ID has no value
+- A blank line follows the opening brace and separates each method from the next — one blank line between methods, never packed together.
 
 ### Store Interface
 
 Repository interfaces belong to the domain — no Spring or JPA imports.
 
+Store methods take **typed ID records** — never raw `UUID`. Every ID parameter uses the typed ID that matches the field it identifies: the entity's own ID for `findById` / `deleteById`, and the foreign-key's typed ID for `findAllByXxxId` (e.g. `TournamentId tournamentId`, `GroupId groupId`). Collections of IDs use `List<XxxId>`, never `List<UUID>`. The `JpaXxxStore` unwraps `.value()` when delegating to the Spring Data repository; callers pass a typed ID (constructed via `XxxId.of(uuid)` when they only hold a raw `UUID`).
+
+**One blank line separates each method** — store methods are never packed together.
+
 ```java
 public interface TeamStore {
     Team save(Team team);
-    Optional<Team> findById(UUID id);
-    List<Team> findAll();
-    void deleteById(UUID id);
+
+    Optional<Team> findById(TeamId id);
+
+    List<Team> findAllByTournamentId(TournamentId tournamentId);
+
+    void deleteById(TeamId id);
 }
 ```
 
@@ -311,6 +365,7 @@ Services live in `domain/`. They orchestrate store calls but contain no mapping 
 @Service
 @RequiredArgsConstructor
 public class TeamService {
+    private final TeamSearchService teamSearchService;
     private final TeamStore teamStore;
 
     public Team create(final TeamCreateRequest request) {
@@ -327,27 +382,113 @@ public class TeamService {
             .build();
     }
 
-    public Team findById(final UUID id) {
-        return teamStore.findById(id)
-            .orElseThrow(() -> new NotFoundException("Team", id));
+    public Team update(final TeamUpdateRequest request, final TeamId id) {
+        teamSearchService.findById(id);
+        return teamStore.save(buildTeam(request, id));
     }
 
-    public Team update(final TeamUpdateRequest request, final UUID id) {
-        findById(id);
-        return teamStore.save(Team.builder()
-            .id(TeamId.of(id))
-            .name(request.getName())
-            .sport(request.getSport())
-            .tournamentId(TournamentId.of(request.getTournamentId()))
-            .build());
-    }
-
-    public void delete(final UUID id) {
-        findById(id);
+    public void delete(final TeamId id) {
+        teamSearchService.findById(id);
         teamStore.deleteById(id);
     }
 }
 ```
+
+### Service Methods Take Typed IDs — Never Raw `UUID`
+
+Every service method — **public and private alike** — that receives an entity identifier takes the matching **typed ID record** (`TournamentId`, `TeamId`, `MatchId`, …), never a raw `UUID`. This holds for the entity's own id (`findById`, `delete`, `start`) and for foreign-key ids (`registerTeams(TournamentId tournamentId, …)`, `buildTeam(TournamentId tournamentId, …)`, `toMatchOverview(Match match, TournamentId tournamentId)`). A raw `UUID` only appears where an id is *created* (`XxxId.of(UUID.randomUUID())`) or as an internal `Map`/`Set` key derived via `.value()`.
+
+```java
+// WRONG — service method receives a raw UUID
+public List<TeamOverview> registerTeams(final UUID tournamentId, final TeamRegisterRequest request) { ... }
+private static Team buildTeam(final UUID tournamentId, ...) { ... }
+
+// CORRECT — typed ID everywhere
+public List<TeamOverview> registerTeams(final TournamentId tournamentId, final TeamRegisterRequest request) { ... }
+private static Team buildTeam(final TournamentId tournamentId, ...) { ... }
+```
+
+Because service signatures use typed IDs, the store call no longer wraps: `teamStore.findAllByTournamentId(tournamentId)`, not `teamStore.findAllByTournamentId(TournamentId.of(tournamentId))`.
+
+**The controller performs the `UUID` → typed-ID conversion**, inline in the service call, since a `@PathVariable` binds as a raw `UUID`:
+
+```java
+@GetMapping("/{id}")
+public TournamentDto getById(@PathVariable UUID id) {
+    final var tournament = tournamentService.findById(TournamentId.of(id));
+    return toTournamentDto(tournament);
+}
+```
+
+`XxxId.of(id)` is treated as a trivial wrapper, not a data-fetch/transform step, so it stays inline as the argument rather than taking its own `final var`. A raw `UUID` held in a domain request object (e.g. `GroupSwapRequest.getTeamId1()`) is likewise wrapped inline at the call site: `teamSearchService.findById(TeamId.of(request.getTeamId1()))`.
+
+### Builders in Services — `buildXxx` vs `toXxx`
+
+A `Xxx.builder()...build()` call is **never left inline** inside a service method (including inside a stream, a lambda, or a `store.save(...)` argument). Every builder is extracted into its own method, named by how its result is used:
+
+- **`buildXxx` — the object is persisted or created.** When the built object is passed to `store.save(...)` / `store.saveAll(...)` (directly or after `.withXxx(...)`), extract a **`private static buildXxx(...)`** method that returns the freshly built object. Generated IDs (`XxxId.of(UUID.randomUUID())`) live inside this method.
+- **`toXxx` — the object is a mapping returned to the caller.** When the builder maps a domain object (or a set of them) into a view/overview model that the method returns, extract a mapping method named **`toXxx`** (target type in camelCase — `RoundOverview` → `toRoundOverview`, `TeamOverview` → `toTeamOverview`). Make it **`private static`** when it needs no stores (a pure mapping); keep it a **`private` instance** method when it must query a store to assemble the result.
+
+A builder that is neither persisted nor a mapping of a domain object (e.g. a value object computed from primitives) may stay in its enclosing computation method — the rule targets persistence builders and mapping builders.
+
+```java
+// buildXxx — result is saved
+private static Round buildRound(final UUID tournamentId, final RoundId roundId, final int number, final LocalDateTime startTime) {
+    return Round.builder()
+            .id(roundId)
+            .tournamentId(TournamentId.of(tournamentId))
+            .number(number)
+            .startTime(startTime)
+            .build();
+}
+
+rounds.add(buildRound(tournamentId, roundId, r + 1, roundStart));
+roundStore.saveAll(rounds);
+
+// toXxx — result is a mapping returned to the caller (pure → static)
+private static RoundOverview toRoundOverview(final Round round, final List<MatchOverview> matches) {
+    return RoundOverview.builder()
+            .id(round.getId())
+            .number(round.getNumber())
+            .startTime(round.getStartTime())
+            .matches(matches)
+            .build();
+}
+
+// toXxx — mapping that must query a store (instance, not static)
+private GroupOverview toGroupOverview(final Group group) {
+    final var teams = teamStore.findAllByGroupId(group.getId());
+    return GroupOverview.builder()
+            .id(group.getId())
+            .name(group.getName())
+            .tournamentId(group.getTournamentId())
+            .teams(teams)
+            .build();
+}
+```
+
+### Search Service (find-by-id)
+
+Looking up a single entity by its id — `store.findById(...).orElseThrow(() -> new NotFoundException("Xxx", id))` — is **never inlined** in a service. It lives in exactly one place: a dedicated `XxxSearchService` in the entity's domain package.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class TeamSearchService {
+    private final TeamStore teamStore;
+
+    public Team findById(final TeamId teamId) {
+        return teamStore.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("Team", teamId.value()));
+    }
+}
+```
+
+- One `XxxSearchService` per entity that needs a find-or-throw lookup — `@Service` + `@RequiredArgsConstructor`, in `domain/xxx/`.
+- Its only dependency is that entity's store. It never depends on another service, so it can be injected anywhere without creating a circular dependency.
+- The single public method is `findById(XxxId id)` — it takes the **typed ID**, returns the domain object, and throws `NotFoundException("Xxx", id.value())` when absent (the `.value()` keeps the message showing the raw UUID). Callers pass a typed id directly; a caller holding a raw `UUID` wraps it inline via `XxxId.of(uuid)`.
+- Any service (including the entity's own `XxxService`) that needs the entity by id **injects the `XxxSearchService` and calls `findById`** instead of reaching into the store. Since the lookup is always consumed from another class, the method is always `public`.
+- The not-found behaviour is unit-tested once, in `XxxSearchServiceTest`. Consuming-service tests mock the `XxxSearchService` and do **not** re-test the not-found path.
 
 ### Value Objects
 
@@ -418,23 +559,23 @@ class JpaTeamStore implements TeamStore {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Team> findById(UUID id) {
-        return teamRepository.findById(id)
+    public Optional<Team> findById(TeamId id) {
+        return teamRepository.findById(id.value())
                 .map(TeamDbMapper::toTeam);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Team> findAll() {
-        return teamRepository.findAll().stream()
+    public List<Team> findAllByTournamentId(TournamentId tournamentId) {
+        return teamRepository.findByTournamentId(tournamentId.value()).stream()
                 .map(TeamDbMapper::toTeam)
                 .toList();
     }
 
     @Override
     @Transactional
-    public void deleteById(UUID id) {
-        teamRepository.deleteById(id);
+    public void deleteById(TeamId id) {
+        teamRepository.deleteById(id.value());
     }
 }
 ```
@@ -489,6 +630,35 @@ Controllers are thin — one service call per endpoint, no business logic. Use `
 | `PUT` / `PATCH` | `updateXxx` | `updateStatus(...)` |
 | `DELETE` | `delete` | `delete(UUID id)` |
 
+A `@RequestBody` parameter of type `XxxRequestDto` (or `XxxCreateRequestDto` / `XxxUpdateRequestDto`) is always named `requestDto` — never `request`. The name `request` is reserved for the mapped domain request object. Endpoints returning a list delegate to the mapper's plural `toXxxDtos(...)` method — never stream inline.
+
+#### One named `final var` per step — never nest calls
+
+Every call in a handler that **gets or transforms data** — mapping a `requestDto` to a domain request, invoking the service, or any intermediate step — is assigned to its own named `final var`. Never nest these calls inside one another. Only the terminal DTO mapping stays inline in the `return`; every input to it is already a named variable.
+
+Variables are named after what they hold: the mapped request is `request`, the service result is named after the model (`teams`, `tournament`, `schedule`).
+
+```java
+// WRONG — nested calls
+return toTeamDtos(teamService.registerTeams(tournamentId, toTeamRegisterRequest(requestDto)));
+
+// CORRECT — one named var per step
+final var request = toTeamRegisterRequest(requestDto);
+final var teams = teamService.registerTeams(tournamentId, request);
+return toTeamDtos(teams);
+```
+
+A handler that only calls the service (no request mapping) still names the service result before mapping it:
+
+```java
+// WRONG
+return toTeamDto(teamService.findById(id));
+
+// CORRECT
+final var team = teamService.findById(id);
+return toTeamDto(team);
+```
+
 ```java
 @RestController
 @RequestMapping("/api/teams")
@@ -498,25 +668,29 @@ class TeamController {
 
     @GetMapping
     public List<TeamDto> getAll() {
-        return teamService.findAll().stream()
-                .map(TeamApiMapper::toTeamDto)
-                .toList();
+        final var teams = teamService.findAll();
+        return toTeamDtos(teams);
     }
 
     @GetMapping("/{id}")
     public TeamDto getById(@PathVariable UUID id) {
-        return toTeamDto(teamService.findById(id));
+        final var team = teamService.findById(id);
+        return toTeamDto(team);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TeamDto create(@RequestBody @Valid TeamCreateRequestDto request) {
-        return toTeamDto(teamService.create(toTeamCreateRequest(request)));
+    public TeamDto create(@RequestBody @Valid TeamCreateRequestDto requestDto) {
+        final var request = toTeamCreateRequest(requestDto);
+        final var team = teamService.create(request);
+        return toTeamDto(team);
     }
 
     @PutMapping("/{id}")
-    public TeamDto updateName(@PathVariable UUID id, @RequestBody @Valid TeamUpdateRequestDto request) {
-        return toTeamDto(teamService.update(toTeamUpdateRequest(request), id));
+    public TeamDto updateName(@PathVariable UUID id, @RequestBody @Valid TeamUpdateRequestDto requestDto) {
+        final var request = toTeamUpdateRequest(requestDto);
+        final var team = teamService.update(request, id);
+        return toTeamDto(team);
     }
 
     @DeleteMapping("/{id}")
@@ -533,6 +707,8 @@ Use Lombok `@Value` + `@Builder` + `@Jacksonized`. `@Jacksonized` enables Jackso
 
 DTOs carry **structural validation only** (`@NotNull`, `@NotBlank`, `@Size`, `@Min`, `@Max`). Business rules (cross-field, domain invariants) belong in the domain validator.
 
+**One validation annotation per line.** Each validation annotation goes on its own line above the field it constrains — never inline with the field, never several annotations sharing a line. A blank line separates each field from the next. This applies to every request DTO field that carries at least one validation annotation.
+
 ```java
 @Value
 @Builder
@@ -547,9 +723,35 @@ public class TeamDto {
 @Builder
 @Jacksonized
 public class TeamCreateRequestDto {
-    @NotBlank String name;
-    @NotBlank String sport;
-    @NotNull UUID tournamentId;
+    @NotBlank
+    String name;
+
+    @NotBlank
+    String sport;
+
+    @NotNull
+    UUID tournamentId;
+}
+```
+
+```java
+// WRONG — annotations inline / sharing a line, no blank line between fields
+public class SubmitMatchResultRequestDto {
+    @NotNull @Min(0) @Max(500) Integer score1;
+    @NotNull @Min(0) @Max(500) Integer score2;
+}
+
+// CORRECT — one annotation per line, blank line between fields
+public class SubmitMatchResultRequestDto {
+    @NotNull
+    @Min(0)
+    @Max(500)
+    Integer score1;
+
+    @NotNull
+    @Min(0)
+    @Max(500)
+    Integer score2;
 }
 ```
 
@@ -569,6 +771,12 @@ public class TeamApiMapper {
             .build();
     }
 
+    static List<TeamDto> toTeamDtos(final List<Team> teams) {
+        return emptyIfNull(teams).stream()
+            .map(TeamApiMapper::toTeamDto)
+            .toList();
+    }
+
     static TeamCreateRequest toTeamCreateRequest(TeamCreateRequestDto dto) {
         return TeamCreateRequest.builder()
             .name(dto.getName())
@@ -582,6 +790,24 @@ public class TeamApiMapper {
 - Method name = `to` + target type: `toTeamDto(Team)`, `toTeamCreateRequest(TeamCreateRequestDto)`
 - Always use explicit `static` keyword on methods
 - Visibility ladder: `private` → package-private → `protected` → `public` — use the lowest that satisfies callers
+
+#### Collection methods
+
+Every `to` + type mapping that a caller needs for a list has a matching **plural** method named `toXxxDtos`, taking `List<Domain>` and returning `List<Dto>`. It always wraps the source with `emptyIfNull` (from `org.apache.commons.collections4.CollectionUtils`, static import) before streaming, so a `null` collection maps to an empty list instead of throwing.
+
+```java
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+
+static List<TeamDto> toTeamDtos(final List<Team> teams) {
+    return emptyIfNull(teams).stream()
+        .map(TeamApiMapper::toTeamDto)
+        .toList();
+}
+```
+
+- **Every** collection streamed inside a mapper — top-level lists and nested lists built inside a `toXxxDto` — goes through `emptyIfNull(...)`. Never call `.stream()` directly on a collection getter.
+- A nested list is mapped via its own plural method: `.matches(toBracketMatchDtos(round.getMatches()))`, not an inline stream.
+- The plural method takes the same visibility as its singular counterpart (package-private by default; `private` when used only internally).
 
 ---
 
@@ -633,9 +859,8 @@ public Tournament create(final TournamentCreateRequest request) {
     return tournamentStore.save(buildTournament(request));
 }
 
-public Tournament findById(final UUID id) {
-    return tournamentStore.findById(id)
-        .orElseThrow(() -> new NotFoundException("Tournament", id));
+public Tournament findById(final TournamentId id) {
+    return tournamentSearchService.findById(id);
 }
 ```
 
@@ -649,30 +874,44 @@ public Tournament findById(final UUID id) {
 | No `toBuilder` | Build fresh instances with the full builder — never use `toBuilder()` |
 | DTOs | Always add `@Jacksonized` alongside `@Value` + `@Builder` |
 | DTO validation | Structural only (`@NotNull`, `@NotBlank`, `@Min`, `@Max`, `@Size`) — no business rules |
+| DTO field formatting | One validation annotation per line, above the field; a blank line separates each field — never inline or several annotations on one line |
 | Domain validator | `XxxValidator` `@UtilityClass` in `domain/` — throws `ValidationException` |
 | Validator method naming | `validateXxxCreateRequest` / `validateXxxUpdateRequest` — statically imported at call sites |
 | CreateRequest | `XxxCreateRequest` in `domain/` — mirrors DTO fields, no validation annotations |
-| `buildXxx` in service | Domain object construction extracted into a `private static buildXxx(XxxCreateRequest)` method |
+| `buildXxx` in service | A builder whose result is persisted (`store.save`/`saveAll`) is extracted into a `private static buildXxx(...)` method — never left inline |
+| `toXxx` in service | A builder that maps a domain object into a returned view/overview model is extracted into a `toXxx` mapping method — `private static` when pure, `private` instance when it queries a store |
 | JPA entities | `@Getter` + `@Setter` + `@NoArgsConstructor`, package-private |
 | Typed IDs | Every entity has a typed ID record with `.of()` and `.empty()` |
+| Typed ID spacing | Blank line after the opening brace and one blank line between each method — never packed together |
+| Store ID parameters | Store methods take typed ID records — never raw `UUID`; collections use `List<XxxId>`. `JpaXxxStore` unwraps `.value()`; callers wrap raw UUIDs via `XxxId.of(uuid)` |
+| Store method spacing | One blank line between each method in the store interface — never packed together |
 | `@RequiredArgsConstructor` | Used on services, controllers, and store implementations — no explicit constructors |
 | `@Transactional` | Per method on `JpaXxxStore` only — never on the class, never on services or controllers; use `readOnly = true` on reads |
 | Mappers | `@UtilityClass` with explicit `static` methods, named `to` + target type |
 | Mapper visibility | Minimum necessary: `private` → package-private → `protected` → `public` |
 | API mapper | `TeamApiMapper` in `api/`, public class, methods package-private by default |
+| Mapper collection methods | Every list mapping has a plural `toXxxDtos(List<Domain>)` method; every streamed collection (top-level and nested) is wrapped in `emptyIfNull(...)` — never `.stream()` on a raw getter |
 | Persistence mapper | `TeamDbMapper` in `persistence/`, package-private class and methods |
 | Controller methods | Always `public`; named by HTTP verb: `getAll`, `getById`, `create`, `updateXxx`, `delete` |
+| `@RequestBody` naming | A `XxxRequestDto` body parameter is named `requestDto` — never `request` (reserved for the mapped domain request) |
+| Controller list returns | Delegate to the mapper's plural `toXxxDtos(...)` — never stream inline in the controller |
+| Controller named steps | Every get/transform call gets its own named `final var` (`request`, then the model result) — never nest calls; only the terminal DTO mapping stays inline in the `return` |
 | No leaking | `TeamEntity` and `TeamRepository` are package-private |
 | No mapping in DTOs | No `from()` or `toDomain()` on DTOs — mappers own all conversions |
 | Services in domain | `TeamService` lives in `domain/`, not in `api/` |
+| Search service | Find-by-id (`findById(XxxId)` + `NotFoundException`) lives only in a dedicated `XxxSearchService` (one dependency: the store); takes the typed ID and throws `NotFoundException("Xxx", id.value())`; services inject it instead of inlining `store.findById(...).orElseThrow(...)`; not-found tested once in `XxxSearchServiceTest` |
+| Service ID parameters | Every service method (public and private) receiving an entity id takes the matching typed ID record — never raw `UUID`; store calls no longer wrap (`teamStore.findAllByTournamentId(tournamentId)`). Raw `UUID` appears only at id creation (`XxxId.of(UUID.randomUUID())`) or internal `Map`/`Set` keys |
+| Controller ID conversion | The controller wraps `@PathVariable UUID` into the typed ID inline in the service call (`tournamentService.findById(TournamentId.of(id))`) — `XxxId.of(id)` is a trivial wrapper, not a data step, so it stays inline |
 | Exceptions | `NotFoundException`, `BusinessException`, `ValidationException` thrown from services/validators |
 | Method parameters | Always `final` — never mutate a parameter, produce and return a new instance |
-| `@With` on domain classes | `@Value @Builder @With` — enables `obj.withField(value)` for test overrides without `toBuilder` |
+| `@With` on domain classes | `@Value @With @Builder` (in that order) — enables `obj.withField(value)` for test overrides without `toBuilder` |
 | `final var` | All local variables use `final var`; use `var` only when reassigned |
 | One operation per line | Never nest calls — break into `final var` steps |
 | Stream chains | One method per line, chained with indentation |
+| `.map` is pure | `.map(...)` does simple mapping only — never throws (no validation, `orElseThrow`, failing lookups, or business rules); do those before/after the stream |
 | Ternary | Condition on line 1; `?` and `:` each on their own line |
 | No blank line after `{` | First field immediately follows the class opening brace |
 | Field order | Stores → Services → Others, each group alphabetical |
 | Bean naming | Field name = camelCase of class name (no abbreviation) |
 | Static imports | `public static` methods and enum values always imported statically |
+| No wildcard imports | `.*` imports forbidden (regular and static) — list every type/method explicitly, in `src/main` and `src/test` |

@@ -1,17 +1,17 @@
-package abe.fvjc.tournament.tournament.persistence;
+package abe.fvjc.tournament.persistence.tournament;
 
-import abe.fvjc.tournament.tournament.domain.Tournament;
-import abe.fvjc.tournament.tournament.domain.TournamentStore;
+import abe.fvjc.tournament.domain.tournament.Tournament;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-import static abe.fvjc.tournament.tournament.persistence.TournamentDbMapper.toTournament;
-import static abe.fvjc.tournament.tournament.persistence.TournamentDbMapper.toTournamentEntity;
+import static abe.fvjc.tournament.persistence.tournament.TournamentDbMapper.toTournament;
+import static abe.fvjc.tournament.persistence.tournament.TournamentDbMapper.toTournamentEntity;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,8 +28,8 @@ class JpaTournamentStore implements TournamentStore {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Tournament> findById(UUID id) {
-        return tournamentRepository.findById(id)
+    public Optional<Tournament> findById(TournamentId id) {
+        return tournamentRepository.findById(id.value())
                 .map(TournamentDbMapper::toTournament);
     }
 
@@ -43,7 +43,7 @@ class JpaTournamentStore implements TournamentStore {
 
     @Override
     @Transactional
-    public void deleteById(UUID id) {
-        tournamentRepository.deleteById(id);
+    public void deleteById(TournamentId id) {
+        tournamentRepository.deleteById(id.value());
     }
 }

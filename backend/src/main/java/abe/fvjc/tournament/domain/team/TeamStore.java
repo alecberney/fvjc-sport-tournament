@@ -1,15 +1,24 @@
-package abe.fvjc.tournament.team.domain;
+package abe.fvjc.tournament.domain.team;
+
+import abe.fvjc.tournament.domain.group.GroupId;
+import abe.fvjc.tournament.domain.organisation.OrganisationId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface TeamStore {
     Team save(Team team);
-    Optional<Team> findById(UUID id);
-    List<Team> findAllByTournamentId(UUID tournamentId);
-    List<Team> findAllByGroupId(UUID groupId);
-    void deleteById(UUID id);
-    void deleteAllByTournamentId(UUID tournamentId);
-    long countByOrganisationId(UUID organisationId);
+
+    Optional<Team> findById(TeamId id);
+
+    List<Team> findAllByTournamentId(TournamentId tournamentId);
+
+    List<Team> findAllByGroupId(GroupId groupId);
+
+    void deleteById(TeamId id);
+
+    void deleteAllByTournamentId(TournamentId tournamentId);
+
+    long countByOrganisationId(OrganisationId organisationId);
 }

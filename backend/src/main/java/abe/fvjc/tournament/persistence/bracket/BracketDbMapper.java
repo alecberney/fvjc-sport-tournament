@@ -1,20 +1,19 @@
-package abe.fvjc.tournament.bracket.persistence;
+package abe.fvjc.tournament.persistence.bracket;
 
-import abe.fvjc.tournament.bracket.domain.BracketMatch;
-import abe.fvjc.tournament.bracket.domain.BracketMatchId;
-import abe.fvjc.tournament.bracket.domain.BracketRound;
-import abe.fvjc.tournament.bracket.domain.BracketRoundId;
-import abe.fvjc.tournament.schedule.domain.MatchResult;
-import abe.fvjc.tournament.schedule.domain.TeamRef;
-import abe.fvjc.tournament.team.domain.TeamId;
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.bracket.BracketMatch;
+import abe.fvjc.tournament.domain.bracket.BracketMatchId;
+import abe.fvjc.tournament.domain.bracket.BracketRound;
+import abe.fvjc.tournament.domain.bracket.BracketRoundId;
+import abe.fvjc.tournament.domain.schedule.MatchResult;
+import abe.fvjc.tournament.domain.team.TeamId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static abe.fvjc.tournament.schedule.domain.TeamRef.toTeamRef;
+import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
 
 @UtilityClass
 class BracketDbMapper {

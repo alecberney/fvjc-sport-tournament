@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.bracket.api;
+package abe.fvjc.tournament.api.bracket;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -9,6 +9,9 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 public class BracketMatchResultRequestDto {
-    @NotNull Integer score1;
-    @NotNull Integer score2;
+    @NotNull
+    Integer score1;
+
+    @NotNull
+    Integer score2;
 }

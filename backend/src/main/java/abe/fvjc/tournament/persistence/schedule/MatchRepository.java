@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.schedule.persistence;
+package abe.fvjc.tournament.persistence.schedule;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

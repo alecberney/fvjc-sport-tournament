@@ -1,13 +1,16 @@
-package abe.fvjc.tournament.schedule.api;
+package abe.fvjc.tournament.api.schedule;
 
-import abe.fvjc.tournament.schedule.domain.MatchOverview;
-import abe.fvjc.tournament.schedule.domain.RoundOverview;
-import abe.fvjc.tournament.schedule.domain.ScheduleGenerateRequest;
-import abe.fvjc.tournament.schedule.domain.ScheduleOverview;
-import abe.fvjc.tournament.schedule.domain.TeamRef;
+import abe.fvjc.tournament.domain.schedule.MatchOverview;
+import abe.fvjc.tournament.domain.schedule.RoundOverview;
+import abe.fvjc.tournament.domain.schedule.ScheduleGenerateRequest;
+import abe.fvjc.tournament.domain.schedule.ScheduleOverview;
 import lombok.experimental.UtilityClass;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import static abe.fvjc.tournament.api.team.TeamApiMapper.toTeamRefDto;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 @UtilityClass
 public class ScheduleApiMapper {
@@ -24,9 +27,7 @@ public class ScheduleApiMapper {
         return ScheduleDto.builder()
                 .totalRounds(overview.getTotalRounds())
                 .totalMatches(overview.getTotalMatches())
-                .rounds(overview.getRounds().stream()
-                        .map(ScheduleApiMapper::toRoundDto)
-                        .toList())
+                .rounds(toRoundDtos(overview.getRounds()))
                 .build();
     }
 
@@ -35,10 +36,14 @@ public class ScheduleApiMapper {
                 .id(overview.getId().value())
                 .number(overview.getNumber())
                 .startTime(overview.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                .matches(overview.getMatches().stream()
-                        .map(ScheduleApiMapper::toMatchDto)
-                        .toList())
+                .matches(toMatchDtos(overview.getMatches()))
                 .build();
+    }
+
+    private static List<RoundDto> toRoundDtos(final List<RoundOverview> overviews) {
+        return emptyIfNull(overviews).stream()
+                .map(ScheduleApiMapper::toRoundDto)
+                .toList();
     }
 
     static MatchDto toMatchDto(final MatchOverview overview) {
@@ -53,16 +58,15 @@ public class ScheduleApiMapper {
                 .field(overview.getField())
                 .groupId(overview.getGroupId().value())
                 .groupName(overview.getGroupName())
-                .team1(toMatchTeamDto(overview.getTeam1()))
-                .team2(toMatchTeamDto(overview.getTeam2()))
+                .team1(toTeamRefDto(overview.getTeam1()))
+                .team2(toTeamRefDto(overview.getTeam2()))
                 .result(result)
                 .build();
     }
 
-    private static MatchTeamDto toMatchTeamDto(final TeamRef ref) {
-        return MatchTeamDto.builder()
-                .id(ref.getId().value())
-                .name(ref.getName())
-                .build();
+    static List<MatchDto> toMatchDtos(final List<MatchOverview> overviews) {
+        return emptyIfNull(overviews).stream()
+                .map(ScheduleApiMapper::toMatchDto)
+                .toList();
     }
 }

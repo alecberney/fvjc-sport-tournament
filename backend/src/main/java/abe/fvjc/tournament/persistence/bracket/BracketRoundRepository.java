@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.bracket.persistence;
+package abe.fvjc.tournament.persistence.bracket;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,13 +1,13 @@
-package abe.fvjc.tournament.organisation.domain;
+package abe.fvjc.tournament.domain.organisation;
 
-import abe.fvjc.tournament.tournament.domain.TournamentId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 
 @Value
-@Builder
 @With
+@Builder
 public class Organisation {
     OrganisationId id;
     Person responsible;
