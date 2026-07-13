@@ -21,7 +21,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,17 +69,14 @@ public class ScheduleService {
                 .collect(Collectors.toMap(t -> t.getId().value(), t -> t));
         final var groupById = groups.stream()
                 .collect(Collectors.toMap(g -> g.getId().value(), g -> g));
-        final var matchesByGroupId = new LinkedHashMap<UUID, List<MatchPair>>();
+        final var allMatches = new ArrayList<MatchPair>();
         for (final var group : groups) {
             final var groupTeams = teamsByGroupId.getOrDefault(group.getId().value(), List.of());
             final var teamIds = groupTeams.stream().map(Team::getId).toList();
-            matchesByGroupId.put(group.getId().value(), generateGroupMatches(group.getId(), teamIds));
+            allMatches.addAll(generateGroupMatches(group.getId(), teamIds));
         }
-        final var fieldQueues = buildFieldQueues(groups, matchesByGroupId, tournament.getNumberOfFields());
-        final var totalRounds = fieldQueues.values().stream()
-                .mapToInt(List::size)
-                .max()
-                .orElse(0);
+        final var packedRounds = packRounds(allMatches, tournament.getNumberOfFields());
+        final var totalRounds = packedRounds.size();
         final var startTime = LocalTime.parse(request.getStartTime(), DateTimeFormatter.ofPattern("HH:mm"));
         final var firstRoundStart = LocalDateTime.of(tournament.getDate(), startTime);
         final var rounds = new ArrayList<Round>();
@@ -93,20 +91,17 @@ public class ScheduleService {
                     .number(r + 1)
                     .startTime(roundStart)
                     .build());
-            for (final var entry : fieldQueues.entrySet()) {
-                final var field = entry.getKey();
-                final var queue = entry.getValue();
-                if (r < queue.size()) {
-                    final var pair = queue.get(r);
-                    matches.add(Match.builder()
-                            .id(MatchId.of(UUID.randomUUID()))
-                            .roundId(roundId)
-                            .field(field)
-                            .groupId(pair.groupId())
-                            .team1Id(pair.team1Id())
-                            .team2Id(pair.team2Id())
-                            .build());
-                }
+            final var roundMatches = packedRounds.get(r);
+            for (int f = 0; f < roundMatches.size(); f++) {
+                final var pair = roundMatches.get(f);
+                matches.add(Match.builder()
+                        .id(MatchId.of(UUID.randomUUID()))
+                        .roundId(roundId)
+                        .field(f + 1)
+                        .groupId(pair.groupId())
+                        .team1Id(pair.team1Id())
+                        .team2Id(pair.team2Id())
+                        .build());
             }
         }
         roundStore.saveAll(rounds);
@@ -193,37 +188,91 @@ public class ScheduleService {
         return pairs;
     }
 
-    private static Map<Integer, List<MatchPair>> buildFieldQueues(
-            final List<Group> groups,
-            final Map<UUID, List<MatchPair>> matchesByGroupId,
-            final int numFields) {
-        final var groupMatchesByField = new LinkedHashMap<Integer, List<List<MatchPair>>>();
-        for (int f = 1; f <= numFields; f++) {
-            groupMatchesByField.put(f, new ArrayList<>());
-        }
-        for (int i = 0; i < groups.size(); i++) {
-            final var field = (i % numFields) + 1;
-            final var groupMatches = matchesByGroupId.getOrDefault(groups.get(i).getId().value(), List.of());
-            groupMatchesByField.get(field).add(new ArrayList<>(groupMatches));
-        }
-        final var fieldQueues = new LinkedHashMap<Integer, List<MatchPair>>();
-        for (int f = 1; f <= numFields; f++) {
-            final var queue = new ArrayList<MatchPair>();
-            final var groupLists = groupMatchesByField.get(f);
-            final var indices = new int[groupLists.size()];
-            while (true) {
-                var added = false;
-                for (int g = 0; g < groupLists.size(); g++) {
-                    if (indices[g] < groupLists.get(g).size()) {
-                        queue.add(groupLists.get(g).get(indices[g]));
-                        indices[g]++;
-                        added = true;
-                    }
+    private static List<List<MatchPair>> packRounds(final List<MatchPair> allMatches, final int numFields) {
+        final var remaining = new ArrayList<>(allMatches);
+        final var rounds = new ArrayList<List<MatchPair>>();
+        // Round index in which each team last played. Absent = has not played yet.
+        // Used to measure "rest" (rounds waited) and to detect back-to-back play.
+        final var lastPlayedRound = new HashMap<TeamId, Integer>();
+        var roundIndex = 0;
+        while (!remaining.isEmpty()) {
+            final var degrees = computeDegrees(remaining);
+            final var currentRound = roundIndex;
+            // Order remaining matches so the fairest one to play now sorts first:
+            //   1. Matches with NO team that played the previous round come first,
+            //      so we avoid back-to-back play whenever an alternative exists.
+            //   2. Among equals, the match whose least-rested team has waited the
+            //      longest comes first (min rest across the two teams, descending),
+            //      so the most starved team is served first and idle waits stay short.
+            //   3. Finally fall back to the remaining-degree heuristic (teams with
+            //      the most matches left first) so the total round count stays minimal.
+            remaining.sort((a, b) -> {
+                final var backToBackA = isBackToBack(a, lastPlayedRound, currentRound);
+                final var backToBackB = isBackToBack(b, lastPlayedRound, currentRound);
+                if (backToBackA != backToBackB) {
+                    return Boolean.compare(backToBackA, backToBackB);
                 }
-                if (!added) break;
+                final var restA = minRest(a, lastPlayedRound, currentRound);
+                final var restB = minRest(b, lastPlayedRound, currentRound);
+                if (restA != restB) {
+                    return Integer.compare(restB, restA);
+                }
+                final var degreeA = degrees.get(a.team1Id()) + degrees.get(a.team2Id());
+                final var degreeB = degrees.get(b.team1Id()) + degrees.get(b.team2Id());
+                return Integer.compare(degreeB, degreeA);
+            });
+            final var round = new ArrayList<MatchPair>();
+            final var usedTeams = new HashSet<TeamId>();
+            final var iterator = remaining.iterator();
+            while (iterator.hasNext() && round.size() < numFields) {
+                final var pair = iterator.next();
+                final var team1Free = !usedTeams.contains(pair.team1Id());
+                final var team2Free = !usedTeams.contains(pair.team2Id());
+                if (team1Free && team2Free) {
+                    round.add(pair);
+                    usedTeams.add(pair.team1Id());
+                    usedTeams.add(pair.team2Id());
+                    iterator.remove();
+                }
             }
-            fieldQueues.put(f, queue);
+            // Every team that played is now marked as having played this round,
+            // so later rounds can measure their rest and skip back-to-back matches.
+            for (final var team : usedTeams) {
+                lastPlayedRound.put(team, currentRound);
+            }
+            rounds.add(round);
+            roundIndex++;
         }
-        return fieldQueues;
+        return rounds;
+    }
+
+    // A match is "back-to-back" when either of its teams played in the immediately
+    // previous round. Such matches are only used to fill a field that would
+    // otherwise sit empty. MIN_VALUE default keeps never-played teams from matching
+    // the previous round (-1) in the very first round.
+    private static boolean isBackToBack(final MatchPair pair, final Map<TeamId, Integer> lastPlayedRound,
+                                        final int roundIndex) {
+        final var previousRound = roundIndex - 1;
+        return lastPlayedRound.getOrDefault(pair.team1Id(), Integer.MIN_VALUE) == previousRound
+                || lastPlayedRound.getOrDefault(pair.team2Id(), Integer.MIN_VALUE) == previousRound;
+    }
+
+    // Rest = rounds since a team last played (a never-played team counts as fully
+    // rested via the -1 default). A match's rest is the minimum across its two
+    // teams, so the more starved team drives how urgently the match is scheduled.
+    private static int minRest(final MatchPair pair, final Map<TeamId, Integer> lastPlayedRound,
+                               final int roundIndex) {
+        final var rest1 = roundIndex - lastPlayedRound.getOrDefault(pair.team1Id(), -1);
+        final var rest2 = roundIndex - lastPlayedRound.getOrDefault(pair.team2Id(), -1);
+        return Math.min(rest1, rest2);
+    }
+
+    private static Map<TeamId, Integer> computeDegrees(final List<MatchPair> matches) {
+        final var degrees = new HashMap<TeamId, Integer>();
+        for (final var pair : matches) {
+            degrees.merge(pair.team1Id(), 1, Integer::sum);
+            degrees.merge(pair.team2Id(), 1, Integer::sum);
+        }
+        return degrees;
     }
 }

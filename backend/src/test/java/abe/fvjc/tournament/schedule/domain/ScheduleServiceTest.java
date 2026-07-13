@@ -19,9 +19,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static abe.fvjc.tournament.schedule.domain.ScheduleFakes.*;
 import static abe.fvjc.tournament.tournament.domain.TournamentFakes.buildTournament;
@@ -120,7 +122,8 @@ class ScheduleServiceTest {
         final var groupId2 = GroupId.of(UUID.randomUUID());
         final var group1 = GroupFakes.buildGroup(tournament.getId()).withId(groupId1).withName("A");
         final var group2 = GroupFakes.buildGroup(tournament.getId()).withId(groupId2).withName("B");
-        // 3 teams per group → 3 round-robin matches each; 2 groups on 2 different fields → 3 rounds, 6 matches
+        // 3 teams per group → each group is a triangle: at most 1 match per group per round.
+        // With 2 groups that is 2 matches per round → 3 rounds, 6 matches (fields to spare).
         final var t1 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId1);
         final var t2 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId1);
         final var t3 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId1);
@@ -148,7 +151,7 @@ class ScheduleServiceTest {
     }
 
     @Test
-    void generateWhenTwoGroupsOnSameFieldShouldComputeTotalRoundsFromLongestQueue() {
+    void generateWhenSingleFieldShouldScheduleOneMatchPerRound() {
         final var tournament = buildTournament().withNumberOfFields(1);
         final var org = OrganisationId.of(UUID.randomUUID());
         final var groupId1 = GroupId.of(UUID.randomUUID());
@@ -175,11 +178,49 @@ class ScheduleServiceTest {
         verify(roundStore).saveAll(anyList());
         verify(matchStore).saveAll(anyList());
 
-        // Field 1 queue: [A0, B0, B1, B2, B3, B4, B5] → 7 slots → 7 rounds, 7 matches
+        // Only 1 field → at most 1 match per round → 7 matches spread over 7 rounds
         assertEquals(7, scheduleGenerated.getTotalRounds());
         assertEquals(7, scheduleGenerated.getTotalMatches());
         assertEquals(7, scheduleGenerated.getRounds().size());
         assertTrue(scheduleGenerated.getRounds().get(0).getMatches().size() >= 1);
+    }
+
+    @Test
+    void generateWhenSingleFieldShouldScheduleIdleGroupEarlyForRestFairness() {
+        final var tournament = buildTournament().withNumberOfFields(1);
+        final var org = OrganisationId.of(UUID.randomUUID());
+        final var groupId1 = GroupId.of(UUID.randomUUID());
+        final var groupId2 = GroupId.of(UUID.randomUUID());
+        final var group1 = GroupFakes.buildGroup(tournament.getId()).withId(groupId1).withName("A");
+        final var group2 = GroupFakes.buildGroup(tournament.getId()).withId(groupId2).withName("B");
+        final var tA1 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId1);
+        final var tA2 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId1);
+        final var tB1 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId2);
+        final var tB2 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId2);
+        final var tB3 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId2);
+        final var tB4 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId2);
+        final var request = buildGenerateRequest();
+
+        when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
+        when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group1, group2));
+        when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of());
+        when(teamStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(tA1, tA2, tB1, tB2, tB3, tB4));
+
+        final var scheduleGenerated = scheduleService.generate(tournament.getId().value(), request);
+
+        verify(roundStore).saveAll(anyList());
+        verify(matchStore).saveAll(anyList());
+
+        final var groupARoundNumber = scheduleGenerated.getRounds().stream()
+                .filter(round -> round.getMatches().stream()
+                        .anyMatch(match -> match.getGroupName().equals("A")))
+                .map(RoundOverview::getNumber)
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(7, scheduleGenerated.getTotalRounds());
+        assertTrue(groupARoundNumber <= 3,
+                "Group A should be scheduled early for rest fairness but was round " + groupARoundNumber);
     }
 
     @Test
@@ -206,6 +247,83 @@ class ScheduleServiceTest {
         verify(roundStore).deleteAllByTournamentId(tournament.getId().value());
         verify(roundStore).saveAll(anyList());
         verify(matchStore).saveAll(anyList());
+    }
+
+    @Test
+    void generateWhenGroupLargerThanFieldsShouldPackSameGroupMatchesInOneRound() {
+        final var tournament = buildTournament(); // 4 fields
+        final var org = OrganisationId.of(UUID.randomUUID());
+        final var groupId = GroupId.of(UUID.randomUUID());
+        final var group = GroupFakes.buildGroup(tournament.getId()).withId(groupId).withName("A");
+        // 4 teams → 6 round-robin matches, each team plays 3 → minimum 3 rounds,
+        // two disjoint matches of the SAME group can share a round → 2 matches per round.
+        final var t1 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId);
+        final var t2 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId);
+        final var t3 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId);
+        final var t4 = TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId);
+        final var request = buildGenerateRequest();
+
+        when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
+        when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group));
+        when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of());
+        when(teamStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(t1, t2, t3, t4));
+
+        final var scheduleGenerated = scheduleService.generate(tournament.getId().value(), request);
+
+        verify(roundStore).saveAll(anyList());
+        verify(matchStore).saveAll(anyList());
+
+        assertEquals(3, scheduleGenerated.getTotalRounds());
+        assertEquals(6, scheduleGenerated.getTotalMatches());
+        scheduleGenerated.getRounds().forEach(round -> assertEquals(2, round.getMatches().size()));
+    }
+
+    @Test
+    void generateShouldFillAllFieldsAndNeverScheduleTeamTwiceInSameRound() {
+        final var tournament = buildTournament(); // 4 fields
+        final var org = OrganisationId.of(UUID.randomUUID());
+        final var groupId1 = GroupId.of(UUID.randomUUID());
+        final var groupId2 = GroupId.of(UUID.randomUUID());
+        final var group1 = GroupFakes.buildGroup(tournament.getId()).withId(groupId1).withName("A");
+        final var group2 = GroupFakes.buildGroup(tournament.getId()).withId(groupId2).withName("B");
+        // Two groups of 4 teams → 12 matches; each group contributes 2 disjoint matches per round,
+        // filling all 4 fields → 3 rounds of 4 matches.
+        final var teams = new ArrayList<Team>();
+        for (int i = 0; i < 4; i++) {
+            teams.add(TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId1));
+        }
+        for (int i = 0; i < 4; i++) {
+            teams.add(TeamFakes.buildTeam(org, tournament.getId()).withGroupId(groupId2));
+        }
+        final var request = buildGenerateRequest();
+
+        when(tournamentStore.findById(tournament.getId().value())).thenReturn(Optional.of(tournament));
+        when(groupStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of(group1, group2));
+        when(roundStore.findAllByTournamentId(tournament.getId().value())).thenReturn(List.of());
+        when(teamStore.findAllByTournamentId(tournament.getId().value())).thenReturn(teams);
+
+        final var scheduleGenerated = scheduleService.generate(tournament.getId().value(), request);
+
+        verify(roundStore).saveAll(anyList());
+        verify(matchStore).saveAll(anyList());
+
+        assertEquals(3, scheduleGenerated.getTotalRounds());
+        assertEquals(12, scheduleGenerated.getTotalMatches());
+        scheduleGenerated.getRounds().forEach(round -> {
+            assertEquals(4, round.getMatches().size());
+
+            final var teamIds = round.getMatches().stream()
+                    .flatMap(m -> Stream.of(m.getTeam1().getId(), m.getTeam2().getId()))
+                    .toList();
+            final var distinctTeamIds = teamIds.stream().distinct().toList();
+            final var distinctFields = round.getMatches().stream()
+                    .map(MatchOverview::getField)
+                    .distinct()
+                    .toList();
+
+            assertEquals(teamIds.size(), distinctTeamIds.size());
+            assertEquals(round.getMatches().size(), distinctFields.size());
+        });
     }
 
     @Test
