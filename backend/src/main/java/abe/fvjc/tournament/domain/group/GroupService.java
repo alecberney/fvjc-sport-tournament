@@ -71,6 +71,10 @@ public class GroupService {
                 .toList();
     }
 
+    public void deleteAllByTournamentId(final UUID tournamentId) {
+        groupStore.deleteAllByTournamentId(tournamentId);
+    }
+
     public List<GroupOverview> swap(final UUID tournamentId, final GroupSwapRequest request) {
         final var tournament = tournamentStore.findById(tournamentId)
             .orElseThrow(() -> new NotFoundException("Tournament", tournamentId));

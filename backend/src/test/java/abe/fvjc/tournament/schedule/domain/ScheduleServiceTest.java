@@ -12,6 +12,7 @@ import abe.fvjc.tournament.team.domain.Team;
 import abe.fvjc.tournament.team.domain.TeamFakes;
 import abe.fvjc.tournament.team.domain.TeamStore;
 import abe.fvjc.tournament.tournament.domain.TournamentFakes;
+import abe.fvjc.tournament.tournament.domain.TournamentId;
 import abe.fvjc.tournament.tournament.domain.TournamentStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -324,6 +325,33 @@ class ScheduleServiceTest {
             assertEquals(teamIds.size(), distinctTeamIds.size());
             assertEquals(round.getMatches().size(), distinctFields.size());
         });
+    }
+
+    @Test
+    void deleteAllByTournamentIdWhenRoundsExistShouldDeleteMatchesThenRounds() {
+        final var tournamentId = UUID.randomUUID();
+        final var round = ScheduleFakes.buildRound(TournamentId.of(tournamentId));
+
+        when(roundStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(round));
+
+        scheduleService.deleteAllByTournamentId(tournamentId);
+
+        verify(roundStore).findAllByTournamentId(tournamentId);
+        verify(matchStore).deleteAllByRoundIds(List.of(round.getId().value()));
+        verify(roundStore).deleteAllByTournamentId(tournamentId);
+    }
+
+    @Test
+    void deleteAllByTournamentIdWhenNoRoundsShouldNotDeleteAnything() {
+        final var tournamentId = UUID.randomUUID();
+
+        when(roundStore.findAllByTournamentId(tournamentId)).thenReturn(List.of());
+
+        scheduleService.deleteAllByTournamentId(tournamentId);
+
+        verify(roundStore).findAllByTournamentId(tournamentId);
+        verify(matchStore, never()).deleteAllByRoundIds(anyList());
+        verify(roundStore, never()).deleteAllByTournamentId(tournamentId);
     }
 
     @Test

@@ -318,4 +318,13 @@ class GroupServiceTest {
 
         assertEquals(3, groupsGenerated.size());
     }
+
+    @Test
+    void deleteAllByTournamentIdShouldDeleteGroups() {
+        final var tournamentId = UUID.randomUUID();
+
+        groupService.deleteAllByTournamentId(tournamentId);
+
+        verify(groupStore).deleteAllByTournamentId(tournamentId);
+    }
 }

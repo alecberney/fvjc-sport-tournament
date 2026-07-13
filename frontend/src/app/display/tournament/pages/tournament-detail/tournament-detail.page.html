@@ -6,6 +6,10 @@
         Inscrire des équipes
       </button>
     }
+    <button mat-stroked-button color="warn" (click)="openDeleteModal(tournament)">
+      <mat-icon>delete</mat-icon>
+      Supprimer
+    </button>
   </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 

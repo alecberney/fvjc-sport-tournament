@@ -10,8 +10,9 @@ import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { Tournament } from '@app/domain/tournament/tournament.model';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
-import { LoadTournaments } from '@app/domain/tournament/tournament.actions';
+import { DeleteTournament, LoadTournaments } from '@app/domain/tournament/tournament.actions';
 import { TournamentCreateModal } from '@app/display/tournament/pages/tournament-create/tournament-create.modal';
+import { TournamentDeleteConfirmModal } from '@app/display/tournament/components/tournament-delete-confirm/tournament-delete-confirm.modal';
 
 @Component({
   selector: 'app-tournament-list-page',
@@ -33,5 +34,18 @@ export class TournamentListPage implements OnInit {
 
   openCreateModal(): void {
     this.dialog.open(TournamentCreateModal);
+  }
+
+  openDeleteModal(tournament: Tournament, event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.dialog
+      .open(TournamentDeleteConfirmModal, { data: { name: tournament.name } })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(new DeleteTournament(tournament.id));
+        }
+      });
   }
 }

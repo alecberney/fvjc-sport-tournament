@@ -7,4 +7,5 @@ public interface OrganisationStore {
     Organisation save(Organisation organisation);
     Optional<Organisation> findById(UUID id);
     void deleteById(UUID id);
+    void deleteAllByTournamentId(UUID tournamentId);
 }

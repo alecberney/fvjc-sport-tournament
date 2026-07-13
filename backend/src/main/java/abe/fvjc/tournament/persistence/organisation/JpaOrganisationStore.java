@@ -38,4 +38,10 @@ class JpaOrganisationStore implements OrganisationStore {
     public void deleteById(final UUID id) {
         organisationRepository.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public void deleteAllByTournamentId(final UUID tournamentId) {
+        organisationRepository.deleteByTournamentId(tournamentId);
+    }
 }

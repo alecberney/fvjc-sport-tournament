@@ -89,6 +89,11 @@ public class TeamService {
         }
     }
 
+    public void deleteAllByTournamentId(final UUID tournamentId) {
+        teamStore.deleteAllByTournamentId(tournamentId);
+        organisationStore.deleteAllByTournamentId(tournamentId);
+    }
+
     public TeamOverview markPaid(final UUID teamId, final boolean paid) {
         final var team = teamStore.findById(teamId)
             .orElseThrow(() -> new NotFoundException("Team", teamId));

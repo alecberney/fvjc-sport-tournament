@@ -10,5 +10,6 @@ public interface TeamStore {
     List<Team> findAllByTournamentId(UUID tournamentId);
     List<Team> findAllByGroupId(UUID groupId);
     void deleteById(UUID id);
+    void deleteAllByTournamentId(UUID tournamentId);
     long countByOrganisationId(UUID organisationId);
 }

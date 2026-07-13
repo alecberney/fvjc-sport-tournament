@@ -344,6 +344,22 @@ class BracketServiceTest {
         verify(bracketMatchStore).findById(matchId);
     }
 
+    @Test
+    void deleteAllByTournamentIdShouldDeleteBracketMatchesThenRounds() {
+        final var tournamentId = UUID.randomUUID();
+        final var round = BracketRound.builder()
+                .id(BracketRoundId.of(UUID.randomUUID()))
+                .build();
+
+        when(bracketRoundStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(round));
+
+        bracketService.deleteAllByTournamentId(tournamentId);
+
+        verify(bracketRoundStore).findAllByTournamentId(tournamentId);
+        verify(bracketMatchStore).deleteAllByRoundId(round.getId().value());
+        verify(bracketRoundStore).deleteAllByTournamentId(tournamentId);
+    }
+
     private static GroupRanking buildRanking(final GroupId groupId, final String groupName, final int numEntries) {
         final var entries = new ArrayList<GroupRankingEntry>();
         for (int i = 1; i <= numEntries; i++) {

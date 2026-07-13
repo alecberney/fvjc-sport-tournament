@@ -56,6 +56,12 @@ class JpaTeamStore implements TeamStore {
     }
 
     @Override
+    @Transactional
+    public void deleteAllByTournamentId(final UUID tournamentId) {
+        teamRepository.deleteByTournamentId(tournamentId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public long countByOrganisationId(final UUID organisationId) {
         return teamRepository.countByOrganisationId(organisationId);

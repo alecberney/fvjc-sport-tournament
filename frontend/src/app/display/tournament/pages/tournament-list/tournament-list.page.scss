@@ -55,3 +55,9 @@
   --mat-chip-elevated-container-color: var(--mat-sys-primary);
   --mat-chip-label-text-color: var(--mat-sys-on-primary);
 }
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

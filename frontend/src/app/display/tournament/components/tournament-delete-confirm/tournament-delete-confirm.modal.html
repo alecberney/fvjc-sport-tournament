@@ -1,0 +1,15 @@
+<h2 mat-dialog-title>Supprimer le tournoi</h2>
+
+<mat-dialog-content>
+  <p>Êtes-vous sûr de vouloir supprimer le tournoi <strong>{{ data.name }}</strong> ?</p>
+  <p>Toutes les données associées (équipes, groupes, calendrier et tableau final) seront définitivement supprimées.</p>
+  <p><strong>Cette action est irréversible.</strong></p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="warn" (click)="confirm()">
+    <mat-icon>delete</mat-icon>
+    Supprimer
+  </button>
+</mat-dialog-actions>

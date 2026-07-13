@@ -27,12 +27,20 @@
               <span>{{ tournament.minPlayersPerTeam }}–{{ tournament.maxPlayersPerTeam }} joueurs/équipe</span>
             </div>
           </mat-card-content>
-          <mat-card-actions>
+          <mat-card-actions class="card-actions">
             <mat-chip-set>
               <mat-chip [class.chip-active]="tournament.status !== 'DRAFT'">
                 {{ tournament.status === 'DRAFT' ? 'Brouillon' : 'En cours' }}
               </mat-chip>
             </mat-chip-set>
+            <button
+              mat-icon-button
+              color="warn"
+              aria-label="Supprimer le tournoi"
+              (click)="openDeleteModal(tournament, $event)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
           </mat-card-actions>
         </mat-card>
       }

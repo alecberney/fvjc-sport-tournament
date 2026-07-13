@@ -1,8 +1,12 @@
 package abe.fvjc.tournament.tournament.domain;
 
+import abe.fvjc.tournament.bracket.domain.BracketService;
+import abe.fvjc.tournament.group.domain.GroupService;
 import abe.fvjc.tournament.schedule.domain.RoundStore;
+import abe.fvjc.tournament.schedule.domain.ScheduleService;
 import abe.fvjc.tournament.shared.exception.ConflictException;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
+import abe.fvjc.tournament.team.domain.TeamService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +34,18 @@ class TournamentServiceTest {
 
     @Mock
     private TournamentStore tournamentStore;
+
+    @Mock
+    private BracketService bracketService;
+
+    @Mock
+    private GroupService groupService;
+
+    @Mock
+    private ScheduleService scheduleService;
+
+    @Mock
+    private TeamService teamService;
 
     @InjectMocks
     private TournamentService tournamentService;
@@ -81,6 +97,35 @@ class TournamentServiceTest {
         verify(tournamentStore).findById(id);
 
         assertEquals(tournament, tournamentFound);
+    }
+
+    @Test
+    void deleteWhenNotFoundShouldThrowNotFoundException() {
+        final var id = tournamentId().value();
+
+        when(tournamentStore.findById(id)).thenReturn(Optional.empty());
+
+        final var exception = assertThrows(NotFoundException.class, () -> tournamentService.delete(id));
+
+        verify(tournamentStore).findById(id);
+
+        assertEquals("Tournament not found with id: " + id, exception.getMessage());
+    }
+
+    @Test
+    void deleteWhenExistsShouldCascadeAndDeleteTournament() {
+        final var tournament = buildTournament();
+        final var id = tournament.getId().value();
+
+        when(tournamentStore.findById(id)).thenReturn(Optional.of(tournament));
+
+        tournamentService.delete(id);
+
+        verify(bracketService).deleteAllByTournamentId(id);
+        verify(scheduleService).deleteAllByTournamentId(id);
+        verify(groupService).deleteAllByTournamentId(id);
+        verify(teamService).deleteAllByTournamentId(id);
+        verify(tournamentStore).deleteById(id);
     }
 
     @Test

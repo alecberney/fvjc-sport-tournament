@@ -54,9 +54,7 @@ public class BracketService {
             }
         }
 
-        final var existingRounds = bracketRoundStore.findAllByTournamentId(tournamentId);
-        existingRounds.forEach(r -> bracketMatchStore.deleteAllByRoundId(r.getId().value()));
-        bracketRoundStore.deleteAllByTournamentId(tournamentId);
+        deleteAllByTournamentId(tournamentId);
 
         final var round1Pairs = buildRound1Pairs(groupRankings, qualifiersPerGroup, extraQualifiers, request.getTieBreaker());
         final var totalTeams = request.getTotalQualifiedTeams();
@@ -148,6 +146,12 @@ public class BracketService {
         return savedRounds.stream()
                 .map(r -> r.withMatches(matchesByRound.get(r.getNumber() - 1)))
                 .toList();
+    }
+
+    public void deleteAllByTournamentId(final UUID tournamentId) {
+        final var existingRounds = bracketRoundStore.findAllByTournamentId(tournamentId);
+        existingRounds.forEach(r -> bracketMatchStore.deleteAllByRoundId(r.getId().value()));
+        bracketRoundStore.deleteAllByTournamentId(tournamentId);
     }
 
     public List<BracketRound> findAll(final UUID tournamentId) {

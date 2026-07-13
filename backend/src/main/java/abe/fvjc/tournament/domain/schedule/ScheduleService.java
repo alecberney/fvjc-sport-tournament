@@ -59,8 +59,7 @@ public class ScheduleService {
             if (matchStore.existsResultByRoundIds(existingRoundIds)) {
                 throw new ConflictException("Impossible de régénérer le calendrier : des résultats ont déjà été saisis");
             }
-            matchStore.deleteAllByRoundIds(existingRoundIds);
-            roundStore.deleteAllByTournamentId(tournamentId);
+            deleteAllByTournamentId(tournamentId);
         }
         final var allTeams = teamStore.findAllByTournamentId(tournamentId);
         final var teamsByGroupId = allTeams.stream()
@@ -107,6 +106,18 @@ public class ScheduleService {
         roundStore.saveAll(rounds);
         matchStore.saveAll(matches);
         return buildScheduleOverview(rounds, matches, groupById, teamById);
+    }
+
+    public void deleteAllByTournamentId(final UUID tournamentId) {
+        final var existingRounds = roundStore.findAllByTournamentId(tournamentId);
+        if (existingRounds.isEmpty()) {
+            return;
+        }
+        final var existingRoundIds = existingRounds.stream()
+                .map(r -> r.getId().value())
+                .toList();
+        matchStore.deleteAllByRoundIds(existingRoundIds);
+        roundStore.deleteAllByTournamentId(tournamentId);
     }
 
     public ScheduleOverview findByTournamentId(final UUID tournamentId) {

@@ -262,4 +262,14 @@ class TeamServiceTest {
 
         verify(teamStore).findById(teamId);
     }
+
+    @Test
+    void deleteAllByTournamentIdShouldDeleteTeamsThenOrganisations() {
+        final var tournamentId = UUID.randomUUID();
+
+        teamService.deleteAllByTournamentId(tournamentId);
+
+        verify(teamStore).deleteAllByTournamentId(tournamentId);
+        verify(organisationStore).deleteAllByTournamentId(tournamentId);
+    }
 }

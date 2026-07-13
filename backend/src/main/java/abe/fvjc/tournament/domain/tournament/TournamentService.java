@@ -1,8 +1,12 @@
 package abe.fvjc.tournament.tournament.domain;
 
+import abe.fvjc.tournament.bracket.domain.BracketService;
+import abe.fvjc.tournament.group.domain.GroupService;
 import abe.fvjc.tournament.schedule.domain.RoundStore;
+import abe.fvjc.tournament.schedule.domain.ScheduleService;
 import abe.fvjc.tournament.shared.exception.ConflictException;
 import abe.fvjc.tournament.shared.exception.NotFoundException;
+import abe.fvjc.tournament.team.domain.TeamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +22,10 @@ import static abe.fvjc.tournament.tournament.domain.TournamentValidator.validate
 public class TournamentService {
     private final RoundStore roundStore;
     private final TournamentStore tournamentStore;
+    private final BracketService bracketService;
+    private final GroupService groupService;
+    private final ScheduleService scheduleService;
+    private final TeamService teamService;
 
     public Tournament create(final TournamentCreateRequest request) {
         validateTournamentCreateRequest(request);
@@ -36,6 +44,10 @@ public class TournamentService {
 
     public void delete(final UUID id) {
         findById(id);
+        bracketService.deleteAllByTournamentId(id);
+        scheduleService.deleteAllByTournamentId(id);
+        groupService.deleteAllByTournamentId(id);
+        teamService.deleteAllByTournamentId(id);
         tournamentStore.deleteById(id);
     }
 
