@@ -44,7 +44,22 @@
   border-top: 1px solid var(--mat-sys-outline-variant);
 
   .team-name { font-size: 14px; }
-  .team-actions { display: flex; gap: 4px; }
+  .team-actions { display: flex; gap: 4px; align-items: center; }
+}
+
+.team-header-row {
+  padding-top: 4px;
+  padding-bottom: 4px;
+
+  .paid-header {
+    width: 40px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .action-spacer { width: 40px; }
 }
 
 .empty-state {

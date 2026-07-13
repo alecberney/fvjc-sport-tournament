@@ -33,6 +33,16 @@
               <mat-icon>person</mat-icon>
               <span>{{ group.responsibleName }}</span>
             </div>
+            <div class="team-row team-header-row">
+              <span class="team-name"></span>
+              <div class="team-actions">
+                <span class="paid-header">Payé</span>
+                @if (isDraft(tournament)) {
+                  <span class="action-spacer"></span>
+                  <span class="action-spacer"></span>
+                }
+              </div>
+            </div>
             @for (team of group.teams; track team.id) {
               <div class="team-row">
                 <span class="team-name">{{ team.name }}</span>

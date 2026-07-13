@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,13 +15,14 @@ import { LoadGroups } from '@app/domain/group/group.actions';
 import { GroupListComponent, SwapRequest } from '@app/display/tournament/components/group-list/group-list.component';
 import { GroupGenerateModal } from '@app/display/tournament/pages/group-generate/group-generate.modal';
 import { TeamSwapModal } from '@app/display/tournament/pages/team-swap/team-swap.modal';
+import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 
 @Component({
   selector: 'app-tournament-groups-page',
   templateUrl: './tournament-groups.page.html',
   styleUrl: './tournament-groups.page.scss',
   standalone: true,
-  imports: [AsyncPipe, RouterLink, MatButtonModule, MatIconModule, GroupListComponent],
+  imports: [AsyncPipe, MatButtonModule, MatIconModule, GroupListComponent, TournamentNavComponent],
 })
 export class TournamentGroupsPage implements OnInit {
 
@@ -32,7 +33,7 @@ export class TournamentGroupsPage implements OnInit {
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly groups$: Observable<Group[]> = this.store.select(GroupState.getGroups);
 
-  private tournamentId!: string;
+  protected tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;

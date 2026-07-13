@@ -4,14 +4,7 @@
   align-items: center;
   margin-bottom: 32px;
 
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    h1 { margin: 0; font-size: 24px; }
-    .subtitle { color: var(--mat-sys-on-surface-variant); font-size: 14px; }
-  }
+  h1 { margin: 0; font-size: 24px; }
 }
 
 .empty-state {

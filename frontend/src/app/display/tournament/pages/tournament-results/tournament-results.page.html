@@ -4,6 +4,16 @@
   </div>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
+  @if (isDraft(tournament)) {
+    <div class="empty-state">
+      <mat-icon>play_circle</mat-icon>
+      <p>Démarrez le tournoi pour saisir les résultats</p>
+      <a mat-raised-button color="primary" [routerLink]="['/', tournamentId, 'schedule']">
+        <mat-icon>calendar_month</mat-icon>
+        Aller à l'horaire
+      </a>
+    </div>
+  } @else {
   <div class="results-layout">
     <div class="schedule-panel">
       @if (schedule$ | async; as schedule) {
@@ -103,4 +113,5 @@
       }
     </div>
   </div>
+  }
 }

@@ -6,14 +6,12 @@
 .bracket-layout {
   display: grid;
   grid-template-columns: 1fr 360px;
+  align-items: start;
   gap: 24px;
   padding: 16px 24px;
-  height: calc(100vh - 120px);
-  overflow: hidden;
 }
 
 .bracket-panel {
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -63,7 +61,8 @@
 }
 
 .detail-panel {
-  overflow-y: auto;
+  position: sticky;
+  top: 16px;
 }
 
 .result-form {

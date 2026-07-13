@@ -1,14 +1,6 @@
 @if (tournament$ | async; as tournament) {
   <div class="page-header">
-    <div class="header-left">
-      <button mat-icon-button [routerLink]="['..']">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      <div>
-        <h1>{{ tournament.name }}</h1>
-        <span class="subtitle">Groupes</span>
-      </div>
-    </div>
+    <h1>{{ tournament.name }}</h1>
     @if (isDraft(tournament)) {
       <button mat-raised-button color="primary" (click)="openGenerateModal()">
         <mat-icon>shuffle</mat-icon>
@@ -16,6 +8,7 @@
       </button>
     }
   </div>
+  <app-tournament-nav [tournamentId]="tournamentId" />
 
   @if (groups$ | async; as groups) {
     @if (groups.length === 0) {

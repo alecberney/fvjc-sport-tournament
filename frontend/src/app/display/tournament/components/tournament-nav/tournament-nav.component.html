@@ -9,6 +9,14 @@
     Équipes
   </a>
   <a mat-tab-link
+     [routerLink]="['/', tournamentId, 'groups']"
+     routerLinkActive
+     #groupesLink="routerLinkActive"
+     [active]="groupesLink.isActive">
+    <mat-icon>grid_view</mat-icon>
+    Groupes
+  </a>
+  <a mat-tab-link
      [routerLink]="['/', tournamentId, 'schedule']"
      routerLinkActive
      #horaireLink="routerLinkActive"
