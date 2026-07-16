@@ -1,15 +1,16 @@
-name: Build Jar
+name: Release Jar
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  build-jar:
-    name: Build & commit jar
+  release-jar:
+    name: Build & attach jar to release
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,16 +29,12 @@ jobs:
       - name: Build jar
         run: ./mvnw --batch-mode package
 
-      - name: Copy jar to root dist folder
+      # Attach the freshly built jar to the release for this tag, creating the
+      # release if it does not exist yet. --clobber replaces an existing asset.
+      - name: Publish jar to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p ../dist
-          rm -f ../dist/*.jar
-          cp target/*.jar ../dist/
-
-      - name: Commit and push jar
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ../dist
-          git diff --cached --quiet && echo "No changes to commit" || git commit -m "chore: update built jar [skip ci]"
-          git push
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "Automated release build."
+          gh release upload "$GITHUB_REF_NAME" target/*.jar --clobber
