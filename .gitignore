@@ -1,5 +1,5 @@
 # Database
-/database/*.db
+/backend/database/*.db
 
 # Frontend
 /frontend/node_modules/
@@ -31,11 +31,14 @@
 *.tar.gz
 *.rar
 
+# Distributed release jar (tracked so it can be downloaded from the repo)
+!/dist/*.jar
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
 
 # IntelliJ IDEA
 /backend/.idea/
-/database/.idea/
+/backend/database/.idea/
 *.iml

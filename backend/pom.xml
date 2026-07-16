@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>abe.fvjc</groupId>
 	<artifactId>tournament</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>tournament</name>
 	<description>FVJC Tournament app by Alec Berney</description>
 	<url/>
