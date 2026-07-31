@@ -1,0 +1,42 @@
+// Shared, reusable style classes used across pages and components.
+// These live in the global stylesheet (no view encapsulation), so any page or
+// component template can reference the class names directly.
+
+// Centered "nothing here yet" placeholder with an icon and an optional message + action.
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin-bottom: 16px;
+  }
+}
+
+// A row of side-by-side form fields that share the available width evenly.
+.responsible-row {
+  display: flex;
+  gap: 8px;
+
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+// Vertical form layout used inside dialog modals.
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 420px;
+  padding-top: 8px;
+}

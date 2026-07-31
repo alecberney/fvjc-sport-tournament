@@ -21,7 +21,6 @@ import { TournamentHeaderComponent } from '@app/display/tournament/components/to
 @Component({
   selector: 'app-tournament-groups-page',
   templateUrl: './tournament-groups.page.html',
-  styleUrl: './tournament-groups.page.scss',
   standalone: true,
   imports: [AsyncPipe, MatButtonModule, MatIconModule, GroupListComponent, TournamentNavComponent, TournamentHeaderComponent],
 })

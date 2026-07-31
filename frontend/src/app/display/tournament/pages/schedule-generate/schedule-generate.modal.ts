@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,19 +24,22 @@ export class ScheduleGenerateModal implements OnInit, OnDestroy {
   private readonly data = inject<{ tournamentId: string }>(MAT_DIALOG_DATA);
   private readonly destroy$ = new Subject<void>();
 
-  form!: FormGroup;
+  readonly form = this.fb.group({
+    startTime: ['09:00', [Validators.required, Validators.pattern(/^\d{2}:\d{2}$/)]],
+    matchDurationMinutes: [20, [Validators.required, Validators.min(1)]],
+    breakDurationMinutes: [5, [Validators.required, Validators.min(0)]],
+  });
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      startTime: ['09:00', [Validators.required, Validators.pattern(/^\d{2}:\d{2}$/)]],
-      matchDurationMinutes: [20, [Validators.required, Validators.min(1)]],
-      breakDurationMinutes: [5, [Validators.required, Validators.min(0)]],
-    });
-
     this.actions$.pipe(
       ofActionSuccessful(GenerateSchedule),
       takeUntil(this.destroy$),
     ).subscribe(() => this.dialogRef.close());
+  }
+
+  isStartTimeInvalid(): boolean {
+    return this.form.controls.startTime.hasError('required')
+      || this.form.controls.startTime.hasError('pattern');
   }
 
   ngOnDestroy(): void {

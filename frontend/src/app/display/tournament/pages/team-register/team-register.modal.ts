@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -32,10 +32,16 @@ export class TeamRegisterModal implements OnInit, OnDestroy {
   private readonly data = inject<{ tournamentId: string }>(MAT_DIALOG_DATA);
   private readonly destroy$ = new Subject<void>();
 
-  form!: FormGroup;
+  readonly form = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(250)]],
+    responsibleFirstName: ['', [Validators.required, Validators.maxLength(100)]],
+    responsibleLastName: ['', [Validators.required, Validators.maxLength(100)]],
+    count: [1, [Validators.required, Validators.min(1)]],
+    paid: this.fb.array([this.fb.control(false)]),
+  });
 
   get paidArray(): FormArray {
-    return this.form.get('paid') as FormArray;
+    return this.form.controls.paid;
   }
 
   get paidControls() {
@@ -43,15 +49,7 @@ export class TeamRegisterModal implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      name: ['', [Validators.required, Validators.maxLength(250)]],
-      responsibleFirstName: ['', [Validators.required, Validators.maxLength(100)]],
-      responsibleLastName: ['', [Validators.required, Validators.maxLength(100)]],
-      count: [1, [Validators.required, Validators.min(1)]],
-      paid: this.fb.array([this.fb.control(false)]),
-    });
-
-    this.form.get('count')!.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(count => {
+    this.form.controls.count.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(count => {
       this.syncPaidArray(Number(count) || 1);
     });
 
@@ -68,11 +66,11 @@ export class TeamRegisterModal implements OnInit, OnDestroy {
 
   submit(): void {
     if (this.form.invalid) return;
-    const { name, responsibleFirstName, responsibleLastName, count, paid } = this.form.value;
+    const { name, responsibleFirstName, responsibleLastName, count, paid } = this.form.getRawValue();
     this.store.dispatch(new RegisterTeams(this.data.tournamentId, {
-      name,
-      responsibleFirstName,
-      responsibleLastName,
+      name: name!,
+      responsibleFirstName: responsibleFirstName!,
+      responsibleLastName: responsibleLastName!,
       count: Number(count),
       paid: paid as boolean[],
     }));
@@ -83,8 +81,8 @@ export class TeamRegisterModal implements OnInit, OnDestroy {
   }
 
   teamLabel(index: number): string {
-    const name = this.form.get('name')?.value || '—';
-    return this.form.get('count')?.value === 1 ? name : `${name} ${index + 1}`;
+    const name = this.form.value.name || '—';
+    return this.form.value.count === 1 ? name : `${name} ${index + 1}`;
   }
 
   private syncPaidArray(count: number): void {

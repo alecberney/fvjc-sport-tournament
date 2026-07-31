@@ -6,7 +6,7 @@
         Générer l'horaire
       </button>
     }
-    @if (isDraft(tournament) && (schedule$ | async)?.totalRounds! > 0) {
+    @if (canStartTournament(tournament, schedule$ | async)) {
       <button mat-raised-button color="accent" (click)="startTournament()">
         <mat-icon>play_arrow</mat-icon>
         Démarrer le tournoi

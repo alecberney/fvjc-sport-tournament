@@ -386,6 +386,90 @@ export class TournamentCardComponent {
 - Pages use `store.select()` and `store.dispatch()`.
 - Components are pure — they only receive inputs and emit outputs.
 
+### Typed Forms
+
+Reactive forms are **typed** (`FormGroup<...>`). Access controls through the typed `form.controls` / `form.value` properties directly — **never** the stringly-typed `form.get('...')` accessor. `get('...')` returns `AbstractControl | null` and loses the value type; the typed property preserves it and is checked by the compiler.
+
+```typescript
+// WRONG — stringly-typed, loses the type, returns AbstractControl | null
+const duration = this.form.get('matchDurationMinutes')?.value;
+this.form.get('matchDurationMinutes')?.setValue(30);
+this.form.get('matchDurationMinutes')?.invalid;
+```
+
+```typescript
+// CORRECT — typed property access on the form
+const duration = this.form.controls.matchDurationMinutes.value;
+this.form.controls.matchDurationMinutes.setValue(30);
+this.form.controls.matchDurationMinutes.invalid;
+
+// value shortcut when reading only
+const duration = this.form.value.matchDurationMinutes;
+```
+
+- Applies everywhere a control is accessed — in components, pages, and templates.
+- In templates, bind through the typed control too: `form.controls.matchDurationMinutes` — never `form.get('matchDurationMinutes')`.
+
+### Template Conditions
+
+A `@if` / `@else if` condition made of **multiple parts combined with `||` or `&&`** must not live in the template — extract it into a method (or getter) on the `.ts` returning `boolean`, and call that from the template. A single, atomic expression (one comparison, one method call, one truthy check) stays inline.
+
+```html
+<!-- WRONG — compound logic in the template -->
+@if (form.controls.startTime.hasError('required') || form.controls.startTime.hasError('pattern')) { ... }
+@if (isDraft(tournament) && (schedule$ | async)?.totalRounds! > 0) { ... }
+```
+
+```html
+<!-- CORRECT — the template reads a single named intent -->
+@if (isStartTimeInvalid()) { ... }
+@if (canStartTournament(tournament, schedule$ | async)) { ... }
+```
+
+```typescript
+protected isStartTimeInvalid(): boolean {
+  return this.form.controls.startTime.hasError('required')
+    || this.form.controls.startTime.hasError('pattern');
+}
+
+protected canStartTournament(tournament: Tournament, schedule: Schedule | null | undefined): boolean {
+  return this.isDraft(tournament) && !!schedule && schedule.totalRounds > 0;
+}
+```
+
+- Applies to `@if`, `@else if`, and any structural condition — the moment two or more conditions are joined by `||` / `&&`.
+- The method is named after the **intent** it expresses (`isStartTimeInvalid`, `canStartTournament`) — never a mechanical `checkCondition1`.
+- Values only available in the template (an `async` pipe result, a `@for` item) are passed in as method arguments — the method stays a pure function of its inputs.
+- A single inline expression (`@if (isDraft(tournament))`, `@if (schedule.totalRounds === 0)`) is left as-is — this rule targets compound conditions only.
+
+---
+
+## Shared Styles
+
+Style rules that are **identical across two or more components/pages** are not duplicated — they live once as a reusable class in the global stylesheet and are referenced by class name from any template.
+
+```
+src/
+├── styles.scss              ← global entry; @use-s the partials below
+└── styles/
+    └── _global.scss         ← reusable class definitions
+```
+
+```scss
+// styles.scss — @use must come before any other rule
+@use 'styles/global';
+
+// styles/_global.scss
+.empty-state { /* ... */ }
+.responsible-row { /* ... */ }
+.modal-form { /* ... */ }
+```
+
+- Global styles are **not** view-encapsulated, so a class defined here (and its descendant selectors like `.empty-state mat-icon`) applies inside any component template that uses the class name.
+- Only extract rules that are **genuinely the same**. Styles that merely look similar but differ in spacing, colour, or children stay local to their component — never normalise differing styles into a shared class without intent.
+- The shared class is named after its **purpose** (`.empty-state`, `.modal-form`), not the component it came from (`.edit-form`).
+- A component keeps its own `.scss` only for styles unique to it. When extraction leaves a component with no unique styles, delete the `.scss` file and drop its `styleUrl`.
+
 ---
 
 ## Modules Layer (`modules/`)
@@ -425,6 +509,9 @@ export const TOURNAMENT_ROUTES: Routes = [
 | Pages | Dispatch actions, select state — one per route |
 | Components | Pure — `@Input` / `@Output` only, no store access |
 | Standalone | All components are standalone |
+| Typed forms | Access controls via typed `form.controls.xxx` / `form.value.xxx` — never `form.get('xxx')` |
+| Template conditions | Compound `@if` conditions (`||` / `&&`) extracted into an intent-named `.ts` method returning `boolean` — single expressions stay inline |
 | Styles | Always use `styleUrl` with a `.scss` file — never inline `styles` |
+| Shared styles | Identical rules across components extracted to `styles/_global.scss` as a purpose-named class — never duplicate; leave differing styles local |
 | DI | `inject()` everywhere — no constructor injection |
 | Action type | `[Feature] Action Name` format |

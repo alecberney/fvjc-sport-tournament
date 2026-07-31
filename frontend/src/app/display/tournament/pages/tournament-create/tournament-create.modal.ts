@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -36,18 +36,16 @@ export class TournamentCreateModal implements OnInit, OnDestroy {
 
   readonly sports = Object.values(Sport);
 
-  form!: FormGroup;
+  readonly form = this.formBuilder.group({
+    name: ['', [Validators.required, Validators.maxLength(250)]],
+    sport: this.formBuilder.control<Sport | null>(null, Validators.required),
+    numberOfFields: this.formBuilder.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(500)]),
+    minPlayersPerTeam: this.formBuilder.control<number | null>(null, [Validators.required, Validators.min(1)]),
+    maxPlayersPerTeam: this.formBuilder.control<number | null>(null, Validators.required),
+    date: this.formBuilder.control<Date | null>(null, Validators.required),
+  });
 
   ngOnInit(): void {
-    this.form = this.formBuilder.group({
-      name: ['', [Validators.required, Validators.maxLength(250)]],
-      sport: [null, Validators.required],
-      numberOfFields: [null, [Validators.required, Validators.min(1), Validators.max(500)]],
-      minPlayersPerTeam: [null, [Validators.required, Validators.min(1)]],
-      maxPlayersPerTeam: [null, Validators.required],
-      date: [null, Validators.required],
-    });
-
     this.actions$.pipe(
       ofActionSuccessful(CreateTournament),
       takeUntil(this.destroy$),
@@ -64,10 +62,14 @@ export class TournamentCreateModal implements OnInit, OnDestroy {
   submit(): void {
     if (this.form.invalid) return;
 
-    const { date, ...rest } = this.form.value;
+    const { name, sport, numberOfFields, minPlayersPerTeam, maxPlayersPerTeam, date } = this.form.getRawValue();
     this.store.dispatch(new CreateTournament({
-      ...rest,
-      date: new Date(date),
+      name: name!,
+      sport: sport!,
+      numberOfFields: numberOfFields!,
+      minPlayersPerTeam: minPlayersPerTeam!,
+      maxPlayersPerTeam: maxPlayersPerTeam!,
+      date: new Date(date!),
     }));
   }
 

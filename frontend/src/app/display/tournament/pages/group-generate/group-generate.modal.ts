@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,13 +24,11 @@ export class GroupGenerateModal implements OnInit, OnDestroy {
   private readonly data = inject<{ tournamentId: string }>(MAT_DIALOG_DATA);
   private readonly destroy$ = new Subject<void>();
 
-  form!: FormGroup;
+  readonly form = this.fb.group({
+    groupSize: [4, [Validators.required, Validators.min(2)]],
+  });
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      groupSize: [4, [Validators.required, Validators.min(2)]],
-    });
-
     this.actions$.pipe(
       ofActionSuccessful(GenerateGroups),
       takeUntil(this.destroy$),

@@ -44,12 +44,3 @@
   .action-spacer { width: 40px; }
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 0;
-  color: var(--mat-sys-on-surface-variant);
-
-  mat-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 12px; }
-}

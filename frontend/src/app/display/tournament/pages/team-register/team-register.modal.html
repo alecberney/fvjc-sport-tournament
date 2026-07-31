@@ -1,13 +1,13 @@
 <h2 mat-dialog-title>Inscrire des équipes</h2>
 
 <mat-dialog-content>
-  <form [formGroup]="form" class="register-form">
+  <form [formGroup]="form" class="modal-form">
     <mat-form-field appearance="outline">
       <mat-label>Nom de base de l'équipe</mat-label>
       <input matInput formControlName="name" />
-      @if (form.get('name')?.hasError('required')) {
+      @if (form.controls.name.hasError('required')) {
         <mat-error>Le nom de l'équipe est obligatoire</mat-error>
-      } @else if (form.get('name')?.hasError('maxlength')) {
+      } @else if (form.controls.name.hasError('maxlength')) {
         <mat-error>Le nom ne peut pas dépasser 250 caractères</mat-error>
       }
     </mat-form-field>
@@ -16,9 +16,9 @@
       <mat-form-field appearance="outline">
         <mat-label>Prénom du responsable</mat-label>
         <input matInput formControlName="responsibleFirstName" />
-        @if (form.get('responsibleFirstName')?.hasError('required')) {
+        @if (form.controls.responsibleFirstName.hasError('required')) {
           <mat-error>Le prénom du responsable est obligatoire</mat-error>
-        } @else if (form.get('responsibleFirstName')?.hasError('maxlength')) {
+        } @else if (form.controls.responsibleFirstName.hasError('maxlength')) {
           <mat-error>Maximum 100 caractères</mat-error>
         }
       </mat-form-field>
@@ -26,9 +26,9 @@
       <mat-form-field appearance="outline">
         <mat-label>Nom du responsable</mat-label>
         <input matInput formControlName="responsibleLastName" />
-        @if (form.get('responsibleLastName')?.hasError('required')) {
+        @if (form.controls.responsibleLastName.hasError('required')) {
           <mat-error>Le nom du responsable est obligatoire</mat-error>
-        } @else if (form.get('responsibleLastName')?.hasError('maxlength')) {
+        } @else if (form.controls.responsibleLastName.hasError('maxlength')) {
           <mat-error>Maximum 100 caractères</mat-error>
         }
       </mat-form-field>
@@ -37,9 +37,9 @@
     <mat-form-field appearance="outline">
       <mat-label>Nombre d'équipes</mat-label>
       <input matInput type="number" min="1" formControlName="count" />
-      @if (form.get('count')?.hasError('required')) {
+      @if (form.controls.count.hasError('required')) {
         <mat-error>Le nombre d'équipes est obligatoire</mat-error>
-      } @else if (form.get('count')?.hasError('min')) {
+      } @else if (form.controls.count.hasError('min')) {
         <mat-error>Le nombre d'équipes doit être d'au moins 1</mat-error>
       }
     </mat-form-field>

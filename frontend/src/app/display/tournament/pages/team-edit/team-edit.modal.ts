@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -13,7 +13,6 @@ import { UpdateTeam } from '@app/domain/team/team.actions';
 @Component({
   selector: 'app-team-edit-modal',
   templateUrl: './team-edit.modal.html',
-  styleUrl: './team-edit.modal.scss',
   standalone: true,
   imports: [
     ReactiveFormsModule,
@@ -33,17 +32,14 @@ export class TeamEditModal implements OnInit, OnDestroy {
   private readonly data = inject<{ tournamentId: string; team: Team }>(MAT_DIALOG_DATA);
   private readonly destroy$ = new Subject<void>();
 
-  form!: FormGroup;
+  readonly form = this.fb.group({
+    name: [this.data.team.name, [Validators.required, Validators.maxLength(250)]],
+    responsibleFirstName: [this.data.team.responsibleFirstName, [Validators.required, Validators.maxLength(100)]],
+    responsibleLastName: [this.data.team.responsibleLastName, [Validators.required, Validators.maxLength(100)]],
+    paid: [this.data.team.paid],
+  });
 
   ngOnInit(): void {
-    const { team } = this.data;
-    this.form = this.fb.group({
-      name: [team.name, [Validators.required, Validators.maxLength(250)]],
-      responsibleFirstName: [team.responsibleFirstName, [Validators.required, Validators.maxLength(100)]],
-      responsibleLastName: [team.responsibleLastName, [Validators.required, Validators.maxLength(100)]],
-      paid: [team.paid],
-    });
-
     this.actions$.pipe(
       ofActionSuccessful(UpdateTeam),
       takeUntil(this.destroy$),
@@ -57,12 +53,12 @@ export class TeamEditModal implements OnInit, OnDestroy {
 
   submit(): void {
     if (this.form.invalid) return;
-    const { name, responsibleFirstName, responsibleLastName, paid } = this.form.value;
+    const { name, responsibleFirstName, responsibleLastName, paid } = this.form.getRawValue();
     this.store.dispatch(new UpdateTeam(this.data.tournamentId, this.data.team.id, {
-      name,
-      responsibleFirstName,
-      responsibleLastName,
-      paid,
+      name: name!,
+      responsibleFirstName: responsibleFirstName!,
+      responsibleLastName: responsibleLastName!,
+      paid: paid!,
     }));
   }
 

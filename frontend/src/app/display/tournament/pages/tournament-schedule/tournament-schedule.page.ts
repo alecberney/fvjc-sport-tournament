@@ -45,6 +45,10 @@ export class TournamentSchedulePage implements OnInit {
     return tournament.status === TournamentStatus.IN_PROGRESS;
   }
 
+  canStartTournament(tournament: Tournament, schedule: Schedule | null | undefined): boolean {
+    return this.isDraft(tournament) && !!schedule && schedule.totalRounds > 0;
+  }
+
   startTournament(): void {
     const dialogRef = this.dialog.open(TournamentStartConfirmModal);
     dialogRef.afterClosed().subscribe((confirmed: boolean) => {
