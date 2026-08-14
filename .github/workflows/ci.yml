@@ -51,4 +51,65 @@ jobs:
         run: npm run build
 
       - name: Test
-        run: npm test -- --watch=false --browsers=ChromeHeadless
+        run: npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
+
+  sonar:
+    name: SonarCloud — analysis & coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Sonar needs the full history to attribute issues to commits and to
+          # compute the "new code" period.
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Runs the tests with the JaCoCo agent attached, producing
+      # backend/target/site/jacoco/jacoco.xml.
+      - name: Backend coverage
+        working-directory: backend
+        run: ./mvnw --batch-mode test -Dfrontend.skip=true
+
+      # Dependency jars let the Java analyser resolve types it would otherwise
+      # skip. sonar.java.libraries wants a comma-separated list, so the paths go
+      # through an env var rather than the committed properties file.
+      - name: Export backend dependency classpath
+        working-directory: backend
+        run: |
+          ./mvnw --batch-mode -q dependency:build-classpath -Dmdep.outputFile=target/sonar-classpath.txt -Dmdep.pathSeparator=, -Dfrontend.skip=true
+          echo "SONAR_JAVA_LIBRARIES=$(cat target/sonar-classpath.txt)" >> "$GITHUB_ENV"
+
+      # Produces frontend/coverage/frontend/lcov.info.
+      - name: Frontend coverage
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      # Istanbul writes paths relative to the frontend workspace (src/app/...),
+      # but the scanner resolves them from the repo root — prefix them so the
+      # coverage lands on the right files.
+      - name: Rebase frontend coverage paths on the repo root
+        run: sed -i 's|^SF:|SF:frontend/|' frontend/coverage/frontend/lcov.info
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.java.libraries=${{ env.SONAR_JAVA_LIBRARIES }}

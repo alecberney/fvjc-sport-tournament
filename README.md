@@ -1,5 +1,10 @@
 # FVJC Sport Tournament
 
+[![CI](https://github.com/alecberney/fvjc-sport-tournament/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/alecberney/fvjc-sport-tournament/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=alecberney_fvjc-sport-tournament&metric=alert_status)](https://sonarcloud.io/summary/overall?id=alecberney_fvjc-sport-tournament&branch=main)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=alecberney_fvjc-sport-tournament&metric=coverage)](https://sonarcloud.io/component_measures?id=alecberney_fvjc-sport-tournament&metric=coverage&branch=main)
+[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=alecberney_fvjc-sport-tournament&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=alecberney_fvjc-sport-tournament&branch=main)
+
 Sport tournament management app for FVJC. Runs as a single JAR with SQLite, serves an Angular frontend.
 
 ## Install
@@ -23,6 +28,8 @@ App available at http://localhost:8081
 - Java 21+
 - Node.js 20+
 - Maven 3.8+
+
+With [SDKMAN!](https://sdkman.io/) installed, run `sdk env init` at the repo root to create a local (git-ignored) `.sdkmanrc` pinning `java=21.0.3-tem`, then `sdk env install`. With `sdkman_auto_env=true` the JDK is selected automatically whenever you `cd` into the repo.
 
 ### Run as a JAR
 
@@ -53,3 +60,25 @@ npm start
 ```
 
 Frontend at http://localhost:4200 — API calls are proxied to the backend on port 8081.
+
+### Tests & coverage
+
+**Backend** — JaCoCo is attached to the test run, no extra flag needed:
+
+```bash
+cd backend
+./mvnw test -Dfrontend.skip=true
+```
+
+Report: `backend/target/site/jacoco/index.html` (XML for Sonar at `target/site/jacoco/jacoco.xml`).
+
+**Frontend** — Karma with the Istanbul coverage reporter:
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+Report: `frontend/coverage/frontend/index.html` (LCOV for Sonar at `coverage/frontend/lcov.info`).
+
+Both reports are uploaded to [SonarCloud](https://sonarcloud.io/summary/overall?id=alecberney_fvjc-sport-tournament&branch=main) by the `sonar` job in [`ci.yml`](./.github/workflows/ci.yml) on every push to `main` and every pull request. Analysis settings live in [`sonar-project.properties`](./sonar-project.properties).
