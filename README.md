@@ -11,7 +11,7 @@ Sport tournament management app for FVJC. Runs as a single JAR with SQLite, serv
 
 The app ships as a single self-contained JAR — no separate frontend or database setup needed.
 
-1. **Install Java 21+** — download it from [Adoptium Temurin](https://adoptium.net/temurin/releases/?version=21).
+1. **Install Java 25+** — download it from [Adoptium Temurin](https://adoptium.net/temurin/releases/?version=25).
 2. **Download the app JAR** — grab `tournament-0.1.0.jar` from the [`dist/`](./dist) folder, or from the [latest release](https://github.com/alecberney/fvjc-sport-tournament/releases/latest).
 3. **Run it:**
 
@@ -25,11 +25,11 @@ App available at http://localhost:8081
 
 ### Prerequisites
 
-- Java 21+
+- Java 25+
 - Node.js 20+
 - Maven 3.8+
 
-With [SDKMAN!](https://sdkman.io/) installed, run `sdk env init` at the repo root to create a local (git-ignored) `.sdkmanrc` pinning `java=21.0.3-tem`, then `sdk env install`. With `sdkman_auto_env=true` the JDK is selected automatically whenever you `cd` into the repo.
+With [SDKMAN!](https://sdkman.io/) installed, run `sdk env init` at the repo root to create a local (git-ignored) `.sdkmanrc` pinning `java=25.0.3-tem`, then `sdk env install`. With `sdkman_auto_env=true` the JDK is selected automatically whenever you `cd` into the repo.
 
 ### Run as a JAR
 
