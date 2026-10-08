@@ -17,12 +17,13 @@ import { GroupGenerateModal } from '@app/display/tournament/pages/group-generate
 import { TeamSwapModal } from '@app/display/tournament/pages/team-swap/team-swap.modal';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
+import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
 
 @Component({
   selector: 'app-tournament-groups-page',
   templateUrl: './tournament-groups.page.html',
   standalone: true,
-  imports: [AsyncPipe, MatButtonModule, MatIconModule, GroupListComponent, TournamentNavComponent, TournamentHeaderComponent],
+  imports: [AsyncPipe, MatButtonModule, MatIconModule, GroupListComponent, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],
 })
 export class TournamentGroupsPage implements OnInit {
 

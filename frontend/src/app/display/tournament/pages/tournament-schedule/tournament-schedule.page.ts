@@ -17,13 +17,14 @@ import { ScheduleGenerateModal } from '@app/display/tournament/pages/schedule-ge
 import { TournamentStartConfirmModal } from './tournament-start-confirm.modal';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
+import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
 
 @Component({
   selector: 'app-tournament-schedule-page',
   templateUrl: './tournament-schedule.page.html',
   styleUrl: './tournament-schedule.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent],
+  imports: [AsyncPipe, DatePipe, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],
 })
 export class TournamentSchedulePage implements OnInit {
 

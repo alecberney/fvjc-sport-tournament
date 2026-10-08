@@ -15,6 +15,11 @@ export class SubmitResult {
   ) {}
 }
 
+export class GenerateRandomResults {
+  static readonly type = '[Result] Generate Random Results';
+  constructor(public readonly tournamentId: string) {}
+}
+
 export class LoadGroupRanking {
   static readonly type = '[Result] Load Group Ranking';
   constructor(

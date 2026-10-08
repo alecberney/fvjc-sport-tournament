@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -10,26 +10,25 @@ import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.
 import { Team, TeamGroup } from '@app/domain/team/team.model';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { TeamState } from '@app/domain/team/team.state';
-import { DeleteTournament, LoadTournamentById } from '@app/domain/tournament/tournament.actions';
+import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { DeleteTeam, LoadTeams, MarkTeamPaid } from '@app/domain/team/team.actions';
 import { TeamRegisterModal } from '@app/display/tournament/pages/team-register/team-register.modal';
 import { TeamEditModal } from '@app/display/tournament/pages/team-edit/team-edit.modal';
-import { TournamentDeleteConfirmModal } from '@app/display/tournament/components/tournament-delete-confirm/tournament-delete-confirm.modal';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
+import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
 
 @Component({
   selector: 'app-tournament-detail-page',
   templateUrl: './tournament-detail.page.html',
   styleUrl: './tournament-detail.page.scss',
   standalone: true,
-  imports: [AsyncPipe, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent],
+  imports: [AsyncPipe, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],
 })
 export class TournamentDetailPage implements OnInit {
 
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
 
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
@@ -64,18 +63,5 @@ export class TournamentDetailPage implements OnInit {
 
   markPaid(team: Team, paid: boolean): void {
     this.store.dispatch(new MarkTeamPaid(this.tournamentId, team.id, paid));
-  }
-
-  openDeleteModal(tournament: Tournament): void {
-    this.dialog
-      .open(TournamentDeleteConfirmModal, { data: { name: tournament.name } })
-      .afterClosed()
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.store
-            .dispatch(new DeleteTournament(this.tournamentId))
-            .subscribe(() => this.router.navigate(['..'], { relativeTo: this.route }));
-        }
-      });
   }
 }

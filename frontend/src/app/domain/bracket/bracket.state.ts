@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
-import { switchMap, tap } from 'rxjs';
+import { concatMap, from, last, map, Observable, of, switchMap, tap } from 'rxjs';
 import { BracketApiService } from '@app/api/bracket/bracket.api.service';
 import { BracketApiMapper } from '@app/api/bracket/bracket.api.mapper';
 import { BracketRound } from './bracket.model';
-import { EnterBracketMatchResult, GenerateBracket, LoadBracket } from './bracket.actions';
+import { EnterBracketMatchResult, GenerateBracket, GenerateRandomBracketResults, LoadBracket } from './bracket.actions';
+import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
 
 export interface IBracketState {
   rounds: BracketRound[];
@@ -42,6 +43,32 @@ export class BracketState {
     return this.bracketApiService.generateBracket$(tournamentId, request).pipe(
       tap((dtos) => {
         ctx.patchState({ rounds: dtos.map(BracketApiMapper.toRoundDomain) });
+      }),
+    );
+  }
+
+  @Action(GenerateRandomBracketResults)
+  generateRandomBracketResults(ctx: StateContext<IBracketState>, { tournamentId }: GenerateRandomBracketResults) {
+    return this.playRandomRounds$(tournamentId).pipe(
+      tap((rounds) => ctx.patchState({ rounds })),
+    );
+  }
+
+  // Loads the bracket, submits random results for every playable match, then recurses: winners
+  // advance into the next round on the backend, which makes new matches playable. Stops when
+  // nothing is left to play (final and 3rd place done) and returns the final bracket.
+  private playRandomRounds$(tournamentId: string): Observable<BracketRound[]> {
+    return this.bracketApiService.loadBracket$(tournamentId).pipe(
+      map((dtos) => dtos.map(BracketApiMapper.toRoundDomain)),
+      switchMap((rounds) => {
+        const results = SeedingDomainService.buildRandomBracketResults(rounds);
+        if (results.length === 0) return of(rounds);
+        return from(results).pipe(
+          concatMap(({ matchId, score1, score2 }) => this.bracketApiService.submitBracketMatchResult$(
+            tournamentId, matchId, BracketApiMapper.toSubmitResultRequest(score1, score2))),
+          last(),
+          switchMap(() => this.playRandomRounds$(tournamentId)),
+        );
       }),
     );
   }

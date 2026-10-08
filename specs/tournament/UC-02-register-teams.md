@@ -267,6 +267,45 @@ PATCH /api/tournaments/{tournamentId}/teams/{teamId}/paid
 
 ---
 
+### UC-02.6 — Generate Random Teams (testing aid)
+
+Lets the admin fill a `DRAFT` tournament with N random teams in one click, so the following steps (groups, schedule, results, bracket) can be tested without typing registrations by hand. It is **frontend-only**: it builds random registrations and sends them to the existing UC-02.1 endpoint.
+
+#### Preconditions
+
+- Tournament is in `DRAFT` status. The menu item is disabled in any other status.
+
+#### Main Flow
+
+1. On any tournament tab, admin opens the settings cog (⚙) menu in the header, next to "Supprimer".
+2. Admin picks **"Générer des équipes aléatoires"**.
+3. A modal asks for the number of teams (default `16`).
+4. Admin submits.
+5. The frontend splits the N teams into random organisations of **1 to 3 teams**. Each organisation gets:
+   - a base name from a fixed list (`Les Aigles`, `Les Loups`, …). Once the list runs out, names restart with a suffix (`Les Aigles 2`, …), so no two organisations share a base name;
+   - a random responsible person (first name + last name taken from fixed lists);
+   - a random paid flag for each team.
+6. The frontend calls `POST /api/tournaments/{tournamentId}/teams` (UC-02.1) once per organisation, one after the other.
+7. When all calls succeed, the modal closes and the generated teams show up in the team list.
+
+The total number of registered teams is always exactly N.
+
+#### Validation Rules
+
+| Rule | Error message |
+|------|---------------|
+| `count` is empty | "Le nombre d'équipes est obligatoire" |
+| `count` < 1 | "Le nombre d'équipes doit être d'au moins 1" |
+| `count` > 200 | "Maximum 200 équipes" |
+
+Each generated registration also goes through the UC-02.1 backend validation.
+
+#### API Contract
+
+No new endpoint. The frontend reuses `POST /api/tournaments/{tournamentId}/teams` (UC-02.1).
+
+---
+
 ## Domain Impact
 
 - `Organisation` is a new aggregate with its own `OrganisationStore`.

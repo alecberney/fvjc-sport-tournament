@@ -1,0 +1,22 @@
+<button mat-stroked-button color="warn" (click)="openDeleteModal()">
+  <mat-icon>delete</mat-icon>
+  Supprimer
+</button>
+<button mat-icon-button [matMenuTriggerFor]="settingsMenu" title="Paramètres">
+  <mat-icon>settings</mat-icon>
+</button>
+<mat-menu #settingsMenu="matMenu">
+  <button mat-menu-item [disabled]="!isDraft()" (click)="openRandomTeamsModal()">
+    <mat-icon>casino</mat-icon>
+    <span>Générer des équipes aléatoires</span>
+  </button>
+  <mat-divider />
+  <button mat-menu-item [disabled]="!isInProgress()" (click)="generateRandomResults()">
+    <mat-icon>scoreboard</mat-icon>
+    <span>Résultats aléatoires — groupes</span>
+  </button>
+  <button mat-menu-item [disabled]="!isInProgress()" (click)="generateRandomBracketResults()">
+    <mat-icon>account_tree</mat-icon>
+    <span>Résultats aléatoires — bracket</span>
+  </button>
+</mat-menu>

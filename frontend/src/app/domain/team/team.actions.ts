@@ -38,3 +38,11 @@ export class MarkTeamPaid {
     public readonly paid: boolean,
   ) {}
 }
+
+export class GenerateRandomTeams {
+  static readonly type = '[Team] Generate Random Teams';
+  constructor(
+    public readonly tournamentId: string,
+    public readonly count: number,
+  ) {}
+}

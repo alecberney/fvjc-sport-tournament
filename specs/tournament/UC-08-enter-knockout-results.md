@@ -78,6 +78,32 @@ PUT /api/tournaments/{tournamentId}/bracket/matches/{matchId}/result
 
 ---
 
+### UC-08.2 — Random Bracket Results (testing aid)
+
+Lets the admin play the whole knockout stage in one click, so the final bracket can be tested without typing every score. It is **frontend-only**: it sends each score through the existing UC-08.1 endpoint.
+
+#### Preconditions
+
+- Tournament is in `IN_PROGRESS` status. The menu item is disabled in any other status.
+- The bracket has been generated (UC-07). If there is no bracket, nothing happens.
+
+#### Main Flow
+
+1. On any tournament tab, admin opens the settings cog (⚙) menu in the header, next to "Supprimer".
+2. Admin picks **"Résultats aléatoires — bracket"**.
+3. The frontend loads the bracket and picks every match that is **ready to play**: both teams known and no result yet.
+4. For each of those matches, it draws a random score from `0` to `5` for each team. If the two scores are equal, one side (picked at random) gets one extra point, because knockout matches can't end in a draw.
+5. It submits each score with `PUT /api/tournaments/{tournamentId}/bracket/matches/{matchId}/result` (UC-08.1), one after the other. The backend moves winners (and semi-final losers) into their next match.
+6. Steps 3–5 repeat, round by round, until no match is left to play (final and 3rd-place match done). Then the bracket view updates.
+
+Matches that already have a result are not changed.
+
+#### API Contract
+
+No new endpoint. The frontend reuses UC-08.1 and `GET /api/tournaments/{tournamentId}/bracket`.
+
+---
+
 ## Domain Impact
 
 - `BracketMatch.result` is set to the entered scores.

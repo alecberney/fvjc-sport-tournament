@@ -19,13 +19,14 @@ import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
 import { SubmitResult } from '@app/domain/result/result.actions';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
+import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
 
 @Component({
   selector: 'app-tournament-results-page',
   templateUrl: './tournament-results.page.html',
   styleUrl: './tournament-results.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, FormsModule, RouterLink, MatButtonModule, MatIconModule, MatInputModule, MatFormFieldModule, TournamentNavComponent, TournamentHeaderComponent],
+  imports: [AsyncPipe, DatePipe, FormsModule, RouterLink, MatButtonModule, MatIconModule, MatInputModule, MatFormFieldModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],
 })
 export class TournamentResultsPage implements OnInit {
 

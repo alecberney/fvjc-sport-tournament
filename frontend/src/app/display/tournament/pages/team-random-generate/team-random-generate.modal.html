@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>Générer des équipes aléatoires</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="modal-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre d'équipes</mat-label>
+      <input matInput type="number" min="1" max="200" formControlName="count" />
+      @if (form.controls.count.hasError('required')) {
+        <mat-error>Le nombre d'équipes est obligatoire</mat-error>
+      } @else if (form.controls.count.hasError('min')) {
+        <mat-error>Le nombre d'équipes doit être d'au moins 1</mat-error>
+      } @else if (form.controls.count.hasError('max')) {
+        <mat-error>Maximum 200 équipes</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="submit()">
+    Générer
+  </button>
+</mat-dialog-actions>

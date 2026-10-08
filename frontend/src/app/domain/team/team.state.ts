@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
-import { tap } from 'rxjs';
+import { concatMap, from, tap, toArray } from 'rxjs';
 import { Team, TeamGroup } from '@app/domain/team/team.model';
-import { DeleteTeam, LoadTeams, MarkTeamPaid, RegisterTeams, UpdateTeam } from '@app/domain/team/team.actions';
+import { DeleteTeam, GenerateRandomTeams, LoadTeams, MarkTeamPaid, RegisterTeams, UpdateTeam } from '@app/domain/team/team.actions';
 import { TeamApiService } from '@app/api/team/team.api.service';
 import { TeamApiMapper } from '@app/api/team/team.api.mapper';
 import { TeamDomainService } from '@app/domain/team/team.domain.service';
+import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
 
 export interface ITeamState {
   teams: Team[];
@@ -44,6 +45,20 @@ export class TeamState {
     return this.teamApiService.register$(tournamentId, TeamApiMapper.toRegisterRequest(registration)).pipe(
       tap(dtos => {
         const newTeams = dtos.map(TeamApiMapper.toDomain);
+        ctx.patchState({ teams: [...ctx.getState().teams, ...newTeams] });
+      })
+    );
+  }
+
+  // Registers each random organisation sequentially, then appends all created teams at once.
+  @Action(GenerateRandomTeams)
+  generateRandomTeams(ctx: StateContext<ITeamState>, { tournamentId, count }: GenerateRandomTeams) {
+    const registrations = SeedingDomainService.buildRandomRegistrations(count);
+    return from(registrations).pipe(
+      concatMap(registration => this.teamApiService.register$(tournamentId, TeamApiMapper.toRegisterRequest(registration))),
+      toArray(),
+      tap(dtoBatches => {
+        const newTeams = dtoBatches.flat().map(TeamApiMapper.toDomain);
         ctx.patchState({ teams: [...ctx.getState().teams, ...newTeams] });
       })
     );

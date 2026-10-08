@@ -1,11 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { Action, Selector, State, StateContext } from '@ngxs/store';
-import { tap } from 'rxjs';
+import { concatMap, from, last, map, of, switchMap, tap } from 'rxjs';
 import { GroupRanking } from '@app/domain/result/result.model';
-import { LoadAllGroupRankings, LoadGroupRanking, StartTournament, SubmitResult, UpdateMatchResult } from '@app/domain/result/result.actions';
+import { GenerateRandomResults, LoadAllGroupRankings, LoadGroupRanking, StartTournament, SubmitResult, UpdateMatchResult } from '@app/domain/result/result.actions';
 import { ResultApiService } from '@app/api/result/result.api.service';
 import { ResultApiMapper } from '@app/api/result/result.api.mapper';
 import { PatchSelectedStatus } from '@app/domain/tournament/tournament.actions';
+import { ScheduleApiService } from '@app/api/schedule/schedule.api.service';
+import { ScheduleApiMapper } from '@app/api/schedule/schedule.api.mapper';
+import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
 
 export interface IResultState {
   rankings: { [groupId: string]: GroupRanking };
@@ -19,6 +22,7 @@ export interface IResultState {
 export class ResultState {
 
   private readonly resultApiService = inject(ResultApiService);
+  private readonly scheduleApiService = inject(ScheduleApiService);
 
   @Selector()
   static getRankings(state: IResultState): { [groupId: string]: GroupRanking } {
@@ -51,6 +55,21 @@ export class ResultState {
           ctx.dispatch(new UpdateMatchResult(dto.match.id, dto.match.result.score1, dto.match.result.score2));
         }
       })
+    );
+  }
+
+  // Reloads the schedule so it works from any page, then submits a random score for each
+  // unplayed match one after the other through SubmitResult (keeps rankings and schedule in sync).
+  @Action(GenerateRandomResults)
+  generateRandomResults(ctx: StateContext<IResultState>, { tournamentId }: GenerateRandomResults) {
+    return this.scheduleApiService.getSchedule$(tournamentId).pipe(
+      map(dto => SeedingDomainService.buildRandomResults(ScheduleApiMapper.toDomain(dto))),
+      switchMap(results => results.length === 0
+        ? of(undefined)
+        : from(results).pipe(
+          concatMap(({ matchId, score1, score2 }) => ctx.dispatch(new SubmitResult(tournamentId, matchId, score1, score2))),
+          last(),
+        )),
     );
   }
 

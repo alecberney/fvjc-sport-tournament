@@ -13,6 +13,11 @@ export class GenerateBracket {
   ) {}
 }
 
+export class GenerateRandomBracketResults {
+  static readonly type = '[Bracket] Generate Random Results';
+  constructor(public readonly tournamentId: string) {}
+}
+
 export class EnterBracketMatchResult {
   static readonly type = '[Bracket] Enter Match Result';
   constructor(

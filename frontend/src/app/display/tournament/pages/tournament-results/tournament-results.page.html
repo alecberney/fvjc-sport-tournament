@@ -1,5 +1,7 @@
 @if (tournament$ | async; as tournament) {
-  <app-tournament-header [tournament]="tournament" />
+  <app-tournament-header [tournament]="tournament">
+    <app-tournament-actions [tournament]="tournament" />
+  </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
   @if (isDraft(tournament)) {

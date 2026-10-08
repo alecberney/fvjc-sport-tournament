@@ -283,6 +283,30 @@ GET /api/tournaments/{tournamentId}/groups/{groupId}/ranking
 
 ---
 
+## UC-05.5 — Random Results (testing aid)
+
+### Summary
+
+Lets the admin fill in all missing group-phase results in one click, so rankings and the knockout stage can be tested without typing every score. It is **frontend-only**: it sends each score through the existing UC-05.2 endpoint.
+
+### Preconditions
+
+- Tournament is in `IN_PROGRESS` status. The menu item is disabled in any other status.
+
+### Main Flow
+
+1. On any tournament tab, admin opens the settings cog (⚙) menu in the header, next to "Supprimer".
+2. Admin picks **"Résultats aléatoires — groupes"**.
+3. The frontend reloads the schedule and picks every match that has **no result yet**. Matches that already have a result are not changed.
+4. For each of those matches, it draws a random score from `0` to `5` for each team. Draws are possible.
+5. It submits each score with `PUT /api/tournaments/{tournamentId}/matches/{matchId}/result` (UC-05.2), one after the other. Rankings and the schedule update as each result comes back.
+
+### API Contract
+
+No new endpoint. The frontend reuses UC-05.2.
+
+---
+
 ## Domain Impact
 
 - `Match.result` is a value object `MatchResult(score1, score2)` — null until entered.

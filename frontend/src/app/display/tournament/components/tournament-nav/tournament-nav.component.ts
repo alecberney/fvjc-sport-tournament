@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-tournament-nav',
   templateUrl: './tournament-nav.component.html',
+  styleUrl: './tournament-nav.component.scss',
   standalone: true,
   imports: [RouterLink, RouterLinkActive, MatTabsModule, MatIconModule],
 })
