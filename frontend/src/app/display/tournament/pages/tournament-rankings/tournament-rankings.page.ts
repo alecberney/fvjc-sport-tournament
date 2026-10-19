@@ -1,6 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -30,17 +29,15 @@ import { RankingTableComponent } from '@app/display/tournament/components/rankin
 export class TournamentRankingsPage implements OnInit {
 
   private readonly store = inject(Store);
-  private readonly route = inject(ActivatedRoute);
 
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly groups$: Observable<Group[]> = this.store.select(GroupState.getGroups);
   readonly rankings$: Observable<{ [groupId: string]: GroupRanking }> = this.store.select(ResultState.getRankings);
 
   selectedGroup: string | null = null;
-  protected tournamentId!: string;
+  @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   ngOnInit(): void {
-    this.tournamentId = this.route.snapshot.paramMap.get('id')!;
     this.store.dispatch([
       new LoadTournamentById(this.tournamentId),
       new LoadGroups(this.tournamentId),

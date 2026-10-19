@@ -1,6 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, inject, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -29,14 +29,13 @@ import { TournamentActionsComponent } from '@app/display/tournament/components/t
 export class TournamentSchedulePage implements OnInit {
 
   private readonly store = inject(Store);
-  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly schedule$: Observable<Schedule | undefined> = this.store.select(ScheduleState.getSchedule);
 
-  protected tournamentId!: string;
+  @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;
@@ -61,7 +60,6 @@ export class TournamentSchedulePage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.tournamentId = this.route.snapshot.paramMap.get('id')!;
     this.store.dispatch([new LoadTournamentById(this.tournamentId), new LoadSchedule(this.tournamentId)]);
   }
 

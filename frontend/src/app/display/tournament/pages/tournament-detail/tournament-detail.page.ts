@@ -1,6 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -28,20 +27,18 @@ import { TournamentActionsComponent } from '@app/display/tournament/components/t
 export class TournamentDetailPage implements OnInit {
 
   private readonly store = inject(Store);
-  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
 
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly groups$: Observable<TeamGroup[]> = this.store.select(TeamState.getTeamsGroupedByOrganisation);
 
-  protected tournamentId!: string;
+  @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;
   }
 
   ngOnInit(): void {
-    this.tournamentId = this.route.snapshot.paramMap.get('id')!;
     this.store.dispatch([new LoadTournamentById(this.tournamentId), new LoadTeams(this.tournamentId)]);
   }
 

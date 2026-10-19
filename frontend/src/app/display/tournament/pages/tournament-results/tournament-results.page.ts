@@ -1,6 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, inject, Input, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngxs/store';
@@ -30,7 +30,6 @@ import { ScoreFormComponent, ScoreFormValue } from '@app/display/tournament/comp
 export class TournamentResultsPage implements OnInit {
 
   private readonly store = inject(Store);
-  private readonly route = inject(ActivatedRoute);
 
   readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
   readonly schedule$: Observable<Schedule | undefined> = this.store.select(ScheduleState.getSchedule);
@@ -38,7 +37,7 @@ export class TournamentResultsPage implements OnInit {
 
   selectedMatchId: string | null = null;
 
-  protected tournamentId!: string;
+  @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;
@@ -49,7 +48,6 @@ export class TournamentResultsPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.tournamentId = this.route.snapshot.paramMap.get('id')!;
     this.store.dispatch([
       new LoadTournamentById(this.tournamentId),
       new LoadSchedule(this.tournamentId),

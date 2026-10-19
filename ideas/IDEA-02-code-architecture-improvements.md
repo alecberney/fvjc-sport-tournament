@@ -1,6 +1,6 @@
 # IDEA-02 — Code & architecture improvements
 
-**Status:** in progress — F3, F6, F8, F9, B1, B2, B3 and B4 done
+**Status:** in progress — F3, F6, F7, F8, F9, B1, B2, B3 and B4 done
 **Scope:** frontend (main topic: view models) + backend
 **Type:** technical debt / refactoring — no functional change for the user
 
@@ -16,7 +16,7 @@
 | F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | To do |
 | F5 | `OnPush` change detection everywhere | Frontend | S | Medium | To do |
 | F6 | `takeUntilDestroyed()` instead of `destroy$` + `takeUntil` | Frontend | S | Low | ✅ Done |
-| F7 | Route param via component input binding | Frontend | S | Low | To do |
+| F7 | Route param via component input binding | Frontend | S | Low | ✅ Done |
 | F8 | Score entry as a typed reactive form with validation | Frontend | S | Medium | ✅ Done |
 | F9 | Data-driven `tournament-nav` | Frontend | XS | Low | ✅ Done |
 | B1 | Move HTTP error handling out of `domain` | Backend | S | High (architecture) | ✅ Done |
@@ -29,6 +29,9 @@
 - **F3** — `components/ranking-table/` (used by results + rankings pages) and
   `components/score-form/` (used by results + bracket pages).
 - **F6** — the seven modals use `takeUntilDestroyed(this.destroyRef)`; no `destroy$` left.
+- **F7** — `withComponentInputBinding()` in `app.config.ts`; the six tournament pages declare
+  `@Input({ alias: 'id', required: true }) tournamentId!: string` instead of reading
+  `ActivatedRoute.snapshot.paramMap.get('id')!`.
 - **F8** — `score-form` is a typed `FormGroup` with `required`, `min(0)`, `max(500)`.
 - **F9** — `tournament-nav` renders a `tabs` array with `@for`.
 - **B1** — `GlobalExceptionHandler`, `ValidationErrorResponse`, `ConflictErrorResponse`
@@ -256,7 +259,7 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 Remaining work:
 
-1. **F2 + F7** — quick wins, no rule change.
+1. **F2** — quick win, no rule change.
 2. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
 3. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
