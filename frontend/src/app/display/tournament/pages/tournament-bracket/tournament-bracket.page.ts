@@ -1,16 +1,13 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngxs/store';
-import { Observable } from 'rxjs';
-import { Tournament } from '@app/domain/tournament/tournament.model';
-import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
-import { BracketMatch, BracketRound } from '@app/domain/bracket/bracket.model';
-import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { Observable, switchMap } from 'rxjs';
+import { BracketMatchView, BracketPageView } from '@app/domain/bracket/bracket.view';
 import { BracketState } from '@app/domain/bracket/bracket.state';
-import { ScheduleState } from '@app/domain/schedule/schedule.state';
 import { EndTournament, LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { EnterBracketMatchResult, LoadBracket } from '@app/domain/bracket/bracket.actions';
 import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
@@ -20,6 +17,7 @@ import { TournamentActionsComponent } from '@app/display/tournament/components/t
 import { BracketGenerateModal } from '@app/display/tournament/components/bracket-generate-modal/bracket-generate-modal.component';
 import { TournamentEndConfirmModal } from '@app/display/tournament/components/tournament-end-confirm/tournament-end-confirm.modal';
 import { ScoreFormComponent, ScoreFormValue } from '@app/display/tournament/components/score-form/score-form.component';
+import { DateFormatPipe } from '@app/display/shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-tournament-bracket-page',
@@ -28,7 +26,7 @@ import { ScoreFormComponent, ScoreFormValue } from '@app/display/tournament/comp
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    DateFormatPipe,
     MatButtonModule,
     MatIconModule,
     TournamentNavComponent,
@@ -40,14 +38,14 @@ export class TournamentBracketPage implements OnInit {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
 
-  readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
-  readonly rounds$: Observable<BracketRound[]> = this.store.select(BracketState.getRounds);
-  readonly hasBracket$: Observable<boolean> = this.store.select(BracketState.hasBracket);
-  readonly hasAllResults$: Observable<boolean> = this.store.select(ScheduleState.hasAllResults);
-  readonly isFinalPlayed$: Observable<boolean> = this.store.select(BracketState.isFinalPlayed);
+  // UI state owned by the page — passed to the view selector, never stored in NGXS.
+  private readonly selectedMatchId = signal<string | null>(null);
+
+  readonly vm$: Observable<BracketPageView | null> = toObservable(this.selectedMatchId).pipe(
+    switchMap((selectedMatchId) => this.store.select(BracketState.getBracketPageView(selectedMatchId))),
+  );
 
   @Input({ alias: 'id', required: true }) tournamentId!: string;
-  selectedMatch: BracketMatch | null = null;
 
   ngOnInit(): void {
     this.store.dispatch([
@@ -64,42 +62,25 @@ export class TournamentBracketPage implements OnInit {
     });
   }
 
-  protected isFinished(tournament: Tournament): boolean {
-    return TournamentDomainService.isFinished(tournament);
-  }
-
-  protected canEndTournament(tournament: Tournament, isFinalPlayed: boolean | null): boolean {
-    return TournamentDomainService.canEnd(tournament, !!isFinalPlayed);
-  }
-
-  protected isPlayable(match: BracketMatch): boolean {
-    return !!match.team1 && !!match.team2;
-  }
-
-  protected canSelectMatch(tournament: Tournament, match: BracketMatch): boolean {
-    return TournamentDomainService.canEnterResults(tournament) && this.isPlayable(match);
-  }
-
   openEndModal(): void {
     this.dialog.open(TournamentEndConfirmModal).afterClosed().subscribe((confirmed: boolean) => {
       if (!confirmed) return;
       this.store.dispatch(new EndTournament(this.tournamentId)).subscribe(() => {
-        this.selectedMatch = null;
+        this.selectedMatchId.set(null);
       });
     });
   }
 
-  selectMatch(tournament: Tournament, match: BracketMatch): void {
-    if (!this.canSelectMatch(tournament, match)) return;
-    this.selectedMatch = match;
+  selectMatch(match: BracketMatchView): void {
+    if (!match.isSelectable) return;
+    this.selectedMatchId.set(match.id);
   }
 
-  submitResult({ score1, score2 }: ScoreFormValue): void {
-    if (!this.selectedMatch) return;
+  submitResult(matchId: string, { score1, score2 }: ScoreFormValue): void {
     this.store.dispatch(
-      new EnterBracketMatchResult(this.tournamentId, this.selectedMatch.id, score1, score2),
+      new EnterBracketMatchResult(this.tournamentId, matchId, score1, score2),
     ).subscribe(() => {
-      this.selectedMatch = null;
+      this.selectedMatchId.set(null);
     });
   }
 }

@@ -21,7 +21,7 @@
           <div class="round-section">
             <div class="round-header">
               <span class="round-number">Round {{ round.number }}</span>
-              <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+              <span class="round-time">{{ round.startTime | dateFormat:'time' }}</span>
             </div>
             @for (match of round.matches; track match.id) {
               <div class="match-row"

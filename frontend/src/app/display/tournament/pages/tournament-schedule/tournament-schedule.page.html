@@ -31,7 +31,7 @@
           <div class="round-card">
             <div class="round-header">
               <span class="round-number">Round {{ round.number }}</span>
-              <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+              <span class="round-time">{{ round.startTime | dateFormat:'time' }}</span>
             </div>
             <table class="matches-table">
               <thead>

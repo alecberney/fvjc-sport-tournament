@@ -22,8 +22,13 @@ src/app/
 │       ├── tournament.model.ts
 │       ├── tournament.actions.ts
 │       ├── tournament.state.ts
-│       └── tournament.domain.service.ts   ← only if needed
+│       ├── tournament.domain.service.ts   ← only if needed
+│       ├── tournament.view.ts             ← only if the feature has view models
+│       └── tournament.view.mapper.ts
 ├── display/
+│   ├── shared/
+│   │   └── pipes/
+│   │       └── date-format.pipe.ts
 │   └── tournament/
 │       ├── pages/
 │       │   └── tournament-list/
@@ -60,6 +65,9 @@ Angular kebab-case convention:
 | NGXS actions | `*.actions.ts` | `tournament.actions.ts` |
 | NGXS state | `*.state.ts` | `tournament.state.ts` |
 | Domain service | `*.domain.service.ts` | `tournament.domain.service.ts` |
+| View models | `*.view.ts` | `bracket.view.ts` |
+| View mapper | `*.view.mapper.ts` | `bracket.view.mapper.ts` |
+| Pipe | `*.pipe.ts` | `date-format.pipe.ts` |
 | Page component | `*.page.ts` | `tournament-list.page.ts` |
 | Page styles | `*.page.scss` | `tournament-list.page.scss` |
 | Component | `*.component.ts` | `tournament-card.component.ts` |
@@ -334,8 +342,100 @@ export class TournamentState {
 - `inject()` for dependencies — no constructor.
 - Mapping from DTO to domain happens in `@Action` handlers via the mapper.
 - `@Selector()` delegates computed/derived data to `TournamentDomainService` static methods.
-- `@Selector()` returns domain models — never DTOs.
+- `@Selector()` returns domain models or view models — never DTOs.
 - `patchState` only — never `setState` directly.
+- State holds **business domain data only** — never view models, never UI state (selected row,
+  open panel, typed form values). UI state lives in the page and is passed to view selectors
+  as a parameter.
+
+### View Models
+
+A screen whose template would otherwise compute what it shows (fallback labels, formatted
+scores, enabled/selected flags, conditions) gets a **view model**: an interface whose
+properties are exactly what the template binds. The template never computes — it binds.
+
+```typescript
+// domain/bracket/bracket.view.ts
+export interface BracketMatchView {
+  id: string;
+  fieldLabel: string;      // 'T3'
+  team1Label: string;      // 'Les Aigles' | 'À déterminer'
+  team2Label: string;
+  scoreLabel: string;      // '3 - 1' | '—'
+  isSelectable: boolean;
+  isSelected: boolean;
+}
+
+export interface BracketRoundView {
+  id: string;
+  name: string;
+  startTime: Date;         // dates stay Date — formatted by DateFormatPipe in the template
+  matches: BracketMatchView[];
+}
+```
+
+Views are built by a **view mapper** — a static class (not `@Injectable`) in `*.view.mapper.ts`,
+next to the view. Each method is named `to` + view type: `toBracketPageView`, `toBracketRoundView`,
+`toBracketMatchView`. The mapper only maps: business rules (playable, can end, …) stay in the
+`XxxDomainService` static methods, which the mapper calls.
+
+```typescript
+// domain/bracket/bracket.view.mapper.ts
+export class BracketViewMapper {
+
+  static toBracketMatchView(match: BracketMatch, canEnterResults: boolean, selectedMatchId: string | null): BracketMatchView {
+    return {
+      id: match.id,
+      fieldLabel: `T${match.field}`,
+      team1Label: match.team1?.name ?? BracketViewMapper.TO_BE_DETERMINED,
+      team2Label: match.team2?.name ?? BracketViewMapper.TO_BE_DETERMINED,
+      scoreLabel: match.result ? `${match.result.score1} - ${match.result.score2}` : '—',
+      isSelectable: canEnterResults && BracketDomainService.isPlayable(match),
+      isSelected: match.id === selectedMatchId,
+    };
+  }
+}
+```
+
+The view is **built by a selector**, never stored. The selector gathers every piece of state it
+needs itself (from any state, via `createSelector`); page-only UI state is the selector's
+parameter. One page view selector per page, named `getXxxPageView`:
+
+```typescript
+// bracket.state.ts
+static getBracketPageView(selectedMatchId: string | null) {
+  return createSelector(
+    [TournamentState.getSelected, BracketState.getRounds, ScheduleState.hasAllResults],
+    (tournament, rounds, hasAllResults) => tournament
+      ? BracketViewMapper.toBracketPageView(tournament, rounds, hasAllResults, selectedMatchId)
+      : null,
+  );
+}
+```
+
+```typescript
+// tournament-bracket.page.ts — the page owns its UI state and selects one view
+private readonly selectedMatchId = signal<string | null>(null);
+
+readonly vm$ = toObservable(this.selectedMatchId).pipe(
+  switchMap((id) => this.store.select(BracketState.getBracketPageView(id))),
+);
+```
+
+- View interfaces in `domain/<feature>/<feature>.view.ts`, mapper in `<feature>.view.mapper.ts`.
+- Dates stay `Date` in views — formatting is the template's job, through `DateFormatPipe`.
+- The page renders through a single `@if (vm$ | async; as vm)`.
+
+### Date Formatting
+
+Dates are formatted in templates with the shared `DateFormatPipe` (`display/shared/pipes/`) —
+never Angular's `DatePipe` with an inline pattern. The pipe owns the patterns, so a format is
+changed in one place.
+
+```html
+{{ tournament.date | dateFormat:'date' }}   <!-- 15 Aug 2027 -->
+{{ round.startTime | dateFormat:'time' }}   <!-- 14:30 -->
+```
 
 ---
 
@@ -502,10 +602,14 @@ export const TOURNAMENT_ROUTES: Routes = [
 | Mapping | DTOs → domain in `@Action` handlers via mapper |
 | API service | Returns DTOs only, methods end with `$` |
 | State interface | Named `IXxxState` |
-| Selectors | Return domain models — never DTOs |
+| Selectors | Return domain models or view models — never DTOs |
 | `patchState` | Always used — never `setState` directly |
 | Selectors | Delegate computed data to `XxxDomainService` static methods — never compute inline |
 | Domain service | Transformation methods are `static` — testable without Angular context |
+| State content | Business domain data only — never view models or UI state |
+| View models | `*.view.ts` interfaces, built by a static `XxxViewMapper` (`*.view.mapper.ts`) with `toXxxView` methods; business rules stay in the domain service |
+| View selectors | One `getXxxPageView(uiState)` per page built with `createSelector` — gathers all state itself, UI state is the parameter; the view is never stored |
+| Date formatting | `DateFormatPipe` (`dateFormat:'date'` / `'time'`) in templates — never `DatePipe` with an inline pattern; dates stay `Date` in views |
 | Pages | Dispatch actions, select state — one per route |
 | Components | Pure — `@Input` / `@Output` only, no store access |
 | Standalone | All components are standalone |

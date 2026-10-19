@@ -89,4 +89,52 @@ describe('BracketDomainService', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('isPlayable', () => {
+    it('should return true when both teams are known', () => {
+      // setup
+      const match = BracketFakes.aMatch();
+
+      // call
+      const result = BracketDomainService.isPlayable(match);
+
+      // assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false when a team is not yet determined', () => {
+      // setup
+      const match = BracketFakes.aMatch({ team2: null });
+
+      // call
+      const result = BracketDomainService.isPlayable(match);
+
+      // assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('findMatch', () => {
+    it('should return the match with the given id across rounds', () => {
+      // setup
+      const rounds = aBracket(false, false);
+
+      // call
+      const result = BracketDomainService.findMatch(rounds, 'third');
+
+      // assert
+      expect(result?.id).toBe('third');
+    });
+
+    it('should return undefined when no id is given', () => {
+      // setup
+      const rounds = aBracket(false, false);
+
+      // call
+      const result = BracketDomainService.findMatch(rounds, null);
+
+      // assert
+      expect(result).toBeUndefined();
+    });
+  });
 });

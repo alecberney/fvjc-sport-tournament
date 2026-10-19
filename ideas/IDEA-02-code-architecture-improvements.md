@@ -10,10 +10,10 @@
 
 | # | Improvement | Layer | Effort | Value | Status |
 |---|---|---|---|---|---|
-| F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High | To do |
+| F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High | 🟡 In progress (bracket page done) |
 | F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium | ✅ Done |
 | F3 | Extract shared components (ranking table, score form) | Frontend | S | Medium | ✅ Done |
-| F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | To do |
+| F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | 🟡 In progress (bracket page done) |
 | F5 | `OnPush` change detection everywhere | Frontend | S | Medium | To do |
 | F6 | `takeUntilDestroyed()` instead of `destroy$` + `takeUntil` | Frontend | S | Low | ✅ Done |
 | F7 | Route param via component input binding | Frontend | S | Low | ✅ Done |
@@ -26,6 +26,13 @@
 
 ### Done
 
+- **F1 + F4 (bracket page)** — `bracket.view.ts` + static `BracketViewMapper`
+  (`toBracketPageView`, `toBracketRoundView`, `toBracketMatchView`, `toBracketSelectedMatchView`)
+  with spec; `BracketState.getBracketPageView(selectedMatchId)` built with `createSelector` over
+  tournament / bracket / schedule states; the page keeps the selected match in a signal and
+  renders a single `vm$`. New `BracketDomainService.isPlayable` / `findMatch`. Shared
+  `DateFormatPipe` (`dateFormat:'date' | 'time'`) replaces every inline `DatePipe` pattern.
+  Rules updated in `frontend-rules.md` / `frontend-test-rules.md`.
 - **F2** — `domain/tournament/tournament.domain.service.ts` with static `isDraft`, `isInProgress`,
   `isFinished`, `canStart`, `canEnd`, `canEnterResults` (+ `TournamentFakes`, spec). The five
   pages and `tournament-actions` delegate to it; no `TournamentStatus` comparison left in `display/`
@@ -268,17 +275,19 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 Remaining work:
 
-1. **F1 → F4** — amend `frontend-rules.md`, then migrate page by page (bracket first): build
-   the view selector (F1), then collapse the page onto a single `vm$` (F4).
+1. **F1 → F4** — migrate the remaining pages (results → rankings → schedule → detail → groups):
+   build the view mapper + `getXxxPageView` selector (F1), then collapse the page onto a single `vm$` (F4).
 2. **F5** — once a page has no mutable fields left (F1/F4 done), switch it to `OnPush`.
 3. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 
-## Open questions
+## Decisions (F1)
 
-- Where do view models live: `domain/<feature>/*.view.ts` or `display/<feature>/views/`?
-- Should formatting (dates, `'HH:mm'`) move into views as strings, or stay as Angular
-  pipes for locale handling?
-- Page-local UI state (selected match, typed scores): keep in the page as signals, or
-  move into the NGXS state so a selector can build the full screen view?
+- View models live in `domain/<feature>/<feature>.view.ts`; they are built by a static
+  `XxxViewMapper` in `<feature>.view.mapper.ts` with `toXxxView` methods. Business rules stay
+  in the domain services, which the mapper calls.
+- The view is built by a selector and never stored. NGXS state holds business domain data only;
+  page UI state (selected match, …) stays in the page and is the view selector's parameter
+  (`getBracketPageView(selectedMatchId)`).
+- Dates stay `Date` in views and are formatted in templates by the shared `DateFormatPipe`.

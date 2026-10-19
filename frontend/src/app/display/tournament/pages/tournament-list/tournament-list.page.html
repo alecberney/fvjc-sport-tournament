@@ -22,7 +22,7 @@
           </mat-card-header>
           <mat-card-content>
             <div class="card-info">
-              <span>{{ tournament.date | date:'dd MMM yyyy' }}</span>
+              <span>{{ tournament.date | dateFormat:'date' }}</span>
               <span>{{ tournament.numberOfFields }} terrain(s)</span>
               <span>{{ playersPerTeamLabel(tournament) }} joueurs/équipe</span>
             </div>

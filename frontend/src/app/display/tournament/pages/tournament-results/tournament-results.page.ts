@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, inject, Input, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,13 +20,14 @@ import { TournamentHeaderComponent } from '@app/display/tournament/components/to
 import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
 import { RankingTableComponent } from '@app/display/tournament/components/ranking-table/ranking-table.component';
 import { ScoreFormComponent, ScoreFormValue } from '@app/display/tournament/components/score-form/score-form.component';
+import { DateFormatPipe } from '@app/display/shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-tournament-results-page',
   templateUrl: './tournament-results.page.html',
   styleUrl: './tournament-results.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent, RankingTableComponent, ScoreFormComponent],
+  imports: [AsyncPipe, DateFormatPipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent, RankingTableComponent, ScoreFormComponent],
 })
 export class TournamentResultsPage implements OnInit {
 

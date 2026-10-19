@@ -1,12 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { State, Action, StateContext, Selector } from '@ngxs/store';
+import { State, Action, StateContext, Selector, createSelector } from '@ngxs/store';
 import { concatMap, from, last, map, Observable, of, switchMap, tap } from 'rxjs';
 import { BracketApiService } from '@app/api/bracket/bracket.api.service';
 import { BracketApiMapper } from '@app/api/bracket/bracket.api.mapper';
 import { BracketRound } from './bracket.model';
 import { EnterBracketMatchResult, GenerateBracket, GenerateRandomBracketResults, LoadBracket } from './bracket.actions';
 import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
-import { BracketDomainService } from '@app/domain/bracket/bracket.domain.service';
+import { BracketPageView } from '@app/domain/bracket/bracket.view';
+import { BracketViewMapper } from '@app/domain/bracket/bracket.view.mapper';
+import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { ScheduleState } from '@app/domain/schedule/schedule.state';
 
 export interface IBracketState {
   rounds: BracketRound[];
@@ -25,14 +28,15 @@ export class BracketState {
     return state.rounds;
   }
 
-  @Selector()
-  static hasBracket(state: IBracketState): boolean {
-    return state.rounds.length > 0;
-  }
-
-  @Selector()
-  static isFinalPlayed(state: IBracketState): boolean {
-    return BracketDomainService.isFinalPlayed(state.rounds);
+  // Built on demand, never stored: gathers every state it needs; the page's UI state
+  // (selected match) is the parameter.
+  static getBracketPageView(selectedMatchId: string | null) {
+    return createSelector(
+      [TournamentState.getSelected, BracketState.getRounds, ScheduleState.hasAllResults],
+      (tournament, rounds, hasAllResults): BracketPageView | null => tournament
+        ? BracketViewMapper.toBracketPageView(tournament, rounds, hasAllResults, selectedMatchId)
+        : null,
+    );
   }
 
   @Action(LoadBracket)

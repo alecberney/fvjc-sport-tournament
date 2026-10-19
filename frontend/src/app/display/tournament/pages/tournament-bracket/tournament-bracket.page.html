@@ -1,23 +1,23 @@
-@if (tournament$ | async; as tournament) {
-  <app-tournament-header [tournament]="tournament">
-    @if (canEndTournament(tournament, isFinalPlayed$ | async)) {
+@if (vm$ | async; as vm) {
+  <app-tournament-header [tournament]="vm.tournament">
+    @if (vm.canEnd) {
       <button mat-raised-button color="accent" (click)="openEndModal()">
         <mat-icon>emoji_events</mat-icon>
         Terminer le tournoi
       </button>
     }
-    <app-tournament-actions [tournament]="tournament" />
+    <app-tournament-actions [tournament]="vm.tournament" />
   </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
   <div class="bracket-layout">
-    @if (hasBracket$ | async) {
+    @if (vm.hasBracket) {
       <div class="bracket-panel">
-        @for (round of rounds$ | async; track round.id) {
+        @for (round of vm.rounds; track round.id) {
           <div class="round-section">
             <div class="round-header">
               <span class="round-name">{{ round.name }}</span>
-              <span class="round-time">{{ round.startTime | date:'HH:mm' }}</span>
+              <span class="round-time">{{ round.startTime | dateFormat:'time' }}</span>
             </div>
             <table class="bracket-table">
               <thead>
@@ -32,20 +32,14 @@
               <tbody>
                 @for (match of round.matches; track match.id) {
                   <tr
-                    [class.selected]="selectedMatch?.id === match.id"
-                    [class.playable]="canSelectMatch(tournament, match)"
-                    (click)="selectMatch(tournament, match)">
-                    <td>T{{ match.field }}</td>
-                    <td>{{ match.team1?.name ?? 'À déterminer' }}</td>
+                    [class.selected]="match.isSelected"
+                    [class.playable]="match.isSelectable"
+                    (click)="selectMatch(match)">
+                    <td>{{ match.fieldLabel }}</td>
+                    <td>{{ match.team1Label }}</td>
                     <td class="vs">vs</td>
-                    <td>{{ match.team2?.name ?? 'À déterminer' }}</td>
-                    <td>
-                      @if (match.result) {
-                        {{ match.result.score1 }} - {{ match.result.score2 }}
-                      } @else {
-                        —
-                      }
-                    </td>
+                    <td>{{ match.team2Label }}</td>
+                    <td>{{ match.scoreLabel }}</td>
                   </tr>
                 }
               </tbody>
@@ -55,21 +49,21 @@
       </div>
 
       <div class="detail-panel">
-        @if (isFinished(tournament)) {
+        @if (vm.isFinished) {
           <div class="empty-detail">
             <mat-icon>emoji_events</mat-icon>
             <p>Le tournoi est terminé</p>
           </div>
-        } @else if (selectedMatch) {
+        } @else if (vm.selectedMatch; as selectedMatch) {
           <div class="result-form">
-            <h2>{{ selectedMatch.team1?.name }} vs {{ selectedMatch.team2?.name }}</h2>
+            <h2>{{ selectedMatch.title }}</h2>
             <app-score-form
               class="subtle"
-              [team1Label]="selectedMatch.team1?.name ?? ''"
-              [team2Label]="selectedMatch.team2?.name ?? ''"
-              [score1]="selectedMatch.result?.score1 ?? null"
-              [score2]="selectedMatch.result?.score2 ?? null"
-              (submitted)="submitResult($event)" />
+              [team1Label]="selectedMatch.team1Label"
+              [team2Label]="selectedMatch.team2Label"
+              [score1]="selectedMatch.score1"
+              [score2]="selectedMatch.score2"
+              (submitted)="submitResult(selectedMatch.id, $event)" />
           </div>
         } @else {
           <div class="empty-detail">
@@ -81,7 +75,7 @@
     } @else {
       <div class="empty-state">
         <p>Le bracket n'a pas encore été généré.</p>
-        @if (!(hasAllResults$ | async)) {
+        @if (vm.showMissingResultsWarning) {
           <div class="warning-banner">
             <mat-icon>warning</mat-icon>
             <span>Tous les matchs de la phase de groupes doivent avoir un résultat avant de générer le bracket.</span>

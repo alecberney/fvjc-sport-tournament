@@ -15,4 +15,14 @@ export class BracketDomainService {
   static isFinalPlayed(rounds: BracketRound[]): boolean {
     return !!BracketDomainService.findFinal(rounds)?.result;
   }
+
+  // A match can be played once both teams are known (earlier rounds decided).
+  static isPlayable(match: BracketMatch): boolean {
+    return !!match.team1 && !!match.team2;
+  }
+
+  static findMatch(rounds: BracketRound[], matchId: string | null): BracketMatch | undefined {
+    if (!matchId) return undefined;
+    return rounds.flatMap(round => round.matches).find(match => match.id === matchId);
+  }
 }

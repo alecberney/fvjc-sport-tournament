@@ -2,14 +2,14 @@
 
 ## Scope
 
-Unit tests are written for **domain service static methods only** — the transformation and business logic functions.  
-NGXS state, actions, components, and pages are not unit-tested at this stage.
+Unit tests are written for **static methods of domain services and view mappers** — the business logic and the view-building functions.  
+NGXS state, actions, components, pipes, and pages are not unit-tested at this stage.
 
 ---
 
 ## Why Static Methods Only
 
-Domain service transformation methods are static pure functions — they take data in and return data out, with no side effects and no Angular dependencies. This means:
+Domain service and view mapper methods are static pure functions — they take data in and return data out, with no side effects and no Angular dependencies. This means:
 
 - No `TestBed` setup needed.
 - No mocking needed.
@@ -45,7 +45,7 @@ it('should return select options from tournaments', () => {
 
 ## Test File Structure
 
-Test files live alongside the domain service, suffixed with `.spec.ts`:
+Test files live alongside the domain service or view mapper, suffixed with `.spec.ts` (`bracket.view.mapper.spec.ts`):
 
 ```
 src/app/tournament/domain/
@@ -179,7 +179,7 @@ Examples:
 
 | Rule | Detail |
 |------|--------|
-| Test scope | Domain service static methods only |
+| Test scope | Static methods of domain services and view mappers |
 | Test runner | Jest |
 | Structure | `setup` → `call` → `assert` (3 parts, with comments) |
 | No mocking | Static pure functions need no mocks |
