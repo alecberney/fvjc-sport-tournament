@@ -189,7 +189,12 @@ Create it with static `isDraft` / `isInProgress` / `canStart`, with a spec and a
 `tournament-results.page.html` subscribes to `schedule$` **twice** and nests
 `schedule$ | async` → `rankings$ | async` → `getSelectedMatch(...)`. Combine into one
 selector (or `combineLatest`) and render with a single `@if (vm$ | async; as vm)`.
-Fits naturally with F1.
+
+**Depends on F1 — do it after.** With F1, each page's view model comes from one
+`@Selector` (built with `createSelector` over the states it needs), so `vm$` is simply
+`this.store.select(XxxState.getXxxView)`. Doing F4 first would mean writing page-level
+`combineLatest` + `map` code that F1 then throws away. F4 is the finishing step of each
+F1 page migration: once the view selector exists, collapse the template to one `vm$`.
 
 ### F5 — `ChangeDetectionStrategy.OnPush`
 
@@ -263,8 +268,10 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 Remaining work:
 
-1. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
-2. **B4 follow-up** — podium display for a `FINISHED` tournament.
+1. **F1 → F4** — amend `frontend-rules.md`, then migrate page by page (bracket first): build
+   the view selector (F1), then collapse the page onto a single `vm$` (F4).
+2. **F5** — once a page has no mutable fields left (F1/F4 done), switch it to `OnPush`.
+3. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 
