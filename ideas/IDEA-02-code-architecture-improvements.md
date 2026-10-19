@@ -1,6 +1,6 @@
 # IDEA-02 — Code & architecture improvements
 
-**Status:** in progress — F3, F6, F8, F9, B1, B2 (schedule), B3 and B4 done
+**Status:** in progress — F3, F6, F8, F9, B1, B2, B3 and B4 done
 **Scope:** frontend (main topic: view models) + backend
 **Type:** technical debt / refactoring — no functional change for the user
 
@@ -20,7 +20,7 @@
 | F8 | Score entry as a typed reactive form with validation | Frontend | S | Medium | ✅ Done |
 | F9 | Data-driven `tournament-nav` | Frontend | XS | Low | ✅ Done |
 | B1 | Move HTTP error handling out of `domain` | Backend | S | High (architecture) | ✅ Done |
-| B2 | Extract the round-robin algorithm from `ScheduleService` | Backend | M | Medium | 🟡 Partial (bracket left) |
+| B2 | Extract the round-robin algorithm from `ScheduleService` | Backend | M | Medium | ✅ Done |
 | B3 | Remove the N+1 queries in `GroupRankingService` | Backend | S | Medium | ✅ Done |
 | B4 | Model the end of a tournament (`FINISHED` status) | Both | M | Medium | ✅ Done |
 
@@ -34,9 +34,11 @@
 - **B1** — `GlobalExceptionHandler`, `ValidationErrorResponse`, `ConflictErrorResponse`
   moved to `api.common.problem`; `ArchitectureTest.domainShouldNotDependOnSpringWeb`
   forbids `org.springframework.web..` / `org.springframework.http..` in `domain`.
-- **B2 (schedule part)** — pairing algorithm extracted into `RoundRobinService` (+ `MatchPair`,
+- **B2** — group-stage pairing extracted into `RoundRobinService` (+ `MatchPair`,
   `RoundRobinServiceTest`); `ScheduleService` dropped from 310 to ~200 lines.
-  `BracketService` (seeding) is not extracted yet.
+  Bracket seeding (hats per position, extra qualifiers by tie-breaker, best-vs-worst pairing)
+  extracted into `BracketSeedingService` (+ `SeedPair`, `BracketSeedingServiceTest`);
+  `BracketService` keeps only "load → seed → save".
 - **B3** — tournament-wide rankings load teams by `tournamentId` and matches with
   `matchStore.findAllByGroupIds(...)` once, then group in memory.
 - **B4** — `FINISHED` status, `POST /api/tournaments/{id}/end`
@@ -256,8 +258,7 @@ Remaining work:
 
 1. **F2 + F7** — quick wins, no rule change.
 2. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
-3. **B2** — extract the seeding / bracket-building logic from `BracketService`.
-4. **B4 follow-up** — podium display for a `FINISHED` tournament.
+3. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 

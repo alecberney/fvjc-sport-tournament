@@ -1,8 +1,6 @@
 package abe.fvjc.tournament.domain.bracket;
 
 import abe.fvjc.tournament.domain.group.GroupStore;
-import abe.fvjc.tournament.domain.group.GroupRanking;
-import abe.fvjc.tournament.domain.group.GroupRankingEntry;
 import abe.fvjc.tournament.domain.schedule.MatchResult;
 import abe.fvjc.tournament.domain.group.GroupRankingService;
 import abe.fvjc.tournament.domain.team.TeamRef;
@@ -17,8 +15,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -36,6 +32,7 @@ public class BracketService {
     private final BracketRoundStore bracketRoundStore;
     private final GroupStore groupStore;
     private final BracketMatchSearchService bracketMatchSearchService;
+    private final BracketSeedingService bracketSeedingService;
     private final GroupRankingService groupRankingService;
     private final TournamentSearchService tournamentSearchService;
 
@@ -63,7 +60,8 @@ public class BracketService {
 
         deleteAllByTournamentId(tournamentId);
 
-        final var round1Pairs = buildRound1Pairs(groupRankings, qualifiersPerGroup, extraQualifiers, request.getTieBreaker());
+        final var round1Pairs = bracketSeedingService.seedFirstRound(
+                groupRankings, qualifiersPerGroup, extraQualifiers, request.getTieBreaker());
         final var totalTeams = request.getTotalQualifiedTeams();
         final var totalRounds = (int) (Math.log(totalTeams) / Math.log(2));
         final var startTime = LocalTime.parse(request.getStartTime(), DateTimeFormatter.ofPattern("HH:mm"));
@@ -91,8 +89,8 @@ public class BracketService {
                         ? matchIdsByRound.get(r + 1).get(m / 2)
                         : null;
                 final var slot = (m % 2) + 1;
-                final var team1 = (r == 0) ? round1Pairs.get(m).first() : null;
-                final var team2 = (r == 0) ? round1Pairs.get(m).second() : null;
+                final var team1 = (r == 0) ? round1Pairs.get(m).team1() : null;
+                final var team2 = (r == 0) ? round1Pairs.get(m).team2() : null;
                 final var field = (m % tournament.getNumberOfFields()) + 1;
                 final var loserNextMatchId = isDemiFinale ? troisiemePlaceMatchId : null;
                 final var loserNextMatchTeamSlot = isDemiFinale ? slot : 0;
@@ -254,60 +252,6 @@ public class BracketService {
         return result;
     }
 
-    private static List<Pair> buildRound1Pairs(
-            final List<GroupRanking> rankings,
-            final int qualifiersPerGroup,
-            final int extraQualifiers,
-            final TieBreaker tieBreaker) {
-        final var seeded = buildSeededList(rankings, qualifiersPerGroup, extraQualifiers, tieBreaker);
-        return pairSeeded(seeded);
-    }
-
-    private static List<TeamRef> buildSeededList(
-            final List<GroupRanking> rankings,
-            final int qualifiersPerGroup,
-            final int extraQualifiers,
-            final TieBreaker tieBreaker) {
-        final var seeded = new ArrayList<TeamRef>();
-        for (int pos = 0; pos < qualifiersPerGroup; pos++) {
-            final var position = pos;
-            final var hat = new ArrayList<>(rankings.stream()
-                    .map(r -> r.getEntries().get(position).getTeam())
-                    .toList());
-            Collections.shuffle(hat);
-            seeded.addAll(hat);
-        }
-        if (extraQualifiers > 0) {
-            final var extras = new ArrayList<>(rankings.stream()
-                    .filter(r -> r.getEntries().size() > qualifiersPerGroup)
-                    .map(r -> r.getEntries().get(qualifiersPerGroup))
-                    .sorted(tieBreakerComparator(tieBreaker))
-                    .limit(extraQualifiers)
-                    .map(GroupRankingEntry::getTeam)
-                    .toList());
-            Collections.shuffle(extras);
-            seeded.addAll(extras);
-        }
-        return seeded;
-    }
-
-    private static List<Pair> pairSeeded(final List<TeamRef> seeded) {
-        final var n = seeded.size();
-        final var pairs = new ArrayList<Pair>();
-        for (int i = 0; i < n / 2; i++) {
-            pairs.add(new Pair(seeded.get(i), seeded.get(n - 1 - i)));
-        }
-        return pairs;
-    }
-
-    private static Comparator<GroupRankingEntry> tieBreakerComparator(final TieBreaker tieBreaker) {
-        return switch (tieBreaker) {
-            case POINTS_SCORED -> Comparator.comparingInt(GroupRankingEntry::getGoalsFor).reversed();
-            case POINTS_DIFF -> Comparator.comparingInt(GroupRankingEntry::getGoalDifference).reversed();
-            case POINTS_TAKEN -> Comparator.comparingInt(GroupRankingEntry::getGoalsAgainst);
-        };
-    }
-
     private static String roundName(final int teamsCount) {
         return switch (teamsCount) {
             case 16 -> "Huitièmes de finale";
@@ -318,5 +262,4 @@ public class BracketService {
         };
     }
 
-    private record Pair(TeamRef first, TeamRef second) {}
 }

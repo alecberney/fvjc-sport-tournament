@@ -3,15 +3,12 @@ package abe.fvjc.tournament.domain.bracket;
 import abe.fvjc.tournament.domain.fakes.BracketFakes;
 import abe.fvjc.tournament.domain.fakes.GroupFakes;
 import abe.fvjc.tournament.domain.fakes.TournamentFakes;
-import abe.fvjc.tournament.domain.group.GroupId;
 import abe.fvjc.tournament.domain.group.GroupStore;
 import abe.fvjc.tournament.domain.group.GroupRanking;
-import abe.fvjc.tournament.domain.group.GroupRankingEntry;
 import abe.fvjc.tournament.domain.schedule.MatchResult;
 import abe.fvjc.tournament.domain.group.GroupRankingService;
 import abe.fvjc.tournament.domain.common.problem.ConflictException;
 import abe.fvjc.tournament.domain.common.problem.ValidationException;
-import abe.fvjc.tournament.domain.team.TeamId;
 import abe.fvjc.tournament.domain.tournament.TournamentId;
 import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
 import org.junit.jupiter.api.Test;
@@ -20,11 +17,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
+import static abe.fvjc.tournament.domain.bracket.TieBreaker.POINTS_DIFF;
+import static abe.fvjc.tournament.domain.fakes.BracketFakes.buildGroupRanking;
+import static abe.fvjc.tournament.domain.fakes.BracketFakes.buildGroupRankingWithExtras;
+import static abe.fvjc.tournament.domain.fakes.BracketFakes.buildSeedPairs;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.FINISHED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,7 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -54,6 +55,9 @@ class BracketServiceTest {
 
     @Mock
     private BracketMatchSearchService bracketMatchSearchService;
+
+    @Mock
+    private BracketSeedingService bracketSeedingService;
 
     @Mock
     private GroupRankingService groupRankingService;
@@ -78,14 +82,15 @@ class BracketServiceTest {
         final var groups = List.of(gA, gB, gC, gD);
 
         final var rankings = List.of(
-                buildRanking(gA.getId(), "A", 2),
-                buildRanking(gB.getId(), "B", 2),
-                buildRanking(gC.getId(), "C", 2),
-                buildRanking(gD.getId(), "D", 2));
+                buildGroupRanking("A", 2),
+                buildGroupRanking("B", 2),
+                buildGroupRanking("C", 2),
+                buildGroupRanking("D", 2));
 
         when(tournamentSearchService.findById(tid)).thenReturn(tournament);
         when(groupStore.findAllByTournamentId(tid)).thenReturn(groups);
         when(groupRankingService.computeAllGroupRankings(tid, List.of())).thenReturn(rankings);
+        when(bracketSeedingService.seedFirstRound(anyList(), eq(2), eq(0), eq(POINTS_DIFF))).thenReturn(buildSeedPairs(4));
         when(bracketRoundStore.save(any(BracketRound.class))).then(returnsFirstArg());
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
@@ -94,6 +99,7 @@ class BracketServiceTest {
         verify(tournamentSearchService).findById(tid);
         verify(groupStore).findAllByTournamentId(tid);
         verify(groupRankingService).computeAllGroupRankings(tid, List.of());
+        verify(bracketSeedingService).seedFirstRound(anyList(), eq(2), eq(0), eq(POINTS_DIFF));
         verify(bracketRoundStore, times(4)).save(any(BracketRound.class));
         verify(bracketMatchStore, times(8)).save(any(BracketMatch.class));
 
@@ -122,9 +128,9 @@ class BracketServiceTest {
         when(tournamentSearchService.findById(tid)).thenReturn(tournament);
         when(groupStore.findAllByTournamentId(tid)).thenReturn(List.of(gA, gB, gC));
         when(groupRankingService.computeAllGroupRankings(tid, List.of())).thenReturn(
-                List.of(buildRanking(gA.getId(), "A", 2),
-                        buildRanking(gB.getId(), "B", 2),
-                        buildRanking(gC.getId(), "C", 2)));
+                List.of(buildGroupRanking("A", 2),
+                        buildGroupRanking("B", 2),
+                        buildGroupRanking("C", 2)));
 
         final var exception = assertThrows(ValidationException.class,
                 () -> bracketService.generate(tid, request));
@@ -152,10 +158,11 @@ class BracketServiceTest {
         when(tournamentSearchService.findById(tid)).thenReturn(tournament);
         when(groupStore.findAllByTournamentId(tid)).thenReturn(List.of(gA, gB, gC, gD));
         when(groupRankingService.computeAllGroupRankings(tid, List.of())).thenReturn(
-                List.of(buildRanking(gA.getId(), "A", 1),
-                        buildRanking(gB.getId(), "B", 1),
-                        buildRanking(gC.getId(), "C", 1),
-                        buildRanking(gD.getId(), "D", 1)));
+                List.of(buildGroupRanking("A", 1),
+                        buildGroupRanking("B", 1),
+                        buildGroupRanking("C", 1),
+                        buildGroupRanking("D", 1)));
+        when(bracketSeedingService.seedFirstRound(anyList(), eq(1), eq(0), eq(POINTS_DIFF))).thenReturn(buildSeedPairs(2));
         when(bracketRoundStore.save(any(BracketRound.class))).then(returnsFirstArg());
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
@@ -164,6 +171,7 @@ class BracketServiceTest {
         verify(tournamentSearchService).findById(tid);
         verify(groupStore).findAllByTournamentId(tid);
         verify(groupRankingService).computeAllGroupRankings(tid, List.of());
+        verify(bracketSeedingService).seedFirstRound(anyList(), eq(1), eq(0), eq(POINTS_DIFF));
         verify(bracketRoundStore, times(3)).save(any(BracketRound.class));
         verify(bracketMatchStore, times(4)).save(any(BracketMatch.class));
 
@@ -190,9 +198,10 @@ class BracketServiceTest {
         when(tournamentSearchService.findById(tid)).thenReturn(tournament);
         when(groupStore.findAllByTournamentId(tid)).thenReturn(List.of(gA, gB, gC));
         when(groupRankingService.computeAllGroupRankings(tid, List.of())).thenReturn(
-                List.of(buildRankingWithExtras(gA.getId(), "A"),
-                        buildRankingWithExtras(gB.getId(), "B"),
-                        buildRankingWithExtras(gC.getId(), "C")));
+                List.of(buildGroupRankingWithExtras("A"),
+                        buildGroupRankingWithExtras("B"),
+                        buildGroupRankingWithExtras("C")));
+        when(bracketSeedingService.seedFirstRound(anyList(), eq(1), eq(1), eq(POINTS_DIFF))).thenReturn(buildSeedPairs(2));
         when(bracketRoundStore.save(any(BracketRound.class))).then(returnsFirstArg());
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
@@ -201,6 +210,7 @@ class BracketServiceTest {
         verify(tournamentSearchService).findById(tid);
         verify(groupStore).findAllByTournamentId(tid);
         verify(groupRankingService).computeAllGroupRankings(tid, List.of());
+        verify(bracketSeedingService).seedFirstRound(anyList(), eq(1), eq(1), eq(POINTS_DIFF));
         verify(bracketRoundStore, times(3)).save(any(BracketRound.class));
         verify(bracketMatchStore, times(4)).save(any(BracketMatch.class));
 
@@ -477,46 +487,5 @@ class BracketServiceTest {
         verify(bracketRoundStore).findAllByTournamentId(tournamentId);
         verify(bracketMatchStore).deleteAllByRoundId(round.getId());
         verify(bracketRoundStore).deleteAllByTournamentId(tournamentId);
-    }
-
-    private static GroupRanking buildRanking(final GroupId groupId, final String groupName, final int numEntries) {
-        final var entries = new ArrayList<GroupRankingEntry>();
-        for (int i = 1; i <= numEntries; i++) {
-            entries.add(GroupRankingEntry.builder()
-                    .rank(i)
-                    .team(toTeamRef(TeamId.of(UUID.randomUUID()), groupName + i))
-                    .goalsFor(10)
-                    .goalsAgainst(5)
-                    .goalDifference(5)
-                    .build());
-        }
-        return GroupRanking.builder()
-                .groupId(groupId)
-                .groupName(groupName)
-                .entries(entries)
-                .build();
-    }
-
-    private static GroupRanking buildRankingWithExtras(final GroupId groupId, final String groupName) {
-        final var entries = List.of(
-                GroupRankingEntry.builder()
-                        .rank(1)
-                        .team(toTeamRef(TeamId.of(UUID.randomUUID()), groupName + "1"))
-                        .goalsFor(10)
-                        .goalsAgainst(5)
-                        .goalDifference(5)
-                        .build(),
-                GroupRankingEntry.builder()
-                        .rank(2)
-                        .team(toTeamRef(TeamId.of(UUID.randomUUID()), groupName + "2"))
-                        .goalsFor(6)
-                        .goalsAgainst(8)
-                        .goalDifference(-2)
-                        .build());
-        return GroupRanking.builder()
-                .groupId(groupId)
-                .groupName(groupName)
-                .entries(entries)
-                .build();
     }
 }
