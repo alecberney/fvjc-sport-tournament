@@ -9,7 +9,7 @@ import { ResultMatchView, ResultPageView } from '@app/domain/result/result.view'
 import { ResultState } from '@app/domain/result/result.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
-import { SubmitResult } from '@app/domain/result/result.actions';
+import { LoadAllGroupRankings, SubmitResult } from '@app/domain/result/result.actions';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
 import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
@@ -43,6 +43,7 @@ export class TournamentResultsPage implements OnInit {
     this.store.dispatch([
       new LoadTournamentById(this.tournamentId),
       new LoadSchedule(this.tournamentId),
+      new LoadAllGroupRankings(this.tournamentId, {}),
     ]);
   }
 

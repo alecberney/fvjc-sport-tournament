@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -42,9 +42,9 @@ export class BracketGenerateModal {
     ),
   );
 
-  readonly form: FormGroup = this.fb.group({
+  readonly form = this.fb.nonNullable.group({
     totalQualifiedTeams: [8, [Validators.required, Validators.min(2)]],
-    tieBreaker: [TieBreaker.POINTS_DIFF, [Validators.required]],
+    tieBreaker: [TieBreaker.POINTS_DIFF as TieBreaker, [Validators.required]],
     startTime: ['14:00', [Validators.required, Validators.pattern(/^\d{2}:\d{2}$/)]],
     matchDurationMinutes: [20, [Validators.required, Validators.min(1)]],
     breakDurationMinutes: [5, [Validators.required, Validators.min(0)]],
@@ -52,12 +52,13 @@ export class BracketGenerateModal {
 
   submit(): void {
     if (this.form.invalid) return;
+    const { totalQualifiedTeams, tieBreaker, startTime, matchDurationMinutes, breakDurationMinutes } = this.form.getRawValue();
     this.store.dispatch(new GenerateBracket(this.data.tournamentId, {
-      totalQualifiedTeams: Number(this.form.value.totalQualifiedTeams),
-      tieBreaker: String(this.form.value.tieBreaker),
-      startTime: String(this.form.value.startTime),
-      matchDurationMinutes: Number(this.form.value.matchDurationMinutes),
-      breakDurationMinutes: Number(this.form.value.breakDurationMinutes),
+      totalQualifiedTeams,
+      tieBreaker,
+      startTime,
+      matchDurationMinutes,
+      breakDurationMinutes,
     })).subscribe({
       next: () => this.dialogRef.close(),
       // The failure is displayed through errorMessage$.

@@ -13,7 +13,7 @@ Domain service and view mapper methods are static pure functions — they take d
 
 - No `TestBed` setup needed.
 - No mocking needed.
-- Tests are plain Jest — fast, simple, zero Angular overhead.
+- Tests are plain Jasmine specs (run by Karma via `ng test`) — fast, simple, zero Angular overhead.
 
 ---
 
@@ -30,7 +30,7 @@ it('should return select options from tournaments', () => {
   const result = TournamentDomainService.toSelectOptions(tournaments);
 
   // assert
-  expect(result).toHaveLength(3);
+  expect(result.length).toBe(3);
   expect(result[0]).toEqual({ value: tournaments[0].id, label: tournaments[0].name, trackId: tournaments[0].id });
 });
 ```
@@ -68,7 +68,7 @@ describe('TournamentDomainService', () => {
       const result = TournamentDomainService.toSelectOptions(tournaments);
 
       // assert
-      expect(result).toHaveLength(2);
+      expect(result.length).toBe(2);
       expect(result[0].value).toBe(tournaments[0].id);
       expect(result[0].label).toBe(tournaments[0].name);
     });
@@ -180,12 +180,12 @@ Examples:
 | Rule | Detail |
 |------|--------|
 | Test scope | Static methods of domain services and view mappers |
-| Test runner | Jest |
+| Test runner | Karma + Jasmine (`ng test`) — Jasmine matchers only (no Jest `toHaveLength`: use `expect(x.length).toBe(n)`) |
 | Structure | `setup` → `call` → `assert` (3 parts, with comments) |
 | No mocking | Static pure functions need no mocks |
-| No TestBed | No Angular setup — plain Jest |
+| No TestBed | No Angular setup — plain Jasmine |
 | Fakes | Class named `XxxFakes` colocated with domain files |
 | Fake base method | `aXxx(overrides?)` with spread for overrides |
 | `describe` grouping | One per service, one nested per method |
 | Test naming | `should [outcome] when [condition]` |
-| Assertions | Jest `expect` |
+| Assertions | Jasmine `expect` |
