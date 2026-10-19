@@ -175,6 +175,34 @@ Examples:
 
 ---
 
+## End-to-End Tests (Playwright)
+
+Unit tests stop at static methods; user flows are covered by **Playwright** specs in
+`frontend/e2e/`, run with `npm run e2e` (dev server) and by the `e2e` CI job (packaged jar on a
+fresh database).
+
+```
+frontend/
+├── playwright.config.ts
+└── e2e/
+    ├── support/
+    │   ├── tournament-api.ts      ← builds test data through the REST API
+    │   └── score-form.ts          ← shared UI step helpers
+    └── tournament-results.spec.ts ← one spec file per page
+```
+
+- **One spec file per page**, `describe` named after the page; test names `should [outcome] when [condition]`.
+- **Data via the API, assertions via the UI.** `beforeEach` builds the state the test needs with
+  `TournamentApi` (e.g. `createStartedTournament`); `afterEach` deletes the tournament. Only the
+  behaviour under test is driven through the UI.
+- **Every test is independent** — it creates its own tournament with a unique name and never relies
+  on existing data or on another test.
+- **Web-first assertions only** — `await expect(locator).toHaveText/toHaveCount/toHaveClass(...)`;
+  they retry until the UI settles. No `waitForTimeout` / sleeps.
+- **Locators by role or visible text first** (`getByRole('button', { name: 'Générer' })`), CSS
+  classes from the template second. Exact-match text when a substring is ambiguous
+  (`hasText: /^Finale$/` — `'Finale'` also matches "Demi-finales").
+
 ## Rules Summary
 
 | Rule | Detail |
@@ -189,3 +217,4 @@ Examples:
 | `describe` grouping | One per service, one nested per method |
 | Test naming | `should [outcome] when [condition]` |
 | Assertions | Jasmine `expect` |
+| E2E | Playwright specs in `frontend/e2e/`, one per page; data set up via `TournamentApi`, cleaned up in `afterEach`; web-first assertions, no sleeps |

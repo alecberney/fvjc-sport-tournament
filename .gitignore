@@ -6,6 +6,8 @@
 /frontend/.angular/
 /frontend/node/
 /frontend/coverage/
+/frontend/test-results/
+/frontend/playwright-report/
 
 # Backend build
 /backend/target/

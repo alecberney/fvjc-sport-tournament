@@ -81,4 +81,14 @@ npm run test:coverage
 
 Report: `frontend/coverage/frontend/index.html` (LCOV for Sonar at `coverage/frontend/lcov.info`).
 
+**End-to-end** — Playwright drives the real app in Chrome (uses your installed Google Chrome, no browser download). With the app running in dev mode (backend on `:8081`, `npm start` on `:4200`):
+
+```bash
+cd frontend
+npm run e2e          # all specs in frontend/e2e/
+npm run e2e:report   # open the last HTML report
+```
+
+To target another URL (e.g. the packaged jar), set `E2E_BASE_URL=http://localhost:8081`. Each spec creates its own tournament through the API and deletes it afterwards. In CI, the `e2e` job in [`ci.yml`](./.github/workflows/ci.yml) builds the jar, starts it on a fresh SQLite database and runs the suite against it; the Playwright report is uploaded as an artifact when it fails.
+
 Both reports are uploaded to [SonarCloud](https://sonarcloud.io/summary/overall?id=alecberney_fvjc-sport-tournament&branch=main) by the `sonar` job in [`ci.yml`](./.github/workflows/ci.yml) on every push to `main` and every pull request. Analysis settings live in [`sonar-project.properties`](./sonar-project.properties).
