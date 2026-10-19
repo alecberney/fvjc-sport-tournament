@@ -22,7 +22,7 @@
 | B1 | Move HTTP error handling out of `domain` | Backend | S | High (architecture) | ✅ Done |
 | B2 | Extract the round-robin algorithm from `ScheduleService` | Backend | M | Medium | 🟡 Partial (bracket left) |
 | B3 | Remove the N+1 queries in `GroupRankingService` | Backend | S | Medium | ✅ Done |
-| B4 | Model the end of a tournament (`ENDED` status) | Both | M | Medium | ✅ Done |
+| B4 | Model the end of a tournament (`FINISHED` status) | Both | M | Medium | ✅ Done |
 
 ### Done
 
@@ -39,7 +39,7 @@
   `BracketService` (seeding) is not extracted yet.
 - **B3** — tournament-wide rankings load teams by `tournamentId` and matches with
   `matchStore.findAllByGroupIds(...)` once, then group in memory.
-- **B4** — `ENDED` status (named `ENDED` rather than `FINISHED`), `POST /api/tournaments/{id}/end`
+- **B4** — `FINISHED` status, `POST /api/tournaments/{id}/end`
   allowed only when `IN_PROGRESS` and the final has a score (`TournamentService.end`).
   Frontend: `EndTournament` action, `BracketDomainService.findFinal` / `isFinalPlayed`
   (with spec), end confirmation modal on the bracket page, results locked once ended.
@@ -257,7 +257,7 @@ Remaining work:
 1. **F2 + F7** — quick wins, no rule change.
 2. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
 3. **B2** — extract the seeding / bracket-building logic from `BracketService`.
-4. **B4 follow-up** — podium display for an `ENDED` tournament.
+4. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 

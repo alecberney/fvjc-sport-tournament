@@ -1,7 +1,7 @@
 export enum TournamentStatus {
   DRAFT = 'DRAFT',
   IN_PROGRESS = 'IN_PROGRESS',
-  ENDED = 'ENDED',
+  FINISHED = 'FINISHED',
 }
 
 export enum Sport {

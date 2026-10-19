@@ -44,8 +44,8 @@ export class TournamentResultsPage implements OnInit {
     return tournament.status === TournamentStatus.DRAFT;
   }
 
-  protected isEnded(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.ENDED;
+  protected isFinished(tournament: Tournament): boolean {
+    return tournament.status === TournamentStatus.FINISHED;
   }
 
   ngOnInit(): void {

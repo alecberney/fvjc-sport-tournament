@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static abe.fvjc.tournament.domain.fakes.TournamentFakes.buildCreateRequest;
 import static abe.fvjc.tournament.domain.fakes.TournamentFakes.buildTournament;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.DRAFT;
-import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.FINISHED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -152,7 +152,7 @@ class TournamentServiceTest {
 
     @Test
     void startWhenEndedShouldThrowConflictException() {
-        final var tournament = buildTournament().withStatus(ENDED);
+        final var tournament = buildTournament().withStatus(FINISHED);
 
         when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
 
@@ -207,6 +207,6 @@ class TournamentServiceTest {
         verify(bracketService).isFinalPlayed(tournament.getId());
         verify(tournamentStore).save(any(Tournament.class));
 
-        assertEquals(ENDED, tournamentEnded.getStatus());
+        assertEquals(FINISHED, tournamentEnded.getStatus());
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.DRAFT;
-import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.FINISHED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static abe.fvjc.tournament.domain.tournament.TournamentValidator.validateTournamentCreateRequest;
 
@@ -70,7 +70,7 @@ public class TournamentService {
         if (!bracketService.isFinalPlayed(id)) {
             throw new ConflictException("Le tournoi ne peut être terminé qu'une fois le score de la finale saisi");
         }
-        return tournamentStore.save(tournament.withStatus(ENDED));
+        return tournamentStore.save(tournament.withStatus(FINISHED));
     }
 
     private static Tournament buildTournament(final TournamentCreateRequest request) {

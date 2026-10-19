@@ -66,8 +66,8 @@ export class TournamentBracketPage implements OnInit {
     });
   }
 
-  protected isEnded(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.ENDED;
+  protected isFinished(tournament: Tournament): boolean {
+    return tournament.status === TournamentStatus.FINISHED;
   }
 
   protected canEndTournament(tournament: Tournament, isFinalPlayed: boolean | null): boolean {

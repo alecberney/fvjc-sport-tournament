@@ -31,7 +31,7 @@ export class TournamentListPage implements OnInit {
   private static readonly STATUS_LABELS: Record<TournamentStatus, string> = {
     [TournamentStatus.DRAFT]: 'Brouillon',
     [TournamentStatus.IN_PROGRESS]: 'En cours',
-    [TournamentStatus.ENDED]: 'Terminé',
+    [TournamentStatus.FINISHED]: 'Terminé',
   };
 
   ngOnInit(): void {

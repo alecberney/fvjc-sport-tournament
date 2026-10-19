@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static abe.fvjc.tournament.domain.bracket.BracketValidator.validateBracketGenerateRequest;
 import static abe.fvjc.tournament.domain.bracket.BracketValidator.validateBracketMatchResult;
-import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.FINISHED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 
 @Service
@@ -41,7 +41,7 @@ public class BracketService {
 
     public List<BracketRound> generate(final TournamentId tournamentId, final BracketGenerateRequest request) {
         final var tournament = tournamentSearchService.findById(tournamentId);
-        if (tournament.getStatus() == ENDED) {
+        if (tournament.getStatus() == FINISHED) {
             throw new ConflictException("Le bracket ne peut plus être généré pour un tournoi terminé");
         }
         final var groups = groupStore.findAllByTournamentId(tournamentId);

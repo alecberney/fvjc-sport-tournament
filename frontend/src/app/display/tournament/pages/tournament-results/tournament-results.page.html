@@ -49,7 +49,7 @@
               <h2>{{ match.team1.name }} vs {{ match.team2.name }}</h2>
               <p class="form-subtitle">{{ match.groupName }} — Terrain {{ match.field }}</p>
 
-              @if (isEnded(tournament)) {
+              @if (isFinished(tournament)) {
                 <p class="form-subtitle">Tournoi terminé — les résultats ne peuvent plus être modifiés.</p>
               } @else {
                 <app-score-form

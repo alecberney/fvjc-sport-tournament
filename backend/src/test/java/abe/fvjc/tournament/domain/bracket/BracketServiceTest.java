@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
-import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.FINISHED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -363,7 +363,7 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenTournamentEndedShouldThrowConflictException() {
-        final var tournament = TournamentFakes.buildTournament().withStatus(ENDED);
+        final var tournament = TournamentFakes.buildTournament().withStatus(FINISHED);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var request = BracketFakes.buildMatchResultRequest();
 
@@ -380,7 +380,7 @@ class BracketServiceTest {
 
     @Test
     void generateWhenTournamentEndedShouldThrowConflictException() {
-        final var tournament = TournamentFakes.buildTournament().withStatus(ENDED);
+        final var tournament = TournamentFakes.buildTournament().withStatus(FINISHED);
         final var request = BracketFakes.buildGenerateRequest();
 
         when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
