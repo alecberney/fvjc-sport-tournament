@@ -6,7 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
+import { Tournament } from '@app/domain/tournament/tournament.model';
+import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
 import { Schedule } from '@app/domain/schedule/schedule.model';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { ScheduleState } from '@app/domain/schedule/schedule.state';
@@ -38,15 +39,15 @@ export class TournamentSchedulePage implements OnInit {
   @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.DRAFT;
+    return TournamentDomainService.isDraft(tournament);
   }
 
   isInProgress(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.IN_PROGRESS;
+    return TournamentDomainService.isInProgress(tournament);
   }
 
   canStartTournament(tournament: Tournament, schedule: Schedule | null | undefined): boolean {
-    return this.isDraft(tournament) && !!schedule && schedule.totalRounds > 0;
+    return TournamentDomainService.canStart(tournament, !!schedule && schedule.totalRounds > 0);
   }
 
   startTournament(): void {

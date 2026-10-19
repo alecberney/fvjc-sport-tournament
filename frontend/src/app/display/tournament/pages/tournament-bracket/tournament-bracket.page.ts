@@ -5,7 +5,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
+import { Tournament } from '@app/domain/tournament/tournament.model';
+import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
 import { BracketMatch, BracketRound } from '@app/domain/bracket/bracket.model';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { BracketState } from '@app/domain/bracket/bracket.state';
@@ -64,20 +65,19 @@ export class TournamentBracketPage implements OnInit {
   }
 
   protected isFinished(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.FINISHED;
+    return TournamentDomainService.isFinished(tournament);
   }
 
   protected canEndTournament(tournament: Tournament, isFinalPlayed: boolean | null): boolean {
-    return tournament.status === TournamentStatus.IN_PROGRESS && !!isFinalPlayed;
+    return TournamentDomainService.canEnd(tournament, !!isFinalPlayed);
   }
 
   protected isPlayable(match: BracketMatch): boolean {
     return !!match.team1 && !!match.team2;
   }
 
-  // Results are locked once the tournament has ended.
   protected canSelectMatch(tournament: Tournament, match: BracketMatch): boolean {
-    return tournament.status === TournamentStatus.IN_PROGRESS && this.isPlayable(match);
+    return TournamentDomainService.canEnterResults(tournament) && this.isPlayable(match);
   }
 
   openEndModal(): void {

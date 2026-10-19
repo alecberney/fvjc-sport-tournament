@@ -1,6 +1,6 @@
 # IDEA-02 — Code & architecture improvements
 
-**Status:** in progress — F3, F6, F7, F8, F9, B1, B2, B3 and B4 done
+**Status:** in progress — F2, F3, F6, F7, F8, F9, B1, B2, B3 and B4 done
 **Scope:** frontend (main topic: view models) + backend
 **Type:** technical debt / refactoring — no functional change for the user
 
@@ -11,7 +11,7 @@
 | # | Improvement | Layer | Effort | Value | Status |
 |---|---|---|---|---|---|
 | F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High | To do |
-| F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium | To do |
+| F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium | ✅ Done |
 | F3 | Extract shared components (ranking table, score form) | Frontend | S | Medium | ✅ Done |
 | F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | To do |
 | F5 | `OnPush` change detection everywhere | Frontend | S | Medium | To do |
@@ -26,6 +26,10 @@
 
 ### Done
 
+- **F2** — `domain/tournament/tournament.domain.service.ts` with static `isDraft`, `isInProgress`,
+  `isFinished`, `canStart`, `canEnd`, `canEnterResults` (+ `TournamentFakes`, spec). The five
+  pages and `tournament-actions` delegate to it; no `TournamentStatus` comparison left in `display/`
+  except the status labels of the list page.
 - **F3** — `components/ranking-table/` (used by results + rankings pages) and
   `components/score-form/` (used by results + bracket pages).
 - **F6** — the seven modals use `takeUntilDestroyed(this.destroyRef)`; no `destroy$` left.
@@ -259,9 +263,8 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 Remaining work:
 
-1. **F2** — quick win, no rule change.
-2. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
-3. **B4 follow-up** — podium display for a `FINISHED` tournament.
+1. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
+2. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 

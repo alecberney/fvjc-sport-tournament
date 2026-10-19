@@ -7,7 +7,8 @@ import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { Schedule, Match } from '@app/domain/schedule/schedule.model';
 import { GroupRanking } from '@app/domain/result/result.model';
-import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
+import { Tournament } from '@app/domain/tournament/tournament.model';
+import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { ScheduleState } from '@app/domain/schedule/schedule.state';
 import { ResultState } from '@app/domain/result/result.state';
@@ -40,11 +41,11 @@ export class TournamentResultsPage implements OnInit {
   @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.DRAFT;
+    return TournamentDomainService.isDraft(tournament);
   }
 
   protected isFinished(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.FINISHED;
+    return TournamentDomainService.isFinished(tournament);
   }
 
   ngOnInit(): void {

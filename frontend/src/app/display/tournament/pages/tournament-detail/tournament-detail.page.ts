@@ -5,7 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
+import { Tournament } from '@app/domain/tournament/tournament.model';
+import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
 import { Team, TeamGroup } from '@app/domain/team/team.model';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { TeamState } from '@app/domain/team/team.state';
@@ -35,7 +36,7 @@ export class TournamentDetailPage implements OnInit {
   @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
-    return tournament.status === TournamentStatus.DRAFT;
+    return TournamentDomainService.isDraft(tournament);
   }
 
   ngOnInit(): void {

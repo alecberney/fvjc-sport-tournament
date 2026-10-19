@@ -6,7 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { Store } from '@ngxs/store';
-import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
+import { Tournament } from '@app/domain/tournament/tournament.model';
+import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
 import { DeleteTournament } from '@app/domain/tournament/tournament.actions';
 import { GenerateRandomResults } from '@app/domain/result/result.actions';
 import { GenerateRandomBracketResults } from '@app/domain/bracket/bracket.actions';
@@ -31,11 +32,11 @@ export class TournamentActionsComponent {
   private readonly dialog = inject(MatDialog);
 
   protected isDraft(): boolean {
-    return this.tournament.status === TournamentStatus.DRAFT;
+    return TournamentDomainService.isDraft(this.tournament);
   }
 
   protected isInProgress(): boolean {
-    return this.tournament.status === TournamentStatus.IN_PROGRESS;
+    return TournamentDomainService.isInProgress(this.tournament);
   }
 
   openDeleteModal(): void {
