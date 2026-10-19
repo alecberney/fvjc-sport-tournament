@@ -8,6 +8,7 @@ import java.util.UUID;
 interface MatchRepository extends JpaRepository<MatchEntity, UUID> {
     List<MatchEntity> findByRoundIdIn(List<UUID> roundIds);
     List<MatchEntity> findByGroupId(UUID groupId);
+    List<MatchEntity> findByGroupIdIn(List<UUID> groupIds);
     void deleteByRoundIdIn(List<UUID> roundIds);
     boolean existsByRoundIdInAndResultScore1IsNotNull(List<UUID> roundIds);
 }

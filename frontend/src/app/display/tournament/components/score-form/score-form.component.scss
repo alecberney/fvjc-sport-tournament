@@ -1,0 +1,25 @@
+// Default look (results page): bold separator. The `subtle` host-class variant
+// (bracket page) uses a lighter separator and slightly more spacing.
+.score-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  mat-form-field { flex: 1; }
+}
+
+.score-separator {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+:host(.subtle) {
+  .score-inputs { margin-bottom: 20px; }
+
+  .score-separator {
+    font-weight: normal;
+    color: #aaa;
+    flex-shrink: 0;
+  }
+}

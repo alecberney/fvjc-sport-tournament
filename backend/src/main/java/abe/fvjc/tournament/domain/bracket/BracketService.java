@@ -7,6 +7,7 @@ import abe.fvjc.tournament.domain.schedule.MatchResult;
 import abe.fvjc.tournament.domain.group.GroupRankingService;
 import abe.fvjc.tournament.domain.team.TeamRef;
 import abe.fvjc.tournament.domain.common.problem.BusinessException;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
 import abe.fvjc.tournament.domain.tournament.TournamentId;
 import abe.fvjc.tournament.domain.tournament.TournamentSearchService;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static abe.fvjc.tournament.domain.bracket.BracketValidator.validateBracketGenerateRequest;
 import static abe.fvjc.tournament.domain.bracket.BracketValidator.validateBracketMatchResult;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,9 @@ public class BracketService {
 
     public List<BracketRound> generate(final TournamentId tournamentId, final BracketGenerateRequest request) {
         final var tournament = tournamentSearchService.findById(tournamentId);
+        if (tournament.getStatus() == ENDED) {
+            throw new ConflictException("Le bracket ne peut plus être généré pour un tournoi terminé");
+        }
         final var groups = groupStore.findAllByTournamentId(tournamentId);
         final var groupRankings = groupRankingService.computeAllGroupRankings(tournamentId, List.of());
         validateBracketGenerateRequest(request, groups.size());
@@ -128,7 +136,32 @@ public class BracketService {
                 .toList();
     }
 
-    public BracketMatch enterResult(final BracketMatchId matchId, final BracketMatchResultRequest request) {
+    // The final is the only match that feeds no other match as winner (nextMatchId == null)
+    // and is not the third-place match (which is the loser target of the semi-finals).
+    public boolean isFinalPlayed(final TournamentId tournamentId) {
+        final var matches = findAll(tournamentId).stream()
+                .flatMap(round -> round.getMatches().stream())
+                .toList();
+        final var loserTargetIds = matches.stream()
+                .map(BracketMatch::getLoserNextMatchId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        return matches.stream()
+                .filter(match -> match.getNextMatchId() == null)
+                .filter(match -> !loserTargetIds.contains(match.getId()))
+                .findFirst()
+                .map(match -> match.getResult() != null)
+                .orElse(false);
+    }
+
+    public BracketMatch enterResult(
+            final TournamentId tournamentId,
+            final BracketMatchId matchId,
+            final BracketMatchResultRequest request) {
+        final var tournament = tournamentSearchService.findById(tournamentId);
+        if (tournament.getStatus() != IN_PROGRESS) {
+            throw new ConflictException("Les résultats ne peuvent être saisis que pour un tournoi en cours");
+        }
         validateBracketMatchResult(request);
 
         final var match = bracketMatchSearchService.findById(matchId);

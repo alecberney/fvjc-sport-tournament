@@ -1,6 +1,6 @@
 # IDEA-02 — Code & architecture improvements
 
-**Status:** proposed
+**Status:** in progress — F3, F6, F8, F9, B1, B2 (schedule), B3 and B4 done
 **Scope:** frontend (main topic: view models) + backend
 **Type:** technical debt / refactoring — no functional change for the user
 
@@ -8,21 +8,42 @@
 
 ## Summary
 
-| # | Improvement | Layer | Effort | Value |
-|---|---|---|---|---|
-| F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High |
-| F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium |
-| F3 | Extract shared components (ranking table, score form) | Frontend | S | Medium |
-| F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium |
-| F5 | `OnPush` change detection everywhere | Frontend | S | Medium |
-| F6 | `takeUntilDestroyed()` instead of `destroy$` + `takeUntil` | Frontend | S | Low |
-| F7 | Route param via component input binding | Frontend | S | Low |
-| F8 | Score entry as a typed reactive form with validation | Frontend | S | Medium |
-| F9 | Data-driven `tournament-nav` | Frontend | XS | Low |
-| B1 | Move HTTP error handling out of `domain` | Backend | S | High (architecture) |
-| B2 | Extract the round-robin algorithm from `ScheduleService` | Backend | M | Medium |
-| B3 | Remove the N+1 queries in `GroupRankingService` | Backend | S | Medium |
-| B4 | Model the end of a tournament (`FINISHED` status) | Both | M | Medium |
+| # | Improvement | Layer | Effort | Value | Status |
+|---|---|---|---|---|---|
+| F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High | To do |
+| F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium | To do |
+| F3 | Extract shared components (ranking table, score form) | Frontend | S | Medium | ✅ Done |
+| F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | To do |
+| F5 | `OnPush` change detection everywhere | Frontend | S | Medium | To do |
+| F6 | `takeUntilDestroyed()` instead of `destroy$` + `takeUntil` | Frontend | S | Low | ✅ Done |
+| F7 | Route param via component input binding | Frontend | S | Low | To do |
+| F8 | Score entry as a typed reactive form with validation | Frontend | S | Medium | ✅ Done |
+| F9 | Data-driven `tournament-nav` | Frontend | XS | Low | ✅ Done |
+| B1 | Move HTTP error handling out of `domain` | Backend | S | High (architecture) | ✅ Done |
+| B2 | Extract the round-robin algorithm from `ScheduleService` | Backend | M | Medium | 🟡 Partial (bracket left) |
+| B3 | Remove the N+1 queries in `GroupRankingService` | Backend | S | Medium | ✅ Done |
+| B4 | Model the end of a tournament (`ENDED` status) | Both | M | Medium | ✅ Done |
+
+### Done
+
+- **F3** — `components/ranking-table/` (used by results + rankings pages) and
+  `components/score-form/` (used by results + bracket pages).
+- **F6** — the seven modals use `takeUntilDestroyed(this.destroyRef)`; no `destroy$` left.
+- **F8** — `score-form` is a typed `FormGroup` with `required`, `min(0)`, `max(500)`.
+- **F9** — `tournament-nav` renders a `tabs` array with `@for`.
+- **B1** — `GlobalExceptionHandler`, `ValidationErrorResponse`, `ConflictErrorResponse`
+  moved to `api.common.problem`; `ArchitectureTest.domainShouldNotDependOnSpringWeb`
+  forbids `org.springframework.web..` / `org.springframework.http..` in `domain`.
+- **B2 (schedule part)** — pairing algorithm extracted into `RoundRobinService` (+ `MatchPair`,
+  `RoundRobinServiceTest`); `ScheduleService` dropped from 310 to ~200 lines.
+  `BracketService` (seeding) is not extracted yet.
+- **B3** — tournament-wide rankings load teams by `tournamentId` and matches with
+  `matchStore.findAllByGroupIds(...)` once, then group in memory.
+- **B4** — `ENDED` status (named `ENDED` rather than `FINISHED`), `POST /api/tournaments/{id}/end`
+  allowed only when `IN_PROGRESS` and the final has a score (`TournamentService.end`).
+  Frontend: `EndTournament` action, `BracketDomainService.findFinal` / `isFinalPlayed`
+  (with spec), end confirmation modal on the bracket page, results locked once ended.
+  Bracket matches now expose `nextMatchId` / `loserNextMatchId`. Podium display not done.
 
 ---
 
@@ -231,11 +252,12 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 ## Suggested order
 
-1. **F2 + F3 + F6** — quick wins, no rule change.
+Remaining work:
+
+1. **F2 + F7** — quick wins, no rule change.
 2. **F1 + F4 + F5** — amend `frontend-rules.md`, then migrate page by page (bracket first).
-3. **F8** with the `score-form` component.
-4. **B1** (with the ArchUnit rule), **B3**, then **B2**.
-5. **B4** as its own feature idea.
+3. **B2** — extract the seeding / bracket-building logic from `BracketService`.
+4. **B4 follow-up** — podium display for an `ENDED` tournament.
 
 ---
 

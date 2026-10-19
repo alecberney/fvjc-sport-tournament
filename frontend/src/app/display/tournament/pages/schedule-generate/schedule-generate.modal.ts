@@ -1,11 +1,11 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Actions, ofActionSuccessful, Store } from '@ngxs/store';
-import { Subject, takeUntil } from 'rxjs';
 import { GenerateSchedule } from '@app/domain/schedule/schedule.actions';
 
 @Component({
@@ -15,14 +15,14 @@ import { GenerateSchedule } from '@app/domain/schedule/schedule.actions';
   standalone: true,
   imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule],
 })
-export class ScheduleGenerateModal implements OnInit, OnDestroy {
+export class ScheduleGenerateModal implements OnInit {
 
   private readonly store = inject(Store);
   private readonly dialogRef = inject(MatDialogRef<ScheduleGenerateModal>);
   private readonly fb = inject(FormBuilder);
   private readonly actions$ = inject(Actions);
   private readonly data = inject<{ tournamentId: string }>(MAT_DIALOG_DATA);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.group({
     startTime: ['09:00', [Validators.required, Validators.pattern(/^\d{2}:\d{2}$/)]],
@@ -33,18 +33,13 @@ export class ScheduleGenerateModal implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.actions$.pipe(
       ofActionSuccessful(GenerateSchedule),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe(() => this.dialogRef.close());
   }
 
   isStartTimeInvalid(): boolean {
     return this.form.controls.startTime.hasError('required')
       || this.form.controls.startTime.hasError('pattern');
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   submit(): void {

@@ -1,18 +1,19 @@
-package abe.fvjc.tournament.domain.common.problem;
+package abe.fvjc.tournament.api.common.problem;
 
-import tools.jackson.databind.exc.InvalidFormatException;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
+import abe.fvjc.tournament.domain.common.problem.NotFoundException;
+import abe.fvjc.tournament.domain.common.problem.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import tools.jackson.databind.exc.InvalidFormatException;
 
 import java.util.List;
 
-import static abe.fvjc.tournament.domain.common.problem.ValidationErrorResponse.FieldError;
-import abe.fvjc.tournament.domain.common.problem.ConflictException;
-import abe.fvjc.tournament.domain.common.problem.ConflictErrorResponse;
+import static abe.fvjc.tournament.api.common.problem.ValidationErrorResponse.FieldError;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

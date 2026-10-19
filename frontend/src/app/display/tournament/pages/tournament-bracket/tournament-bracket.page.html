@@ -1,5 +1,11 @@
 @if (tournament$ | async; as tournament) {
   <app-tournament-header [tournament]="tournament">
+    @if (canEndTournament(tournament, isFinalPlayed$ | async)) {
+      <button mat-raised-button color="accent" (click)="openEndModal()">
+        <mat-icon>emoji_events</mat-icon>
+        Terminer le tournoi
+      </button>
+    }
     <app-tournament-actions [tournament]="tournament" />
   </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
@@ -27,8 +33,8 @@
                 @for (match of round.matches; track match.id) {
                   <tr
                     [class.selected]="selectedMatch?.id === match.id"
-                    [class.playable]="match.team1 && match.team2"
-                    (click)="selectMatch(match)">
+                    [class.playable]="canSelectMatch(tournament, match)"
+                    (click)="selectMatch(tournament, match)">
                     <td>T{{ match.field }}</td>
                     <td>{{ match.team1?.name ?? 'À déterminer' }}</td>
                     <td class="vs">vs</td>
@@ -49,23 +55,21 @@
       </div>
 
       <div class="detail-panel">
-        @if (selectedMatch) {
+        @if (isEnded(tournament)) {
+          <div class="empty-detail">
+            <mat-icon>emoji_events</mat-icon>
+            <p>Le tournoi est terminé</p>
+          </div>
+        } @else if (selectedMatch) {
           <div class="result-form">
             <h2>{{ selectedMatch.team1?.name }} vs {{ selectedMatch.team2?.name }}</h2>
-            <div class="score-inputs">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ selectedMatch.team1?.name }}</mat-label>
-                <input matInput type="number" min="0" max="500" [(ngModel)]="score1">
-              </mat-form-field>
-              <span class="score-separator">—</span>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ selectedMatch.team2?.name }}</mat-label>
-                <input matInput type="number" min="0" max="500" [(ngModel)]="score2">
-              </mat-form-field>
-            </div>
-            <button mat-raised-button color="primary" (click)="submitResult()">
-              Enregistrer
-            </button>
+            <app-score-form
+              class="subtle"
+              [team1Label]="selectedMatch.team1?.name ?? ''"
+              [team2Label]="selectedMatch.team2?.name ?? ''"
+              [score1]="selectedMatch.result?.score1 ?? null"
+              [score2]="selectedMatch.result?.score2 ?? null"
+              (submitted)="submitResult($event)" />
           </div>
         } @else {
           <div class="empty-detail">

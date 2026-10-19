@@ -9,6 +9,7 @@ import abe.fvjc.tournament.domain.group.GroupRanking;
 import abe.fvjc.tournament.domain.group.GroupRankingEntry;
 import abe.fvjc.tournament.domain.schedule.MatchResult;
 import abe.fvjc.tournament.domain.group.GroupRankingService;
+import abe.fvjc.tournament.domain.common.problem.ConflictException;
 import abe.fvjc.tournament.domain.common.problem.ValidationException;
 import abe.fvjc.tournament.domain.team.TeamId;
 import abe.fvjc.tournament.domain.tournament.TournamentId;
@@ -24,12 +25,17 @@ import java.util.List;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -209,6 +215,7 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenTerminalMatchShouldSaveResultOnly() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(IN_PROGRESS);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var match = BracketFakes.buildMatch()
                 .withId(matchId)
@@ -216,11 +223,13 @@ class BracketServiceTest {
                 .withLoserNextMatchId(null);
         final var request = BracketFakes.buildMatchResultRequest();
 
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
         when(bracketMatchSearchService.findById(matchId)).thenReturn(match);
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
-        final var matchUpdated = bracketService.enterResult(matchId, request);
+        final var matchUpdated = bracketService.enterResult(tournament.getId(), matchId, request);
 
+        verify(tournamentSearchService).findById(tournament.getId());
         verify(bracketMatchSearchService).findById(matchId);
         verify(bracketMatchStore).save(any(BracketMatch.class));
 
@@ -231,6 +240,7 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenHasNextMatchShouldAdvanceWinnerToNextMatch() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(IN_PROGRESS);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var nextMatch = BracketFakes.buildMatch().withTeam1(null).withTeam2(null);
         final var nextMatchId = nextMatch.getId();
@@ -241,14 +251,16 @@ class BracketServiceTest {
                 .withLoserNextMatchId(null);
         final var request = BracketFakes.buildMatchResultRequest();
 
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
         when(bracketMatchSearchService.findById(matchId)).thenReturn(match);
         when(bracketMatchSearchService.findById(nextMatchId)).thenReturn(nextMatch);
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
-        final var matchUpdated = bracketService.enterResult(matchId, request);
+        final var matchUpdated = bracketService.enterResult(tournament.getId(), matchId, request);
 
         // score1(3) > score2(1) → team1 wins, slot=1 → lands in team1 of next match
         final var winner = match.getTeam1();
+        verify(tournamentSearchService).findById(tournament.getId());
         verify(bracketMatchStore, times(2)).save(any(BracketMatch.class));
         verify(bracketMatchStore).save(argThat(m -> nextMatchId.equals(m.getId()) && winner.equals(m.getTeam1())));
 
@@ -257,6 +269,7 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenDemiFinaleLoserShouldAdvanceToTroisiemePlace() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(IN_PROGRESS);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var nextMatch = BracketFakes.buildMatch().withTeam1(null).withTeam2(null);
         final var loserMatch = BracketFakes.buildMatch().withTeam1(null).withTeam2(null);
@@ -270,16 +283,18 @@ class BracketServiceTest {
                 .withLoserNextMatchTeamSlot(2);
         final var request = BracketFakes.buildMatchResultRequest();
 
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
         when(bracketMatchSearchService.findById(matchId)).thenReturn(match);
         when(bracketMatchSearchService.findById(nextMatchId)).thenReturn(nextMatch);
         when(bracketMatchSearchService.findById(loserMatchId)).thenReturn(loserMatch);
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
-        final var matchUpdated = bracketService.enterResult(matchId, request);
+        final var matchUpdated = bracketService.enterResult(tournament.getId(), matchId, request);
 
         // score1(3) > score2(1) → team1 wins, team2 loses, slot=2 → team2 position
         final var winner = match.getTeam1();
         final var loser = match.getTeam2();
+        verify(tournamentSearchService).findById(tournament.getId());
         verify(bracketMatchStore, times(3)).save(any(BracketMatch.class));
         verify(bracketMatchStore).save(argThat(m -> nextMatchId.equals(m.getId()) && winner.equals(m.getTeam2())));
         verify(bracketMatchStore).save(argThat(m -> loserMatchId.equals(m.getId()) && loser.equals(m.getTeam2())));
@@ -289,6 +304,7 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenMatchAlreadyHasResultShouldUpdateResult() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(IN_PROGRESS);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var match = BracketFakes.buildMatch()
                 .withId(matchId)
@@ -297,11 +313,13 @@ class BracketServiceTest {
                 .withResult(MatchResult.builder().score1(1).score2(3).build());
         final var request = BracketMatchResultRequest.builder().score1(5).score2(2).build();
 
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
         when(bracketMatchSearchService.findById(matchId)).thenReturn(match);
         when(bracketMatchStore.save(any(BracketMatch.class))).then(returnsFirstArg());
 
-        final var matchUpdated = bracketService.enterResult(matchId, request);
+        final var matchUpdated = bracketService.enterResult(tournament.getId(), matchId, request);
 
+        verify(tournamentSearchService).findById(tournament.getId());
         verify(bracketMatchSearchService).findById(matchId);
         verify(bracketMatchStore).save(any(BracketMatch.class));
 
@@ -311,11 +329,16 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenDrawShouldThrowValidationException() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(IN_PROGRESS);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var request = BracketMatchResultRequest.builder().score1(2).score2(2).build();
 
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+
         final var exception = assertThrows(ValidationException.class,
-                () -> bracketService.enterResult(matchId, request));
+                () -> bracketService.enterResult(tournament.getId(), matchId, request));
+
+        verify(tournamentSearchService).findById(tournament.getId());
 
         assertEquals(1, exception.getErrors().size());
         assertEquals("scores", exception.getErrors().get(0).field());
@@ -323,14 +346,121 @@ class BracketServiceTest {
 
     @Test
     void enterResultWhenScoreNegativeShouldThrowValidationException() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(IN_PROGRESS);
         final var matchId = BracketMatchId.of(UUID.randomUUID());
         final var request = BracketMatchResultRequest.builder().score1(-1).score2(2).build();
 
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+
         final var exception = assertThrows(ValidationException.class,
-                () -> bracketService.enterResult(matchId, request));
+                () -> bracketService.enterResult(tournament.getId(), matchId, request));
+
+        verify(tournamentSearchService).findById(tournament.getId());
 
         assertEquals(1, exception.getErrors().size());
         assertEquals("scores", exception.getErrors().get(0).field());
+    }
+
+    @Test
+    void enterResultWhenTournamentEndedShouldThrowConflictException() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(ENDED);
+        final var matchId = BracketMatchId.of(UUID.randomUUID());
+        final var request = BracketFakes.buildMatchResultRequest();
+
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+
+        final var exception = assertThrows(ConflictException.class,
+                () -> bracketService.enterResult(tournament.getId(), matchId, request));
+
+        verify(tournamentSearchService).findById(tournament.getId());
+        verify(bracketMatchStore, never()).save(any(BracketMatch.class));
+
+        assertEquals("Les résultats ne peuvent être saisis que pour un tournoi en cours", exception.getMessage());
+    }
+
+    @Test
+    void generateWhenTournamentEndedShouldThrowConflictException() {
+        final var tournament = TournamentFakes.buildTournament().withStatus(ENDED);
+        final var request = BracketFakes.buildGenerateRequest();
+
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+
+        final var exception = assertThrows(ConflictException.class,
+                () -> bracketService.generate(tournament.getId(), request));
+
+        verify(tournamentSearchService).findById(tournament.getId());
+
+        assertEquals("Le bracket ne peut plus être généré pour un tournoi terminé", exception.getMessage());
+    }
+
+    @Test
+    void isFinalPlayedWhenFinalHasResultShouldReturnTrue() {
+        final var tournamentId = TournamentId.of(UUID.randomUUID());
+        final var finalMatch = BracketFakes.buildMatch()
+                .withNextMatchId(null)
+                .withResult(MatchResult.builder().score1(2).score2(1).build());
+        final var thirdPlaceMatch = BracketFakes.buildMatch()
+                .withNextMatchId(null);
+        final var semiFinal = BracketFakes.buildMatch()
+                .withNextMatchId(finalMatch.getId())
+                .withLoserNextMatchId(thirdPlaceMatch.getId())
+                .withResult(MatchResult.builder().score1(3).score2(0).build());
+        final var semiRound = BracketFakes.buildRound(tournamentId, 1);
+        final var finalRound = BracketFakes.buildRound(tournamentId, 2);
+        final var thirdPlaceRound = BracketFakes.buildRound(tournamentId, 3);
+
+        when(bracketRoundStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(semiRound, finalRound, thirdPlaceRound));
+        when(bracketMatchStore.findAllByRoundId(semiRound.getId())).thenReturn(List.of(semiFinal));
+        when(bracketMatchStore.findAllByRoundId(finalRound.getId())).thenReturn(List.of(finalMatch));
+        when(bracketMatchStore.findAllByRoundId(thirdPlaceRound.getId())).thenReturn(List.of(thirdPlaceMatch));
+
+        final var finalPlayed = bracketService.isFinalPlayed(tournamentId);
+
+        verify(bracketRoundStore).findAllByTournamentId(tournamentId);
+        verify(bracketMatchStore, times(3)).findAllByRoundId(any(BracketRoundId.class));
+
+        assertTrue(finalPlayed);
+    }
+
+    @Test
+    void isFinalPlayedWhenOnlyThirdPlaceHasResultShouldReturnFalse() {
+        final var tournamentId = TournamentId.of(UUID.randomUUID());
+        final var finalMatch = BracketFakes.buildMatch()
+                .withNextMatchId(null);
+        final var thirdPlaceMatch = BracketFakes.buildMatch()
+                .withNextMatchId(null)
+                .withResult(MatchResult.builder().score1(2).score2(1).build());
+        final var semiFinal = BracketFakes.buildMatch()
+                .withNextMatchId(finalMatch.getId())
+                .withLoserNextMatchId(thirdPlaceMatch.getId());
+        final var semiRound = BracketFakes.buildRound(tournamentId, 1);
+        final var finalRound = BracketFakes.buildRound(tournamentId, 2);
+        final var thirdPlaceRound = BracketFakes.buildRound(tournamentId, 3);
+
+        when(bracketRoundStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(semiRound, thirdPlaceRound, finalRound));
+        when(bracketMatchStore.findAllByRoundId(semiRound.getId())).thenReturn(List.of(semiFinal));
+        when(bracketMatchStore.findAllByRoundId(finalRound.getId())).thenReturn(List.of(finalMatch));
+        when(bracketMatchStore.findAllByRoundId(thirdPlaceRound.getId())).thenReturn(List.of(thirdPlaceMatch));
+
+        final var finalPlayed = bracketService.isFinalPlayed(tournamentId);
+
+        verify(bracketRoundStore).findAllByTournamentId(tournamentId);
+        verify(bracketMatchStore, times(3)).findAllByRoundId(any(BracketRoundId.class));
+
+        assertFalse(finalPlayed);
+    }
+
+    @Test
+    void isFinalPlayedWhenNoBracketShouldReturnFalse() {
+        final var tournamentId = TournamentId.of(UUID.randomUUID());
+
+        when(bracketRoundStore.findAllByTournamentId(tournamentId)).thenReturn(List.of());
+
+        final var finalPlayed = bracketService.isFinalPlayed(tournamentId);
+
+        verify(bracketRoundStore).findAllByTournamentId(tournamentId);
+
+        assertFalse(finalPlayed);
     }
 
     @Test

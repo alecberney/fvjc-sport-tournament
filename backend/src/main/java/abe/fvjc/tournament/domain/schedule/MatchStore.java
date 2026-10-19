@@ -16,6 +16,8 @@ public interface MatchStore {
 
     List<Match> findAllByGroupId(GroupId groupId);
 
+    List<Match> findAllByGroupIds(List<GroupId> groupIds);
+
     void deleteAllByRoundIds(List<RoundId> roundIds);
 
     boolean existsResultByRoundIds(List<RoundId> roundIds);

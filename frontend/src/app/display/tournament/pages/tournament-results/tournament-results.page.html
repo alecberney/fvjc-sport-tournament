@@ -49,58 +49,22 @@
               <h2>{{ match.team1.name }} vs {{ match.team2.name }}</h2>
               <p class="form-subtitle">{{ match.groupName }} — Terrain {{ match.field }}</p>
 
-              <div class="score-inputs">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ match.team1.name }}</mat-label>
-                  <input matInput type="number" min="0" max="500" [(ngModel)]="score1">
-                </mat-form-field>
-                <span class="score-separator">—</span>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ match.team2.name }}</mat-label>
-                  <input matInput type="number" min="0" max="500" [(ngModel)]="score2">
-                </mat-form-field>
-              </div>
-
-              <button mat-raised-button color="primary" (click)="submitResult()">
-                Enregistrer
-              </button>
+              @if (isEnded(tournament)) {
+                <p class="form-subtitle">Tournoi terminé — les résultats ne peuvent plus être modifiés.</p>
+              } @else {
+                <app-score-form
+                  [team1Label]="match.team1.name"
+                  [team2Label]="match.team2.name"
+                  [score1]="match.result?.score1 ?? null"
+                  [score2]="match.result?.score2 ?? null"
+                  (submitted)="submitResult($event)" />
+              }
             </div>
 
             @if (getRankingForMatch(match, rankings); as ranking) {
               <div class="ranking-panel">
                 <h3>Classement — Groupe {{ ranking.groupName }}</h3>
-                <table class="ranking-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Équipe</th>
-                      <th>J</th>
-                      <th>V</th>
-                      <th>N</th>
-                      <th>D</th>
-                      <th>BP</th>
-                      <th>BC</th>
-                      <th>Diff</th>
-                      <th>Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (entry of ranking.entries; track entry.team.id) {
-                      <tr>
-                        <td>{{ entry.rank }}</td>
-                        <td>{{ entry.team.name }}</td>
-                        <td>{{ entry.played }}</td>
-                        <td>{{ entry.wins }}</td>
-                        <td>{{ entry.draws }}</td>
-                        <td>{{ entry.defeats }}</td>
-                        <td>{{ entry.goalsFor }}</td>
-                        <td>{{ entry.goalsAgainst }}</td>
-                        <td>{{ entry.goalDifference }}</td>
-                        <td><strong>{{ entry.points }}</strong></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+                <app-ranking-table class="compact" [ranking]="ranking" />
               </div>
             }
           } @else {

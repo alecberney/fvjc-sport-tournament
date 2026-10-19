@@ -49,12 +49,20 @@ public class BracketApiMapper {
                         .score2(match.getResult().getScore2())
                         .build()
                 : null;
+        final var nextMatchId = match.getNextMatchId() != null
+                ? match.getNextMatchId().value()
+                : null;
+        final var loserNextMatchId = match.getLoserNextMatchId() != null
+                ? match.getLoserNextMatchId().value()
+                : null;
         return BracketMatchDto.builder()
                 .id(match.getId().value())
                 .field(match.getField())
                 .team1(team1)
                 .team2(team2)
                 .result(result)
+                .nextMatchId(nextMatchId)
+                .loserNextMatchId(loserNextMatchId)
                 .build();
     }
 

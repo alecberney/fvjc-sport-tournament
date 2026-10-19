@@ -1,52 +1,14 @@
 <nav mat-tab-nav-bar [tabPanel]="tabPanel">
-  <a mat-tab-link
-     [routerLink]="['/', tournamentId]"
-     routerLinkActive
-     #equipesLink="routerLinkActive"
-     [active]="equipesLink.isActive"
-     [routerLinkActiveOptions]="{ exact: true }">
-    <mat-icon>groups</mat-icon>
-    Équipes
-  </a>
-  <a mat-tab-link
-     [routerLink]="['/', tournamentId, 'groups']"
-     routerLinkActive
-     #groupesLink="routerLinkActive"
-     [active]="groupesLink.isActive">
-    <mat-icon>grid_view</mat-icon>
-    Groupes
-  </a>
-  <a mat-tab-link
-     [routerLink]="['/', tournamentId, 'schedule']"
-     routerLinkActive
-     #horaireLink="routerLinkActive"
-     [active]="horaireLink.isActive">
-    <mat-icon>calendar_month</mat-icon>
-    Horaire
-  </a>
-  <a mat-tab-link
-     [routerLink]="['/', tournamentId, 'results']"
-     routerLinkActive
-     #resultsLink="routerLinkActive"
-     [active]="resultsLink.isActive">
-    <mat-icon>emoji_events</mat-icon>
-    Résultats
-  </a>
-  <a mat-tab-link
-     [routerLink]="['/', tournamentId, 'rankings']"
-     routerLinkActive
-     #rankingsLink="routerLinkActive"
-     [active]="rankingsLink.isActive">
-    <mat-icon>leaderboard</mat-icon>
-    Classements
-  </a>
-  <a mat-tab-link
-     [routerLink]="['/', tournamentId, 'bracket']"
-     routerLinkActive
-     #bracketLink="routerLinkActive"
-     [active]="bracketLink.isActive">
-    <mat-icon>account_tree</mat-icon>
-    Bracket
-  </a>
+  @for (tab of tabs; track tab.label) {
+    <a mat-tab-link
+       [routerLink]="['/', tournamentId].concat(tab.path)"
+       routerLinkActive
+       #rla="routerLinkActive"
+       [active]="rla.isActive"
+       [routerLinkActiveOptions]="{ exact: tab.exact }">
+      <mat-icon>{{ tab.icon }}</mat-icon>
+      {{ tab.label }}
+    </a>
+  }
 </nav>
 <mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>

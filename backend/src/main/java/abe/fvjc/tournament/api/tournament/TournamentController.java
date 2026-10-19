@@ -53,6 +53,12 @@ class TournamentController {
         return toTournamentDto(tournament);
     }
 
+    @PostMapping("/{id}/end")
+    public TournamentDto end(@PathVariable UUID id) {
+        final var tournament = tournamentService.end(TournamentId.of(id));
+        return toTournamentDto(tournament);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {

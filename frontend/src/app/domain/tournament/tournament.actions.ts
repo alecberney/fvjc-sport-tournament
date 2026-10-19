@@ -19,6 +19,11 @@ export class DeleteTournament {
   constructor(public readonly id: string) {}
 }
 
+export class EndTournament {
+  static readonly type = '[Tournament] End Tournament';
+  constructor(public readonly id: string) {}
+}
+
 export class PatchSelectedStatus {
   static readonly type = '[Tournament] Patch Selected Status';
   constructor(public readonly status: TournamentStatus) {}

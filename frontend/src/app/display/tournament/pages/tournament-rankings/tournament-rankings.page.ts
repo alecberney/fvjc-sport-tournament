@@ -18,13 +18,14 @@ import { LoadAllGroupRankings } from '@app/domain/result/result.actions';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
 import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
+import { RankingTableComponent } from '@app/display/tournament/components/ranking-table/ranking-table.component';
 
 @Component({
   selector: 'app-tournament-rankings-page',
   templateUrl: './tournament-rankings.page.html',
   styleUrl: './tournament-rankings.page.scss',
   standalone: true,
-  imports: [AsyncPipe, FormsModule, MatFormFieldModule, MatSelectModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],
+  imports: [AsyncPipe, FormsModule, MatFormFieldModule, MatSelectModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent, RankingTableComponent],
 })
 export class TournamentRankingsPage implements OnInit {
 

@@ -5,6 +5,7 @@ import { Tournament } from '@app/domain/tournament/tournament.model';
 import {
   CreateTournament,
   DeleteTournament,
+  EndTournament,
   LoadTournamentById,
   LoadTournaments,
   PatchSelectedStatus,
@@ -76,6 +77,19 @@ export class TournamentState {
       tap(() => {
         ctx.patchState({
           tournaments: ctx.getState().tournaments.filter((t) => t.id !== id),
+        });
+      })
+    );
+  }
+
+  @Action(EndTournament)
+  endTournament(ctx: StateContext<ITournamentState>, { id }: EndTournament) {
+    return this.tournamentApiService.end$(id).pipe(
+      tap((dto) => {
+        const ended = TournamentApiMapper.toDomain(dto);
+        ctx.patchState({
+          selected: ended,
+          tournaments: ctx.getState().tournaments.map((t) => (t.id === ended.id ? ended : t)),
         });
       })
     );

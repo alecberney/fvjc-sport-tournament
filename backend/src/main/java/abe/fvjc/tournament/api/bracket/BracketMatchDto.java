@@ -15,4 +15,6 @@ public class BracketMatchDto {
     BracketTeamDto team1;
     BracketTeamDto team2;
     BracketMatchResultDto result;
+    UUID nextMatchId;
+    UUID loserNextMatchId;
 }

@@ -9,6 +9,8 @@ export class BracketFakes {
       team1: { id: 'team-id-1', name: 'Les Aigles' },
       team2: { id: 'team-id-2', name: 'Les Loups' },
       result: null,
+      nextMatchId: null,
+      loserNextMatchId: null,
       ...overrides,
     };
   }

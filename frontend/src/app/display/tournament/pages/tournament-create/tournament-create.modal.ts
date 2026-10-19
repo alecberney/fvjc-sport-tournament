@@ -1,4 +1,5 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -7,7 +8,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Actions, ofActionSuccessful, Store } from '@ngxs/store';
-import { Subject, takeUntil } from 'rxjs';
 import { Sport } from '@app/domain/tournament/tournament.model';
 import { CreateTournament } from '@app/domain/tournament/tournament.actions';
 
@@ -26,13 +26,13 @@ import { CreateTournament } from '@app/domain/tournament/tournament.actions';
     MatButtonModule,
   ],
 })
-export class TournamentCreateModal implements OnInit, OnDestroy {
+export class TournamentCreateModal implements OnInit {
 
   private readonly store = inject(Store);
   private readonly dialogRef = inject(MatDialogRef<TournamentCreateModal>);
   private readonly formBuilder = inject(FormBuilder);
   private readonly actions$ = inject(Actions);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly sports = Object.values(Sport);
 
@@ -48,15 +48,10 @@ export class TournamentCreateModal implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.actions$.pipe(
       ofActionSuccessful(CreateTournament),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe(() => {
       this.dialogRef.close();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   submit(): void {

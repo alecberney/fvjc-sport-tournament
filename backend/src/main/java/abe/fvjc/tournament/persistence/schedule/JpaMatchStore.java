@@ -61,6 +61,17 @@ class JpaMatchStore implements MatchStore {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Match> findAllByGroupIds(final List<GroupId> groupIds) {
+        final var rawGroupIds = groupIds.stream()
+                .map(GroupId::value)
+                .toList();
+        return matchRepository.findByGroupIdIn(rawGroupIds).stream()
+                .map(MatchDbMapper::toMatch)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void deleteAllByRoundIds(final List<RoundId> roundIds) {
         final var rawRoundIds = roundIds.stream()

@@ -1,0 +1,32 @@
+<table class="ranking-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Équipe</th>
+      <th>J</th>
+      <th>V</th>
+      <th>N</th>
+      <th>D</th>
+      <th>BP</th>
+      <th>BC</th>
+      <th>Diff</th>
+      <th>Pts</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (entry of ranking.entries; track entry.team.id) {
+      <tr>
+        <td>{{ entry.rank }}</td>
+        <td>{{ entry.team.name }}</td>
+        <td>{{ entry.played }}</td>
+        <td>{{ entry.wins }}</td>
+        <td>{{ entry.draws }}</td>
+        <td>{{ entry.defeats }}</td>
+        <td>{{ entry.goalsFor }}</td>
+        <td>{{ entry.goalsAgainst }}</td>
+        <td>{{ entry.goalDifference }}</td>
+        <td><strong>{{ entry.points }}</strong></td>
+      </tr>
+    }
+  </tbody>
+</table>

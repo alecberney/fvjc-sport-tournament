@@ -1,11 +1,11 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Actions, ofActionSuccessful, Store } from '@ngxs/store';
-import { Subject, takeUntil } from 'rxjs';
 import { GenerateRandomTeams } from '@app/domain/team/team.actions';
 
 @Component({
@@ -20,14 +20,14 @@ import { GenerateRandomTeams } from '@app/domain/team/team.actions';
     MatButtonModule,
   ],
 })
-export class TeamRandomGenerateModal implements OnInit, OnDestroy {
+export class TeamRandomGenerateModal implements OnInit {
 
   private readonly store = inject(Store);
   private readonly dialogRef = inject(MatDialogRef<TeamRandomGenerateModal>);
   private readonly fb = inject(FormBuilder);
   private readonly actions$ = inject(Actions);
   private readonly data = inject<{ tournamentId: string }>(MAT_DIALOG_DATA);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.group({
     count: [16, [Validators.required, Validators.min(1), Validators.max(200)]],
@@ -36,13 +36,8 @@ export class TeamRandomGenerateModal implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.actions$.pipe(
       ofActionSuccessful(GenerateRandomTeams),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe(() => this.dialogRef.close());
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   submit(): void {

@@ -1,4 +1,5 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -6,7 +7,6 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Actions, ofActionSuccessful, Store } from '@ngxs/store';
-import { Subject, takeUntil } from 'rxjs';
 import { RegisterTeams } from '@app/domain/team/team.actions';
 
 @Component({
@@ -23,14 +23,14 @@ import { RegisterTeams } from '@app/domain/team/team.actions';
     MatButtonModule,
   ],
 })
-export class TeamRegisterModal implements OnInit, OnDestroy {
+export class TeamRegisterModal implements OnInit {
 
   private readonly store = inject(Store);
   private readonly dialogRef = inject(MatDialogRef<TeamRegisterModal>);
   private readonly fb = inject(FormBuilder);
   private readonly actions$ = inject(Actions);
   private readonly data = inject<{ tournamentId: string }>(MAT_DIALOG_DATA);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(250)]],
@@ -49,19 +49,14 @@ export class TeamRegisterModal implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.form.controls.count.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(count => {
+    this.form.controls.count.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(count => {
       this.syncPaidArray(Number(count) || 1);
     });
 
     this.actions$.pipe(
       ofActionSuccessful(RegisterTeams),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe(() => this.dialogRef.close());
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   submit(): void {

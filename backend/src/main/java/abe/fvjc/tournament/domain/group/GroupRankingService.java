@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static abe.fvjc.tournament.domain.team.TeamRef.toTeamRef;
 
@@ -35,6 +36,8 @@ public class GroupRankingService {
         return computeRankingForGroup(group);
     }
 
+    // Loads the teams and matches of every requested group in two queries (instead of two
+    // per group), then computes each ranking in memory.
     public List<GroupRanking> computeAllGroupRankings(final TournamentId tournamentId, final List<String> groupNameFilter) {
         final var groups = groupStore.findAllByTournamentId(tournamentId);
         final var filtered = (groupNameFilter == null || groupNameFilter.isEmpty())
@@ -42,14 +45,33 @@ public class GroupRankingService {
                 : groups.stream()
                         .filter(g -> groupNameFilter.contains(g.getName()))
                         .toList();
+        if (filtered.isEmpty()) {
+            return List.of();
+        }
+        final var groupIds = filtered.stream()
+                .map(Group::getId)
+                .toList();
+        final var teams = teamStore.findAllByTournamentId(tournamentId);
+        final var matches = matchStore.findAllByGroupIds(groupIds);
+        final var teamsByGroupId = teams.stream()
+                .collect(Collectors.groupingBy(Team::getGroupId));
+        final var matchesByGroupId = matches.stream()
+                .collect(Collectors.groupingBy(Match::getGroupId));
         return filtered.stream()
-                .map(this::computeRankingForGroup)
+                .map(group -> computeRankingForGroup(
+                        group,
+                        teamsByGroupId.getOrDefault(group.getId(), List.of()),
+                        matchesByGroupId.getOrDefault(group.getId(), List.of())))
                 .toList();
     }
 
     private GroupRanking computeRankingForGroup(final Group group) {
         final var teams = teamStore.findAllByGroupId(group.getId());
         final var matches = matchStore.findAllByGroupId(group.getId());
+        return computeRankingForGroup(group, teams, matches);
+    }
+
+    private static GroupRanking computeRankingForGroup(final Group group, final List<Team> teams, final List<Match> matches) {
         final var statsMap = buildStatsMap(teams);
         accumulateStats(matches, statsMap);
         final var entries = buildRankedEntries(teams, statsMap);

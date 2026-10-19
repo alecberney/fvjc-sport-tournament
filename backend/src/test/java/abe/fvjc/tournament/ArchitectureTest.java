@@ -42,6 +42,14 @@ class ArchitectureTest {
     }
 
     @Test
+    void domainShouldNotDependOnSpringWeb() {
+        noClasses().that().resideInAPackage(DOMAIN)
+            .should().dependOnClassesThat().resideInAnyPackage("org.springframework.web..", "org.springframework.http..")
+            .because("HTTP concerns (exception handlers, error responses) belong in api")
+            .check(CLASSES);
+    }
+
+    @Test
     void apiShouldNotDependOnPersistence() {
         noClasses().that().resideInAPackage(API)
             .should().dependOnClassesThat().resideInAPackage(PERSISTENCE)

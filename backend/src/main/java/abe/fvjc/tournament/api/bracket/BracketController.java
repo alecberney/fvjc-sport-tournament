@@ -51,7 +51,7 @@ class BracketController {
             @PathVariable final UUID matchId,
             @RequestBody @Valid final BracketMatchResultRequestDto requestDto) {
         final var request = toBracketMatchResultRequest(requestDto);
-        final var match = bracketService.enterResult(BracketMatchId.of(matchId), request);
+        final var match = bracketService.enterResult(TournamentId.of(tournamentId), BracketMatchId.of(matchId), request);
         return toBracketMatchDto(match);
     }
 }

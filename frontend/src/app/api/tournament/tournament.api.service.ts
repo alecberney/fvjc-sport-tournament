@@ -21,6 +21,10 @@ export class TournamentApiService {
     return this.http.post<TournamentDto>(this.baseUrl, request);
   }
 
+  end$(id: string): Observable<TournamentDto> {
+    return this.http.post<TournamentDto>(`${this.baseUrl}/${id}/end`, {});
+  }
+
   delete$(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

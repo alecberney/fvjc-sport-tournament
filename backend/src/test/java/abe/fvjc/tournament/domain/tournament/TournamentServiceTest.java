@@ -15,12 +15,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static abe.fvjc.tournament.domain.fakes.TournamentFakes.buildCreateRequest;
 import static abe.fvjc.tournament.domain.fakes.TournamentFakes.buildTournament;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.DRAFT;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -146,5 +148,65 @@ class TournamentServiceTest {
         verify(tournamentStore).save(any(Tournament.class));
 
         assertEquals(IN_PROGRESS, tournamentStarted.getStatus());
+    }
+
+    @Test
+    void startWhenEndedShouldThrowConflictException() {
+        final var tournament = buildTournament().withStatus(ENDED);
+
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+
+        final var exception = assertThrows(ConflictException.class, () -> tournamentService.start(tournament.getId()));
+
+        verify(tournamentSearchService).findById(tournament.getId());
+
+        assertEquals("Le tournoi est déjà démarré", exception.getMessage());
+    }
+
+    @Test
+    void endWhenNotInProgressShouldThrowConflictException() {
+        final var tournament = buildTournament();
+
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+
+        final var exception = assertThrows(ConflictException.class, () -> tournamentService.end(tournament.getId()));
+
+        verify(tournamentSearchService).findById(tournament.getId());
+        verify(bracketService, never()).isFinalPlayed(tournament.getId());
+
+        assertEquals("Seul un tournoi en cours peut être terminé", exception.getMessage());
+    }
+
+    @Test
+    void endWhenFinalNotPlayedShouldThrowConflictException() {
+        final var tournament = buildTournament().withStatus(IN_PROGRESS);
+
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+        when(bracketService.isFinalPlayed(tournament.getId())).thenReturn(false);
+
+        final var exception = assertThrows(ConflictException.class, () -> tournamentService.end(tournament.getId()));
+
+        verify(tournamentSearchService).findById(tournament.getId());
+        verify(bracketService).isFinalPlayed(tournament.getId());
+        verify(tournamentStore, never()).save(any(Tournament.class));
+
+        assertEquals("Le tournoi ne peut être terminé qu'une fois le score de la finale saisi", exception.getMessage());
+    }
+
+    @Test
+    void endWhenFinalPlayedShouldTransitionToEnded() {
+        final var tournament = buildTournament().withStatus(IN_PROGRESS);
+
+        when(tournamentSearchService.findById(tournament.getId())).thenReturn(tournament);
+        when(bracketService.isFinalPlayed(tournament.getId())).thenReturn(true);
+        when(tournamentStore.save(any(Tournament.class))).then(returnsFirstArg());
+
+        final var tournamentEnded = tournamentService.end(tournament.getId());
+
+        verify(tournamentSearchService).findById(tournament.getId());
+        verify(bracketService).isFinalPlayed(tournament.getId());
+        verify(tournamentStore).save(any(Tournament.class));
+
+        assertEquals(ENDED, tournamentEnded.getStatus());
     }
 }

@@ -24,13 +24,13 @@
             <div class="card-info">
               <span>{{ tournament.date | date:'dd MMM yyyy' }}</span>
               <span>{{ tournament.numberOfFields }} terrain(s)</span>
-              <span>{{ tournament.minPlayersPerTeam }}–{{ tournament.maxPlayersPerTeam }} joueurs/équipe</span>
+              <span>{{ playersPerTeamLabel(tournament) }} joueurs/équipe</span>
             </div>
           </mat-card-content>
           <mat-card-actions class="card-actions">
             <mat-chip-set>
               <mat-chip [class.chip-active]="tournament.status !== 'DRAFT'">
-                {{ tournament.status === 'DRAFT' ? 'Brouillon' : 'En cours' }}
+                {{ statusLabel(tournament) }}
               </mat-chip>
             </mat-chip-set>
             <button

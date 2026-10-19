@@ -20,6 +20,8 @@ export interface BracketMatch {
   team1: BracketTeam | null;
   team2: BracketTeam | null;
   result: BracketMatchResult | null;
+  nextMatchId: string | null;
+  loserNextMatchId: string | null;
 }
 
 export interface BracketRound {

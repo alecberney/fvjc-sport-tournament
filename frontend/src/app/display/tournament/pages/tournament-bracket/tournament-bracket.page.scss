@@ -73,21 +73,6 @@
   }
 }
 
-.score-inputs {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-
-  mat-form-field { flex: 1; }
-}
-
-.score-separator {
-  font-size: 1.25rem;
-  color: #aaa;
-  flex-shrink: 0;
-}
-
 .empty-detail {
   display: flex;
   flex-direction: column;

@@ -6,6 +6,7 @@ import { BracketApiMapper } from '@app/api/bracket/bracket.api.mapper';
 import { BracketRound } from './bracket.model';
 import { EnterBracketMatchResult, GenerateBracket, GenerateRandomBracketResults, LoadBracket } from './bracket.actions';
 import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
+import { BracketDomainService } from '@app/domain/bracket/bracket.domain.service';
 
 export interface IBracketState {
   rounds: BracketRound[];
@@ -27,6 +28,11 @@ export class BracketState {
   @Selector()
   static hasBracket(state: IBracketState): boolean {
     return state.rounds.length > 0;
+  }
+
+  @Selector()
+  static isFinalPlayed(state: IBracketState): boolean {
+    return BracketDomainService.isFinalPlayed(state.rounds);
   }
 
   @Action(LoadBracket)

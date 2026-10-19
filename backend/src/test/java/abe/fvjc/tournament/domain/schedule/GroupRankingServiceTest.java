@@ -20,6 +20,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -204,23 +206,32 @@ class GroupRankingServiceTest {
         final var groupA = GroupFakes.buildGroup(null).withId(groupIdA).withName("A");
         final var groupB = GroupFakes.buildGroup(null).withId(groupIdB).withName("B");
         final var t1 = TeamFakes.buildTeam(org, null).withGroupId(groupIdA);
-        final var t2 = TeamFakes.buildTeam(org, null).withGroupId(groupIdB);
+        final var t2 = TeamFakes.buildTeam(org, null).withGroupId(groupIdA);
+        final var t3 = TeamFakes.buildTeam(org, null).withGroupId(groupIdB);
+        final var round = ScheduleFakes.buildRound(tournamentId);
+        final var match = ScheduleFakes.buildMatch(round.getId())
+                .withGroupId(groupIdA)
+                .withTeam1Id(t1.getId())
+                .withTeam2Id(t2.getId())
+                .withResult(MatchResult.builder().score1(3).score2(1).build());
 
         when(groupStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(groupA, groupB));
-        when(teamStore.findAllByGroupId(groupIdA)).thenReturn(List.of(t1));
-        when(teamStore.findAllByGroupId(groupIdB)).thenReturn(List.of(t2));
-        when(matchStore.findAllByGroupId(groupIdA)).thenReturn(List.of());
-        when(matchStore.findAllByGroupId(groupIdB)).thenReturn(List.of());
+        when(teamStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(t1, t2, t3));
+        when(matchStore.findAllByGroupIds(List.of(groupIdA, groupIdB))).thenReturn(List.of(match));
 
         final var rankingsFound = groupRankingService.computeAllGroupRankings(tournamentId, List.of());
 
         verify(groupStore).findAllByTournamentId(tournamentId);
-        verify(teamStore).findAllByGroupId(groupIdA);
-        verify(teamStore).findAllByGroupId(groupIdB);
-        verify(matchStore).findAllByGroupId(groupIdA);
-        verify(matchStore).findAllByGroupId(groupIdB);
+        verify(teamStore).findAllByTournamentId(tournamentId);
+        verify(matchStore).findAllByGroupIds(List.of(groupIdA, groupIdB));
+        verify(teamStore, never()).findAllByGroupId(any());
+        verify(matchStore, never()).findAllByGroupId(any());
 
         assertEquals(2, rankingsFound.size());
+        assertEquals(t1.getId(), rankingsFound.get(0).getEntries().get(0).getTeam().getId());
+        assertEquals(1, rankingsFound.get(0).getEntries().get(0).getPlayed());
+        assertEquals(t3.getId(), rankingsFound.get(1).getEntries().get(0).getTeam().getId());
+        assertEquals(0, rankingsFound.get(1).getEntries().get(0).getPlayed());
     }
 
     @Test
@@ -234,14 +245,14 @@ class GroupRankingServiceTest {
         final var t1 = TeamFakes.buildTeam(org, null).withGroupId(groupIdA);
 
         when(groupStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(groupA, groupB));
-        when(teamStore.findAllByGroupId(groupIdA)).thenReturn(List.of(t1));
-        when(matchStore.findAllByGroupId(groupIdA)).thenReturn(List.of());
+        when(teamStore.findAllByTournamentId(tournamentId)).thenReturn(List.of(t1));
+        when(matchStore.findAllByGroupIds(List.of(groupIdA))).thenReturn(List.of());
 
         final var rankingsFound = groupRankingService.computeAllGroupRankings(tournamentId, List.of("A"));
 
         verify(groupStore).findAllByTournamentId(tournamentId);
-        verify(teamStore).findAllByGroupId(groupIdA);
-        verify(matchStore).findAllByGroupId(groupIdA);
+        verify(teamStore).findAllByTournamentId(tournamentId);
+        verify(matchStore).findAllByGroupIds(List.of(groupIdA));
 
         assertEquals(1, rankingsFound.size());
         assertEquals("A", rankingsFound.get(0).getGroupName());

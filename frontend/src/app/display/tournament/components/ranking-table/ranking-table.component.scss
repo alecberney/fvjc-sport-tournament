@@ -1,0 +1,40 @@
+// The two pages using this table historically styled it differently, so the
+// look is kept per context: the default variant (rankings page) and a
+// `compact` host-class variant (results side panel, centered numeric columns).
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: #f5f5f5;
+  }
+
+  tbody tr:hover {
+    background-color: #fafafa;
+  }
+}
+
+:host(.compact) .ranking-table {
+  th, td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+    &:nth-child(2) { text-align: left; }
+  }
+
+  th {
+    background-color: transparent;
+  }
+
+  tbody tr:hover {
+    background-color: transparent;
+  }
+}

@@ -14,6 +14,8 @@ export interface BracketMatchDto {
   team1: BracketTeamDto | null;
   team2: BracketTeamDto | null;
   result: BracketMatchResultDto | null;
+  nextMatchId: string | null;
+  loserNextMatchId: string | null;
 }
 
 export interface BracketRoundDto {

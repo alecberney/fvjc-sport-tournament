@@ -65,31 +65,6 @@
   .form-subtitle { color: var(--mat-sys-on-surface-variant); margin: 0 0 16px; }
 }
 
-.score-inputs {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-
-  mat-form-field { flex: 1; }
-  .score-separator { font-size: 20px; font-weight: bold; }
-}
-
-.ranking-table {
-  width: 100%;
-  border-collapse: collapse;
-
-  th, td {
-    padding: 8px 6px;
-    text-align: center;
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
-
-    &:nth-child(2) { text-align: left; }
-  }
-
-  th { font-weight: 600; }
-}
-
 .empty-detail {
   display: flex;
   flex-direction: column;

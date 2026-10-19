@@ -3,9 +3,12 @@ package abe.fvjc.tournament.domain.fakes;
 import abe.fvjc.tournament.domain.bracket.BracketGenerateRequest;
 import abe.fvjc.tournament.domain.bracket.BracketMatch;
 import abe.fvjc.tournament.domain.bracket.BracketMatchResultRequest;
+import abe.fvjc.tournament.domain.bracket.BracketRound;
 import abe.fvjc.tournament.domain.team.TeamId;
+import abe.fvjc.tournament.domain.tournament.TournamentId;
 import lombok.experimental.UtilityClass;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.domain.bracket.TieBreaker.POINTS_DIFF;
@@ -75,6 +78,16 @@ public class BracketFakes {
         return BracketMatchResultRequest.builder()
                 .score1(3)
                 .score2(1)
+                .build();
+    }
+
+    public static BracketRound buildRound(final TournamentId tournamentId, final int number) {
+        return BracketRound.builder()
+                .id(randomBracketRoundId())
+                .tournamentId(tournamentId)
+                .number(number)
+                .name("Tour " + number)
+                .startTime(LocalDateTime.of(2027, 8, 15, 14, 0))
                 .build();
     }
 }

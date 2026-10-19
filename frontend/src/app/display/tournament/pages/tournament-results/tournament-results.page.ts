@@ -1,11 +1,8 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { Schedule, Match } from '@app/domain/schedule/schedule.model';
@@ -20,13 +17,15 @@ import { SubmitResult } from '@app/domain/result/result.actions';
 import { TournamentNavComponent } from '@app/display/tournament/components/tournament-nav/tournament-nav.component';
 import { TournamentHeaderComponent } from '@app/display/tournament/components/tournament-header/tournament-header.component';
 import { TournamentActionsComponent } from '@app/display/tournament/components/tournament-actions/tournament-actions.component';
+import { RankingTableComponent } from '@app/display/tournament/components/ranking-table/ranking-table.component';
+import { ScoreFormComponent, ScoreFormValue } from '@app/display/tournament/components/score-form/score-form.component';
 
 @Component({
   selector: 'app-tournament-results-page',
   templateUrl: './tournament-results.page.html',
   styleUrl: './tournament-results.page.scss',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, FormsModule, RouterLink, MatButtonModule, MatIconModule, MatInputModule, MatFormFieldModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],
+  imports: [AsyncPipe, DatePipe, RouterLink, MatButtonModule, MatIconModule, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent, RankingTableComponent, ScoreFormComponent],
 })
 export class TournamentResultsPage implements OnInit {
 
@@ -38,13 +37,15 @@ export class TournamentResultsPage implements OnInit {
   readonly rankings$: Observable<{ [groupId: string]: GroupRanking }> = this.store.select(ResultState.getRankings);
 
   selectedMatchId: string | null = null;
-  score1: number | null = null;
-  score2: number | null = null;
 
   protected tournamentId!: string;
 
   protected isDraft(tournament: Tournament): boolean {
     return tournament.status === TournamentStatus.DRAFT;
+  }
+
+  protected isEnded(tournament: Tournament): boolean {
+    return tournament.status === TournamentStatus.ENDED;
   }
 
   ngOnInit(): void {
@@ -57,13 +58,11 @@ export class TournamentResultsPage implements OnInit {
 
   selectMatch(match: Match): void {
     this.selectedMatchId = match.id;
-    this.score1 = match.result?.score1 ?? null;
-    this.score2 = match.result?.score2 ?? null;
   }
 
-  submitResult(): void {
-    if (this.selectedMatchId == null || this.score1 == null || this.score2 == null) return;
-    this.store.dispatch(new SubmitResult(this.tournamentId, this.selectedMatchId, this.score1, this.score2));
+  submitResult({ score1, score2 }: ScoreFormValue): void {
+    if (this.selectedMatchId == null) return;
+    this.store.dispatch(new SubmitResult(this.tournamentId, this.selectedMatchId, score1, score2));
   }
 
   getSelectedMatch(schedule: Schedule | undefined): Match | null {

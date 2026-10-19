@@ -1,4 +1,4 @@
-package abe.fvjc.tournament.domain.common.problem;
+package abe.fvjc.tournament.api.common.problem;
 
 import lombok.Builder;
 import lombok.Value;

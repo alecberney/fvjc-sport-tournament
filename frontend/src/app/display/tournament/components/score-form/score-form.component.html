@@ -1,0 +1,17 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <div class="score-inputs">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ team1Label }}</mat-label>
+      <input matInput type="number" min="0" max="500" [formControl]="form.controls.score1">
+    </mat-form-field>
+    <span class="score-separator">—</span>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ team2Label }}</mat-label>
+      <input matInput type="number" min="0" max="500" [formControl]="form.controls.score2">
+    </mat-form-field>
+  </div>
+
+  <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+    Enregistrer
+  </button>
+</form>

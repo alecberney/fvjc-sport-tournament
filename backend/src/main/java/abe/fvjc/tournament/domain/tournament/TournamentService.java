@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.DRAFT;
+import static abe.fvjc.tournament.domain.tournament.TournamentStatus.ENDED;
 import static abe.fvjc.tournament.domain.tournament.TournamentStatus.IN_PROGRESS;
 import static abe.fvjc.tournament.domain.tournament.TournamentValidator.validateTournamentCreateRequest;
 
@@ -52,13 +53,24 @@ public class TournamentService {
 
     public Tournament start(final TournamentId id) {
         final var tournament = tournamentSearchService.findById(id);
-        if (tournament.getStatus() == IN_PROGRESS) {
+        if (tournament.getStatus() != DRAFT) {
             throw new ConflictException("Le tournoi est déjà démarré");
         }
         if (roundStore.countByTournamentId(id) == 0) {
             throw new ConflictException("Impossible de démarrer le tournoi sans calendrier généré");
         }
         return tournamentStore.save(tournament.withStatus(IN_PROGRESS));
+    }
+
+    public Tournament end(final TournamentId id) {
+        final var tournament = tournamentSearchService.findById(id);
+        if (tournament.getStatus() != IN_PROGRESS) {
+            throw new ConflictException("Seul un tournoi en cours peut être terminé");
+        }
+        if (!bracketService.isFinalPlayed(id)) {
+            throw new ConflictException("Le tournoi ne peut être terminé qu'une fois le score de la finale saisi");
+        }
+        return tournamentStore.save(tournament.withStatus(ENDED));
     }
 
     private static Tournament buildTournament(final TournamentCreateRequest request) {

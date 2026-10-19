@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>Terminer le tournoi</h2>
+
+<mat-dialog-content>
+  <p>Le score de la finale a été saisi. Voulez-vous terminer le tournoi ?</p>
+  <p><strong>Plus aucun résultat ne pourra être saisi ou modifié.</strong></p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annuler</button>
+  <button mat-raised-button color="primary" (click)="confirm()">
+    <mat-icon>emoji_events</mat-icon>
+    Terminer
+  </button>
+</mat-dialog-actions>
