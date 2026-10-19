@@ -82,4 +82,62 @@ describe('ScheduleDomainService', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('hasRounds', () => {
+    it('should return true when the schedule has rounds', () => {
+      // setup
+      const schedule = ScheduleFakes.aSchedule();
+
+      // call
+      const result = ScheduleDomainService.hasRounds(schedule);
+
+      // assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false when the schedule has no rounds', () => {
+      // setup
+      const schedule = ScheduleFakes.aSchedule({ totalRounds: 0, rounds: [] });
+
+      // call
+      const result = ScheduleDomainService.hasRounds(schedule);
+
+      // assert
+      expect(result).toBe(false);
+    });
+
+    it('should return false when no schedule is loaded', () => {
+      // setup — (no data needed)
+
+      // call
+      const result = ScheduleDomainService.hasRounds(undefined);
+
+      // assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('findMatch', () => {
+    it('should return the match with the given id', () => {
+      // setup
+      const schedule = ScheduleFakes.aSchedule();
+
+      // call
+      const result = ScheduleDomainService.findMatch(schedule, 'match-id-1');
+
+      // assert
+      expect(result?.id).toBe('match-id-1');
+    });
+
+    it('should return undefined when no id is given', () => {
+      // setup
+      const schedule = ScheduleFakes.aSchedule();
+
+      // call
+      const result = ScheduleDomainService.findMatch(schedule, null);
+
+      // assert
+      expect(result).toBeUndefined();
+    });
+  });
 });

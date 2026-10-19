@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext, createSelector } from '@ngxs/store';
 import { tap } from 'rxjs';
 import { Schedule } from '@app/domain/schedule/schedule.model';
 import { GenerateSchedule, LoadSchedule } from '@app/domain/schedule/schedule.actions';
@@ -7,6 +7,9 @@ import { ScheduleApiService } from '@app/api/schedule/schedule.api.service';
 import { ScheduleApiMapper } from '@app/api/schedule/schedule.api.mapper';
 import { UpdateMatchResult } from '@app/domain/result/result.actions';
 import { ScheduleDomainService } from '@app/domain/schedule/schedule.domain.service';
+import { SchedulePageView } from '@app/domain/schedule/schedule.view';
+import { ScheduleViewMapper } from '@app/domain/schedule/schedule.view.mapper';
+import { TournamentState } from '@app/domain/tournament/tournament.state';
 
 export interface IScheduleState {
   schedule: Schedule | undefined;
@@ -29,6 +32,17 @@ export class ScheduleState {
   @Selector()
   static hasAllResults(state: IScheduleState): boolean {
     return ScheduleDomainService.hasAllResults(state.schedule);
+  }
+
+
+  // Built on demand, never stored.
+  static getSchedulePageView() {
+    return createSelector(
+      [TournamentState.getSelected, ScheduleState.getSchedule],
+      (tournament, schedule): SchedulePageView | null => tournament
+        ? ScheduleViewMapper.toSchedulePageView(tournament, schedule)
+        : null,
+    );
   }
 
   @Action(LoadSchedule)

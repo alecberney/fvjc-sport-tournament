@@ -1,6 +1,6 @@
 # IDEA-02 — Code & architecture improvements
 
-**Status:** in progress — F2, F3, F6, F7, F8, F9, B1, B2, B3 and B4 done
+**Status:** in progress — F1, F2, F3, F4, F6, F7, F8, F9, B1, B2, B3 and B4 done
 **Scope:** frontend (main topic: view models) + backend
 **Type:** technical debt / refactoring — no functional change for the user
 
@@ -10,10 +10,10 @@
 
 | # | Improvement | Layer | Effort | Value | Status |
 |---|---|---|---|---|---|
-| F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High | 🟡 In progress (bracket page done) |
+| F1 | **View models** — one model per screen with every property ready to display | Frontend | M | High | ✅ Done |
 | F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium | ✅ Done |
 | F3 | Extract shared components (ranking table, score form) | Frontend | S | Medium | ✅ Done |
-| F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | 🟡 In progress (bracket page done) |
+| F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | ✅ Done |
 | F5 | `OnPush` change detection everywhere | Frontend | S | Medium | To do |
 | F6 | `takeUntilDestroyed()` instead of `destroy$` + `takeUntil` | Frontend | S | Low | ✅ Done |
 | F7 | Route param via component input binding | Frontend | S | Low | ✅ Done |
@@ -26,7 +26,11 @@
 
 ### Done
 
-- **F1 + F4 (bracket page)** — `bracket.view.ts` + static `BracketViewMapper`
+- **F1 + F4** — every page now renders a single `vm$` built by a page-view selector:
+  list (`TournamentViewMapper`), detail (`TeamViewMapper`), groups (`GroupViewMapper`),
+  schedule (`ScheduleViewMapper`), results + rankings (`ResultViewMapper`, new
+  `ResultDomainService.findRankingsToDisplay`), bracket (below). Each mapper has a spec.
+  Bracket page details: `bracket.view.ts` + static `BracketViewMapper`
   (`toBracketPageView`, `toBracketRoundView`, `toBracketMatchView`, `toBracketSelectedMatchView`)
   with spec; `BracketState.getBracketPageView(selectedMatchId)` built with `createSelector` over
   tournament / bracket / schedule states; the page keeps the selected match in a signal and
@@ -275,10 +279,9 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 Remaining work:
 
-1. **F1 → F4** — migrate the remaining pages (results → rankings → schedule → detail → groups):
-   build the view mapper + `getXxxPageView` selector (F1), then collapse the page onto a single `vm$` (F4).
-2. **F5** — once a page has no mutable fields left (F1/F4 done), switch it to `OnPush`.
-3. **B4 follow-up** — podium display for a `FINISHED` tournament.
+1. **F5** — pages no longer hold mutable fields (UI state is in signals), so every component
+   can switch to `OnPush`.
+2. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 

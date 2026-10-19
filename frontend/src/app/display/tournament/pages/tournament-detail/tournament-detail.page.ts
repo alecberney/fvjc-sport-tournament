@@ -5,10 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament } from '@app/domain/tournament/tournament.model';
-import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
-import { Team, TeamGroup } from '@app/domain/team/team.model';
-import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { TeamPageView, TeamRowView } from '@app/domain/team/team.view';
 import { TeamState } from '@app/domain/team/team.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { DeleteTeam, LoadTeams, MarkTeamPaid } from '@app/domain/team/team.actions';
@@ -30,14 +27,9 @@ export class TournamentDetailPage implements OnInit {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
 
-  readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
-  readonly groups$: Observable<TeamGroup[]> = this.store.select(TeamState.getTeamsGroupedByOrganisation);
+  readonly vm$: Observable<TeamPageView | null> = this.store.select(TeamState.getTeamPageView());
 
   @Input({ alias: 'id', required: true }) tournamentId!: string;
-
-  protected isDraft(tournament: Tournament): boolean {
-    return TournamentDomainService.isDraft(tournament);
-  }
 
   ngOnInit(): void {
     this.store.dispatch([new LoadTournamentById(this.tournamentId), new LoadTeams(this.tournamentId)]);
@@ -49,17 +41,17 @@ export class TournamentDetailPage implements OnInit {
     });
   }
 
-  openEditModal(team: Team): void {
+  openEditModal(row: TeamRowView): void {
     this.dialog.open(TeamEditModal, {
-      data: { tournamentId: this.tournamentId, team },
+      data: { tournamentId: this.tournamentId, team: row.team },
     });
   }
 
-  deleteTeam(team: Team): void {
-    this.store.dispatch(new DeleteTeam(this.tournamentId, team.id));
+  deleteTeam(row: TeamRowView): void {
+    this.store.dispatch(new DeleteTeam(this.tournamentId, row.id));
   }
 
-  markPaid(team: Team, paid: boolean): void {
-    this.store.dispatch(new MarkTeamPaid(this.tournamentId, team.id, paid));
+  togglePaid(row: TeamRowView): void {
+    this.store.dispatch(new MarkTeamPaid(this.tournamentId, row.id, !row.paid));
   }
 }

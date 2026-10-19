@@ -1,16 +1,12 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngxs/store';
-import { Observable } from 'rxjs';
-import { Schedule, Match } from '@app/domain/schedule/schedule.model';
-import { GroupRanking } from '@app/domain/result/result.model';
-import { Tournament } from '@app/domain/tournament/tournament.model';
-import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
-import { TournamentState } from '@app/domain/tournament/tournament.state';
-import { ScheduleState } from '@app/domain/schedule/schedule.state';
+import { Observable, switchMap } from 'rxjs';
+import { ResultMatchView, ResultPageView } from '@app/domain/result/result.view';
 import { ResultState } from '@app/domain/result/result.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
@@ -33,21 +29,14 @@ export class TournamentResultsPage implements OnInit {
 
   private readonly store = inject(Store);
 
-  readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
-  readonly schedule$: Observable<Schedule | undefined> = this.store.select(ScheduleState.getSchedule);
-  readonly rankings$: Observable<{ [groupId: string]: GroupRanking }> = this.store.select(ResultState.getRankings);
+  // UI state owned by the page — passed to the view selector, never stored in NGXS.
+  private readonly selectedMatchId = signal<string | null>(null);
 
-  selectedMatchId: string | null = null;
+  readonly vm$: Observable<ResultPageView | null> = toObservable(this.selectedMatchId).pipe(
+    switchMap((selectedMatchId) => this.store.select(ResultState.getResultPageView(selectedMatchId))),
+  );
 
   @Input({ alias: 'id', required: true }) tournamentId!: string;
-
-  protected isDraft(tournament: Tournament): boolean {
-    return TournamentDomainService.isDraft(tournament);
-  }
-
-  protected isFinished(tournament: Tournament): boolean {
-    return TournamentDomainService.isFinished(tournament);
-  }
 
   ngOnInit(): void {
     this.store.dispatch([
@@ -56,25 +45,11 @@ export class TournamentResultsPage implements OnInit {
     ]);
   }
 
-  selectMatch(match: Match): void {
-    this.selectedMatchId = match.id;
+  selectMatch(match: ResultMatchView): void {
+    this.selectedMatchId.set(match.id);
   }
 
-  submitResult({ score1, score2 }: ScoreFormValue): void {
-    if (this.selectedMatchId == null) return;
-    this.store.dispatch(new SubmitResult(this.tournamentId, this.selectedMatchId, score1, score2));
-  }
-
-  getSelectedMatch(schedule: Schedule | undefined): Match | null {
-    if (!schedule || !this.selectedMatchId) return null;
-    for (const round of schedule.rounds) {
-      const found = round.matches.find(m => m.id === this.selectedMatchId);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  getRankingForMatch(match: Match, rankings: { [groupId: string]: GroupRanking }): GroupRanking | null {
-    return rankings[match.groupId] ?? null;
+  submitResult(matchId: string, { score1, score2 }: ScoreFormValue): void {
+    this.store.dispatch(new SubmitResult(this.tournamentId, matchId, score1, score2));
   }
 }

@@ -1,10 +1,10 @@
-@if (tournament$ | async; as tournament) {
-  <app-tournament-header [tournament]="tournament">
-    <app-tournament-actions [tournament]="tournament" />
+@if (vm$ | async; as vm) {
+  <app-tournament-header [tournament]="vm.tournament">
+    <app-tournament-actions [tournament]="vm.tournament" />
   </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
-  @if (isDraft(tournament)) {
+  @if (vm.isDraft) {
     <div class="empty-state">
       <mat-icon>play_circle</mat-icon>
       <p>Démarrez le tournoi pour saisir les résultats</p>
@@ -16,64 +16,58 @@
   } @else {
   <div class="results-layout">
     <div class="schedule-panel">
-      @if (schedule$ | async; as schedule) {
-        @for (round of schedule.rounds; track round.id) {
-          <div class="round-section">
-            <div class="round-header">
-              <span class="round-number">Round {{ round.number }}</span>
-              <span class="round-time">{{ round.startTime | dateFormat:'time' }}</span>
-            </div>
-            @for (match of round.matches; track match.id) {
-              <div class="match-row"
-                   [class.selected]="selectedMatchId === match.id"
-                   [class.has-result]="match.result !== null"
-                   (click)="selectMatch(match)">
-                <span class="match-field">T{{ match.field }}</span>
-                <span class="match-group">{{ match.groupName }}</span>
-                <span class="match-teams">{{ match.team1.name }} vs {{ match.team2.name }}</span>
-                @if (match.result) {
-                  <span class="match-score">{{ match.result.score1 }} - {{ match.result.score2 }}</span>
-                }
-              </div>
-            }
+      @for (round of vm.rounds; track round.id) {
+        <div class="round-section">
+          <div class="round-header">
+            <span class="round-number">{{ round.title }}</span>
+            <span class="round-time">{{ round.startTime | dateFormat:'time' }}</span>
           </div>
-        }
+          @for (match of round.matches; track match.id) {
+            <div class="match-row"
+                 [class.selected]="match.isSelected"
+                 [class.has-result]="match.hasResult"
+                 (click)="selectMatch(match)">
+              <span class="match-field">{{ match.fieldLabel }}</span>
+              <span class="match-group">{{ match.groupName }}</span>
+              <span class="match-teams">{{ match.teamsLabel }}</span>
+              @if (match.scoreLabel) {
+                <span class="match-score">{{ match.scoreLabel }}</span>
+              }
+            </div>
+          }
+        </div>
       }
     </div>
 
     <div class="detail-panel">
-      @if (schedule$ | async; as schedule) {
-        @if (rankings$ | async; as rankings) {
-          @if (getSelectedMatch(schedule); as match) {
-            <div class="result-form">
-              <h2>{{ match.team1.name }} vs {{ match.team2.name }}</h2>
-              <p class="form-subtitle">{{ match.groupName }} — Terrain {{ match.field }}</p>
+      @if (vm.selectedMatch; as match) {
+        <div class="result-form">
+          <h2>{{ match.title }}</h2>
+          <p class="form-subtitle">{{ match.subtitle }}</p>
 
-              @if (isFinished(tournament)) {
-                <p class="form-subtitle">Tournoi terminé — les résultats ne peuvent plus être modifiés.</p>
-              } @else {
-                <app-score-form
-                  [team1Label]="match.team1.name"
-                  [team2Label]="match.team2.name"
-                  [score1]="match.result?.score1 ?? null"
-                  [score2]="match.result?.score2 ?? null"
-                  (submitted)="submitResult($event)" />
-              }
-            </div>
-
-            @if (getRankingForMatch(match, rankings); as ranking) {
-              <div class="ranking-panel">
-                <h3>Classement — Groupe {{ ranking.groupName }}</h3>
-                <app-ranking-table class="compact" [ranking]="ranking" />
-              </div>
-            }
+          @if (vm.isFinished) {
+            <p class="form-subtitle">Tournoi terminé — les résultats ne peuvent plus être modifiés.</p>
           } @else {
-            <div class="empty-detail">
-              <mat-icon>touch_app</mat-icon>
-              <p>Sélectionnez un match pour saisir le résultat</p>
-            </div>
+            <app-score-form
+              [team1Label]="match.team1Label"
+              [team2Label]="match.team2Label"
+              [score1]="match.score1"
+              [score2]="match.score2"
+              (submitted)="submitResult(match.id, $event)" />
           }
+        </div>
+
+        @if (match.ranking; as ranking) {
+          <div class="ranking-panel">
+            <h3>Classement — {{ ranking.title }}</h3>
+            <app-ranking-table class="compact" [ranking]="ranking.ranking" />
+          </div>
         }
+      } @else {
+        <div class="empty-detail">
+          <mat-icon>touch_app</mat-icon>
+          <p>Sélectionnez un match pour saisir le résultat</p>
+        </div>
       }
     </div>
   </div>

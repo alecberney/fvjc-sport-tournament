@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext, createSelector } from '@ngxs/store';
 import { tap } from 'rxjs';
 import { Tournament } from '@app/domain/tournament/tournament.model';
 import {
@@ -12,6 +12,8 @@ import {
 } from '@app/domain/tournament/tournament.actions';
 import { TournamentApiService } from '@app/api/tournament/tournament.api.service';
 import { TournamentApiMapper } from '@app/api/tournament/tournament.api.mapper';
+import { TournamentListPageView } from '@app/domain/tournament/tournament.view';
+import { TournamentViewMapper } from '@app/domain/tournament/tournament.view.mapper';
 
 export interface ITournamentState {
   tournaments: Tournament[];
@@ -38,6 +40,15 @@ export class TournamentState {
   @Selector()
   static getSelected(state: ITournamentState): Tournament | undefined {
     return state.selected;
+  }
+
+
+  // Built on demand, never stored.
+  static getTournamentListPageView() {
+    return createSelector(
+      [TournamentState.getTournaments],
+      (tournaments): TournamentListPageView => TournamentViewMapper.toTournamentListPageView(tournaments),
+    );
   }
 
   @Action(LoadTournaments)

@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament, TournamentStatus } from '@app/domain/tournament/tournament.model';
+import { TournamentCardView, TournamentListPageView } from '@app/domain/tournament/tournament.view';
 import { TournamentState } from '@app/domain/tournament/tournament.state';
 import { DeleteTournament, LoadTournaments } from '@app/domain/tournament/tournament.actions';
 import { TournamentCreateModal } from '@app/display/tournament/pages/tournament-create/tournament-create.modal';
@@ -27,33 +27,17 @@ export class TournamentListPage implements OnInit {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
 
-  readonly tournaments$: Observable<Tournament[]> = this.store.select(TournamentState.getTournaments);
-
-  private static readonly STATUS_LABELS: Record<TournamentStatus, string> = {
-    [TournamentStatus.DRAFT]: 'Brouillon',
-    [TournamentStatus.IN_PROGRESS]: 'En cours',
-    [TournamentStatus.FINISHED]: 'Terminé',
-  };
+  readonly vm$: Observable<TournamentListPageView> = this.store.select(TournamentState.getTournamentListPageView());
 
   ngOnInit(): void {
     this.store.dispatch(new LoadTournaments());
-  }
-
-  // "2–4" for a range, a single "2" when min and max are equal.
-  protected playersPerTeamLabel(tournament: Tournament): string {
-    const { minPlayersPerTeam: min, maxPlayersPerTeam: max } = tournament;
-    return min === max ? `${min}` : `${min}–${max}`;
-  }
-
-  protected statusLabel(tournament: Tournament): string {
-    return TournamentListPage.STATUS_LABELS[tournament.status];
   }
 
   openCreateModal(): void {
     this.dialog.open(TournamentCreateModal);
   }
 
-  openDeleteModal(tournament: Tournament, event: MouseEvent): void {
+  openDeleteModal(tournament: TournamentCardView, event: MouseEvent): void {
     event.stopPropagation();
     event.preventDefault();
     this.dialog

@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
-import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext, createSelector } from '@ngxs/store';
 import { concatMap, from, tap, toArray } from 'rxjs';
-import { Team, TeamGroup } from '@app/domain/team/team.model';
+import { Team } from '@app/domain/team/team.model';
 import { DeleteTeam, GenerateRandomTeams, LoadTeams, MarkTeamPaid, RegisterTeams, UpdateTeam } from '@app/domain/team/team.actions';
 import { TeamApiService } from '@app/api/team/team.api.service';
 import { TeamApiMapper } from '@app/api/team/team.api.mapper';
-import { TeamDomainService } from '@app/domain/team/team.domain.service';
 import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
+import { TeamPageView } from '@app/domain/team/team.view';
+import { TeamViewMapper } from '@app/domain/team/team.view.mapper';
+import { TournamentState } from '@app/domain/tournament/tournament.state';
 
 export interface ITeamState {
   teams: Team[];
@@ -26,9 +28,16 @@ export class TeamState {
     return state.teams;
   }
 
-  @Selector()
-  static getTeamsGroupedByOrganisation(state: ITeamState): TeamGroup[] {
-    return TeamDomainService.groupByOrganisation(state.teams);
+
+
+  // Built on demand, never stored.
+  static getTeamPageView() {
+    return createSelector(
+      [TournamentState.getSelected, TeamState.getTeams],
+      (tournament, teams): TeamPageView | null => tournament
+        ? TeamViewMapper.toTeamPageView(tournament, teams)
+        : null,
+    );
   }
 
   @Action(LoadTeams)

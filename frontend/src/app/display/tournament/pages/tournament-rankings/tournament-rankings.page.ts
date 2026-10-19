@@ -1,15 +1,12 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Store } from '@ngxs/store';
-import { Observable } from 'rxjs';
-import { Tournament } from '@app/domain/tournament/tournament.model';
-import { Group } from '@app/domain/group/group.model';
-import { GroupRanking } from '@app/domain/result/result.model';
-import { TournamentState } from '@app/domain/tournament/tournament.state';
-import { GroupState } from '@app/domain/group/group.state';
+import { Observable, switchMap } from 'rxjs';
+import { RankingPageView } from '@app/domain/result/result.view';
 import { ResultState } from '@app/domain/result/result.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { LoadGroups } from '@app/domain/group/group.actions';
@@ -30,11 +27,13 @@ export class TournamentRankingsPage implements OnInit {
 
   private readonly store = inject(Store);
 
-  readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
-  readonly groups$: Observable<Group[]> = this.store.select(GroupState.getGroups);
-  readonly rankings$: Observable<{ [groupId: string]: GroupRanking }> = this.store.select(ResultState.getRankings);
+  // UI state owned by the page — passed to the view selector, never stored in NGXS.
+  protected readonly selectedGroupName = signal<string | null>(null);
 
-  selectedGroup: string | null = null;
+  readonly vm$: Observable<RankingPageView | null> = toObservable(this.selectedGroupName).pipe(
+    switchMap((selectedGroupName) => this.store.select(ResultState.getRankingPageView(selectedGroupName))),
+  );
+
   @Input({ alias: 'id', required: true }) tournamentId!: string;
 
   ngOnInit(): void {
@@ -45,22 +44,11 @@ export class TournamentRankingsPage implements OnInit {
     ]);
   }
 
-  onGroupFilterChange(): void {
+  onGroupFilterChange(groupName: string | null): void {
+    this.selectedGroupName.set(groupName);
     this.store.dispatch(new LoadAllGroupRankings(
       this.tournamentId,
-      { groups: this.selectedGroup ?? undefined },
+      { groups: groupName ?? undefined },
     ));
-  }
-
-  getRankingsToDisplay(groups: Group[], rankings: { [groupId: string]: GroupRanking }): GroupRanking[] {
-    if (this.selectedGroup) {
-      const group = groups.find(g => g.name === this.selectedGroup);
-      if (!group) return [];
-      const ranking = rankings[group.id];
-      return ranking ? [ranking] : [];
-    }
-    return groups
-      .map(g => rankings[g.id])
-      .filter((r): r is GroupRanking => r !== undefined);
   }
 }

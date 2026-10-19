@@ -6,10 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament } from '@app/domain/tournament/tournament.model';
-import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
-import { Schedule } from '@app/domain/schedule/schedule.model';
-import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { SchedulePageView } from '@app/domain/schedule/schedule.view';
 import { ScheduleState } from '@app/domain/schedule/schedule.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { LoadSchedule } from '@app/domain/schedule/schedule.actions';
@@ -34,21 +31,12 @@ export class TournamentSchedulePage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
 
-  readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
-  readonly schedule$: Observable<Schedule | undefined> = this.store.select(ScheduleState.getSchedule);
+  readonly vm$: Observable<SchedulePageView | null> = this.store.select(ScheduleState.getSchedulePageView());
 
   @Input({ alias: 'id', required: true }) tournamentId!: string;
 
-  protected isDraft(tournament: Tournament): boolean {
-    return TournamentDomainService.isDraft(tournament);
-  }
-
-  isInProgress(tournament: Tournament): boolean {
-    return TournamentDomainService.isInProgress(tournament);
-  }
-
-  canStartTournament(tournament: Tournament, schedule: Schedule | null | undefined): boolean {
-    return TournamentDomainService.canStart(tournament, !!schedule && schedule.totalRounds > 0);
+  ngOnInit(): void {
+    this.store.dispatch([new LoadTournamentById(this.tournamentId), new LoadSchedule(this.tournamentId)]);
   }
 
   startTournament(): void {
@@ -59,10 +47,6 @@ export class TournamentSchedulePage implements OnInit {
         this.router.navigate(['/', this.tournamentId, 'results']);
       });
     });
-  }
-
-  ngOnInit(): void {
-    this.store.dispatch([new LoadTournamentById(this.tournamentId), new LoadSchedule(this.tournamentId)]);
   }
 
   openGenerateModal(): void {

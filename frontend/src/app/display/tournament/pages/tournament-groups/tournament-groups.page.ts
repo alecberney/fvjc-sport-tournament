@@ -5,10 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { Tournament } from '@app/domain/tournament/tournament.model';
-import { TournamentDomainService } from '@app/domain/tournament/tournament.domain.service';
 import { Group } from '@app/domain/group/group.model';
-import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { GroupPageView } from '@app/domain/group/group.view';
 import { GroupState } from '@app/domain/group/group.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
 import { LoadGroups } from '@app/domain/group/group.actions';
@@ -30,14 +28,9 @@ export class TournamentGroupsPage implements OnInit {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
 
-  readonly tournament$: Observable<Tournament | undefined> = this.store.select(TournamentState.getSelected);
-  readonly groups$: Observable<Group[]> = this.store.select(GroupState.getGroups);
+  readonly vm$: Observable<GroupPageView | null> = this.store.select(GroupState.getGroupPageView());
 
   @Input({ alias: 'id', required: true }) tournamentId!: string;
-
-  protected isDraft(tournament: Tournament): boolean {
-    return TournamentDomainService.isDraft(tournament);
-  }
 
   ngOnInit(): void {
     this.store.dispatch([new LoadTournamentById(this.tournamentId), new LoadGroups(this.tournamentId)]);

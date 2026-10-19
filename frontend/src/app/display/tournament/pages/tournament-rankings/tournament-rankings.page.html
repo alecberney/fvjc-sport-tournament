@@ -1,31 +1,26 @@
-@if (tournament$ | async; as tournament) {
-  <app-tournament-header [tournament]="tournament">
-    <app-tournament-actions [tournament]="tournament" />
+@if (vm$ | async; as vm) {
+  <app-tournament-header [tournament]="vm.tournament">
+    <app-tournament-actions [tournament]="vm.tournament" />
   </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
   <div class="rankings-layout">
-    @if (groups$ | async; as groups) {
-      <div class="rankings-filter">
-        <mat-form-field appearance="outline">
-          <mat-label>Groupe</mat-label>
-          <mat-select [(ngModel)]="selectedGroup" (ngModelChange)="onGroupFilterChange()">
-            <mat-option [value]="null">Tous les groupes</mat-option>
-            @for (group of groups; track group.id) {
-              <mat-option [value]="group.name">Groupe {{ group.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+    <div class="rankings-filter">
+      <mat-form-field appearance="outline">
+        <mat-label>Groupe</mat-label>
+        <mat-select [ngModel]="selectedGroupName()" (ngModelChange)="onGroupFilterChange($event)">
+          @for (option of vm.groupOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
 
-      @if (rankings$ | async; as rankings) {
-        @for (ranking of getRankingsToDisplay(groups, rankings); track ranking.groupId) {
-          <div class="group-ranking">
-            <h2>Groupe {{ ranking.groupName }}</h2>
-            <app-ranking-table [ranking]="ranking" />
-          </div>
-        }
-      }
+    @for (group of vm.rankings; track group.groupId) {
+      <div class="group-ranking">
+        <h2>{{ group.title }}</h2>
+        <app-ranking-table [ranking]="group.ranking" />
+      </div>
     }
   </div>
 }

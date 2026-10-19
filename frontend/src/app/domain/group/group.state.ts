@@ -1,10 +1,13 @@
 import { inject, Injectable } from '@angular/core';
-import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext, createSelector } from '@ngxs/store';
 import { tap } from 'rxjs';
 import { Group } from '@app/domain/group/group.model';
 import { GenerateGroups, LoadGroups, SwapTeams } from '@app/domain/group/group.actions';
 import { GroupApiService } from '@app/api/group/group.api.service';
 import { GroupApiMapper } from '@app/api/group/group.api.mapper';
+import { GroupPageView } from '@app/domain/group/group.view';
+import { GroupViewMapper } from '@app/domain/group/group.view.mapper';
+import { TournamentState } from '@app/domain/tournament/tournament.state';
 
 export interface IGroupState {
   groups: Group[];
@@ -22,6 +25,17 @@ export class GroupState {
   @Selector()
   static getGroups(state: IGroupState): Group[] {
     return state.groups;
+  }
+
+
+  // Built on demand, never stored.
+  static getGroupPageView() {
+    return createSelector(
+      [TournamentState.getSelected, GroupState.getGroups],
+      (tournament, groups): GroupPageView | null => tournament
+        ? GroupViewMapper.toGroupPageView(tournament, groups)
+        : null,
+    );
   }
 
   @Action(LoadGroups)

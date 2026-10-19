@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Action, Selector, State, StateContext } from '@ngxs/store';
+import { Action, Selector, State, StateContext, createSelector } from '@ngxs/store';
 import { concatMap, from, last, map, of, switchMap, tap } from 'rxjs';
 import { GroupRanking } from '@app/domain/result/result.model';
 import { GenerateRandomResults, LoadAllGroupRankings, LoadGroupRanking, StartTournament, SubmitResult, UpdateMatchResult } from '@app/domain/result/result.actions';
@@ -9,6 +9,11 @@ import { PatchSelectedStatus } from '@app/domain/tournament/tournament.actions';
 import { ScheduleApiService } from '@app/api/schedule/schedule.api.service';
 import { ScheduleApiMapper } from '@app/api/schedule/schedule.api.mapper';
 import { SeedingDomainService } from '@app/domain/seeding/seeding.domain.service';
+import { RankingPageView, ResultPageView } from '@app/domain/result/result.view';
+import { ResultViewMapper } from '@app/domain/result/result.view.mapper';
+import { TournamentState } from '@app/domain/tournament/tournament.state';
+import { ScheduleState } from '@app/domain/schedule/schedule.state';
+import { GroupState } from '@app/domain/group/group.state';
 
 export interface IResultState {
   rankings: { [groupId: string]: GroupRanking };
@@ -32,6 +37,27 @@ export class ResultState {
   @Selector()
   static getRankingForGroup(state: IResultState): (groupId: string) => GroupRanking | undefined {
     return (groupId: string) => state.rankings[groupId];
+  }
+
+
+  // Built on demand, never stored; the page's selected match is the parameter.
+  static getResultPageView(selectedMatchId: string | null) {
+    return createSelector(
+      [TournamentState.getSelected, ScheduleState.getSchedule, ResultState.getRankings],
+      (tournament, schedule, rankings): ResultPageView | null => tournament
+        ? ResultViewMapper.toResultPageView(tournament, schedule, rankings, selectedMatchId)
+        : null,
+    );
+  }
+
+  // Built on demand, never stored; the page's group filter is the parameter.
+  static getRankingPageView(selectedGroupName: string | null) {
+    return createSelector(
+      [TournamentState.getSelected, GroupState.getGroups, ResultState.getRankings],
+      (tournament, groups, rankings): RankingPageView | null => tournament
+        ? ResultViewMapper.toRankingPageView(tournament, groups, rankings, selectedGroupName)
+        : null,
+    );
   }
 
   @Action(StartTournament)

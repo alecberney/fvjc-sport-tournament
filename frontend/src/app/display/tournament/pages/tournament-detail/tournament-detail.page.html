@@ -1,62 +1,60 @@
-@if (tournament$ | async; as tournament) {
-  <app-tournament-header [tournament]="tournament">
-    @if (isDraft(tournament)) {
+@if (vm$ | async; as vm) {
+  <app-tournament-header [tournament]="vm.tournament">
+    @if (vm.canEditTeams) {
       <button mat-raised-button color="primary" (click)="openRegisterModal()">
         <mat-icon>group_add</mat-icon>
         Inscrire des équipes
       </button>
     }
-    <app-tournament-actions [tournament]="tournament" />
+    <app-tournament-actions [tournament]="vm.tournament" />
   </app-tournament-header>
   <app-tournament-nav [tournamentId]="tournamentId" />
 
   <section class="teams-section">
-    @if (groups$ | async; as groups) {
-      @if (groups.length === 0) {
-        <div class="empty-state">
-          <mat-icon>groups</mat-icon>
-          <p>Aucune équipe inscrite</p>
-        </div>
-      } @else {
-        @for (group of groups; track group.organisationId) {
-          <div class="org-group">
-            <div class="org-header">
-              <mat-icon>person</mat-icon>
-              <span>{{ group.responsibleName }}</span>
+    @if (vm.isEmpty) {
+      <div class="empty-state">
+        <mat-icon>groups</mat-icon>
+        <p>Aucune équipe inscrite</p>
+      </div>
+    } @else {
+      @for (organisation of vm.organisations; track organisation.organisationId) {
+        <div class="org-group">
+          <div class="org-header">
+            <mat-icon>person</mat-icon>
+            <span>{{ organisation.responsibleName }}</span>
+          </div>
+          <div class="team-row team-header-row">
+            <span class="team-name"></span>
+            <div class="team-actions">
+              <span class="paid-header">Payé</span>
+              @if (vm.canEditTeams) {
+                <span class="action-spacer"></span>
+                <span class="action-spacer"></span>
+              }
             </div>
-            <div class="team-row team-header-row">
-              <span class="team-name"></span>
+          </div>
+          @for (team of organisation.teams; track team.id) {
+            <div class="team-row">
+              <span class="team-name">{{ team.name }}</span>
               <div class="team-actions">
-                <span class="paid-header">Payé</span>
-                @if (isDraft(tournament)) {
-                  <span class="action-spacer"></span>
-                  <span class="action-spacer"></span>
+                <button mat-icon-button
+                        [color]="team.paidColor"
+                        (click)="togglePaid(team)"
+                        [title]="team.paidToggleTitle">
+                  <mat-icon>{{ team.paidIcon }}</mat-icon>
+                </button>
+                @if (vm.canEditTeams) {
+                  <button mat-icon-button (click)="openEditModal(team)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteTeam(team)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
                 }
               </div>
             </div>
-            @for (team of group.teams; track team.id) {
-              <div class="team-row">
-                <span class="team-name">{{ team.name }}</span>
-                <div class="team-actions">
-                  <button mat-icon-button
-                          [color]="team.paid ? 'primary' : ''"
-                          (click)="markPaid(team, !team.paid)"
-                          [title]="team.paid ? 'Marquer non payé' : 'Marquer payé'">
-                    <mat-icon>{{ team.paid ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-                  </button>
-                  @if (isDraft(tournament)) {
-                    <button mat-icon-button (click)="openEditModal(team)">
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button mat-icon-button color="warn" (click)="deleteTeam(team)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        }
+          }
+        </div>
       }
     }
   </section>

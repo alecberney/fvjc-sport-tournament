@@ -6,15 +6,15 @@
   </button>
 </div>
 
-@if (tournaments$ | async; as tournaments) {
-  @if (tournaments.length === 0) {
+@if (vm$ | async; as vm) {
+  @if (vm.isEmpty) {
     <div class="empty-state">
       <mat-icon>emoji_events</mat-icon>
       <p>Aucun tournoi pour l'instant</p>
     </div>
   } @else {
     <div class="tournament-grid">
-      @for (tournament of tournaments; track tournament.id) {
+      @for (tournament of vm.tournaments; track tournament.id) {
         <mat-card class="tournament-card" [routerLink]="[tournament.id]">
           <mat-card-header>
             <mat-card-title>{{ tournament.name }}</mat-card-title>
@@ -23,14 +23,14 @@
           <mat-card-content>
             <div class="card-info">
               <span>{{ tournament.date | dateFormat:'date' }}</span>
-              <span>{{ tournament.numberOfFields }} terrain(s)</span>
-              <span>{{ playersPerTeamLabel(tournament) }} joueurs/équipe</span>
+              <span>{{ tournament.fieldsLabel }}</span>
+              <span>{{ tournament.playersPerTeamLabel }}</span>
             </div>
           </mat-card-content>
           <mat-card-actions class="card-actions">
             <mat-chip-set>
-              <mat-chip [class.chip-active]="tournament.status !== 'DRAFT'">
-                {{ statusLabel(tournament) }}
+              <mat-chip [class.chip-active]="tournament.isStarted">
+                {{ tournament.statusLabel }}
               </mat-chip>
             </mat-chip-set>
             <button
