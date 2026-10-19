@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,7 @@ import { UpdateTeam } from '@app/domain/team/team.actions';
 
 @Component({
   selector: 'app-team-edit-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './team-edit.modal.html',
   standalone: true,
   imports: [

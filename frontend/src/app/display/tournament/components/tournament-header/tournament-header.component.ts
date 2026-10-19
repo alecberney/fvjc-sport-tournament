@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Tournament } from '@app/domain/tournament/tournament.model';
 import { DateFormatPipe } from '@app/display/shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-tournament-header',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-header.component.html',
   styleUrl: './tournament-header.component.scss',
   standalone: true,

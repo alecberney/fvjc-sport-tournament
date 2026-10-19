@@ -1,11 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, OnInit, signal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Store } from '@ngxs/store';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, startWith, Subject, switchMap } from 'rxjs';
 import { RankingPageView } from '@app/domain/result/result.view';
 import { ResultState } from '@app/domain/result/result.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
@@ -18,6 +17,7 @@ import { RankingTableComponent } from '@app/display/tournament/components/rankin
 
 @Component({
   selector: 'app-tournament-rankings-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-rankings.page.html',
   styleUrl: './tournament-rankings.page.scss',
   standalone: true,
@@ -27,10 +27,11 @@ export class TournamentRankingsPage implements OnInit {
 
   private readonly store = inject(Store);
 
-  // UI state owned by the page — passed to the view selector, never stored in NGXS.
-  protected readonly selectedGroupName = signal<string | null>(null);
+  // Stream of the user's group filter choices (null = all groups) — feeds the view selector, never stored.
+  private readonly groupSelection$ = new Subject<string | null>();
 
-  readonly vm$: Observable<RankingPageView | null> = toObservable(this.selectedGroupName).pipe(
+  readonly vm$: Observable<RankingPageView | null> = this.groupSelection$.pipe(
+    startWith(null),
     switchMap((selectedGroupName) => this.store.select(ResultState.getRankingPageView(selectedGroupName))),
   );
 
@@ -45,7 +46,7 @@ export class TournamentRankingsPage implements OnInit {
   }
 
   onGroupFilterChange(groupName: string | null): void {
-    this.selectedGroupName.set(groupName);
+    this.groupSelection$.next(groupName);
     this.store.dispatch(new LoadAllGroupRankings(
       this.tournamentId,
       { groups: groupName ?? undefined },

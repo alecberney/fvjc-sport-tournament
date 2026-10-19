@@ -1,11 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, OnInit, signal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngxs/store';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, startWith, Subject, switchMap } from 'rxjs';
 import { ResultMatchView, ResultPageView } from '@app/domain/result/result.view';
 import { ResultState } from '@app/domain/result/result.state';
 import { LoadTournamentById } from '@app/domain/tournament/tournament.actions';
@@ -20,6 +19,7 @@ import { DateFormatPipe } from '@app/display/shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-tournament-results-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-results.page.html',
   styleUrl: './tournament-results.page.scss',
   standalone: true,
@@ -29,10 +29,11 @@ export class TournamentResultsPage implements OnInit {
 
   private readonly store = inject(Store);
 
-  // UI state owned by the page — passed to the view selector, never stored in NGXS.
-  private readonly selectedMatchId = signal<string | null>(null);
+  // Stream of the user's match selections (null = none) — feeds the view selector, never stored.
+  private readonly matchSelection$ = new Subject<string | null>();
 
-  readonly vm$: Observable<ResultPageView | null> = toObservable(this.selectedMatchId).pipe(
+  readonly vm$: Observable<ResultPageView | null> = this.matchSelection$.pipe(
+    startWith(null),
     switchMap((selectedMatchId) => this.store.select(ResultState.getResultPageView(selectedMatchId))),
   );
 
@@ -46,7 +47,7 @@ export class TournamentResultsPage implements OnInit {
   }
 
   selectMatch(match: ResultMatchView): void {
-    this.selectedMatchId.set(match.id);
+    this.matchSelection$.next(match.id);
   }
 
   submitResult(matchId: string, { score1, score2 }: ScoreFormValue): void {

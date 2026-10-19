@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -19,6 +19,7 @@ import { TeamRandomGenerateModal } from '@app/display/tournament/pages/team-rand
 // don't each have to duplicate the same handlers.
 @Component({
   selector: 'app-tournament-actions',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-actions.component.html',
   styleUrl: './tournament-actions.component.scss',
   standalone: true,

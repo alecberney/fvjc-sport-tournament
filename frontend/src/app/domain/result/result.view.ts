@@ -50,6 +50,7 @@ export interface RankingGroupOptionView {
 
 export interface RankingPageView {
   tournament: Tournament;
+  selectedGroupName: string | null;
   groupOptions: RankingGroupOptionView[];
   rankings: RankingGroupView[];
 }

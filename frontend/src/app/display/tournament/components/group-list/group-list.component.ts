@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Group } from '@app/domain/group/group.model';
@@ -11,6 +11,7 @@ export interface SwapRequest {
 
 @Component({
   selector: 'app-group-list',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './group-list.component.html',
   styleUrl: './group-list.component.scss',
   standalone: true,

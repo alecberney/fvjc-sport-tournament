@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { RegisterTeams } from '@app/domain/team/team.actions';
 
 @Component({
   selector: 'app-team-register-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './team-register.modal.html',
   styleUrl: './team-register.modal.scss',
   standalone: true,

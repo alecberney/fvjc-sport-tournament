@@ -414,13 +414,21 @@ static getBracketPageView(selectedMatchId: string | null) {
 ```
 
 ```typescript
-// tournament-bracket.page.ts — the page owns its UI state and selects one view
-private readonly selectedMatchId = signal<string | null>(null);
+// tournament-bracket.page.ts — user selections are a stream feeding the view selector
+private readonly matchSelection$ = new Subject<string | null>();
 
-readonly vm$ = toObservable(this.selectedMatchId).pipe(
+readonly vm$ = this.matchSelection$.pipe(
+  startWith(null),
   switchMap((id) => this.store.select(BracketState.getBracketPageView(id))),
 );
+
+selectMatch(match: BracketMatchView): void {
+  this.matchSelection$.next(match.id);
+}
 ```
+
+When the template needs the current UI value back (e.g. a `mat-select` `[ngModel]`), the
+view carries it: the selector parameter is copied into the view (`vm.selectedGroupName`).
 
 - View interfaces in `domain/<feature>/<feature>.view.ts`, mapper in `<feature>.view.mapper.ts`.
 - Dates stay `Date` in views — formatting is the template's job, through `DateFormatPipe`.
@@ -481,10 +489,50 @@ export class TournamentCardComponent {
 ```
 
 - All components are **standalone**.
+- All components use `changeDetection: ChangeDetectionStrategy.OnPush` — pages, components and modals alike.
 - `inject()` for dependencies — no constructor.
 - Styles go in a `.scss` file referenced via `styleUrl` — never inline `styles`.
 - Pages use `store.select()` and `store.dispatch()`.
 - Components are pure — they only receive inputs and emit outputs.
+
+### Change Detection and UI State
+
+Every component is `OnPush`: Angular re-checks it only when an `@Input` gets a new reference,
+an event fires in its template, or an `async` pipe emits. So the template must never depend on
+a plain mutable field.
+
+**No signals, no mutable UI fields** — everything the template shows changes through an
+observable read with `| async`:
+
+- Component fields are `readonly`. Never `this.field = value` to change what is displayed.
+- Store data reaches the template through `vm$ | async` (see View Models).
+- **User-driven UI state** (selected row, filter) is a `Subject` of user events (`next()` in the
+  handler), piped with `startWith(initial)` into the view selector — the stream is the state,
+  nothing is stored.
+- **Action-driven UI state** (error message, "saving…") is derived from the NGXS `Actions`
+  stream (`ofActionDispatched` / `ofActionCompleted` / `ofActionSuccessful`) — never set in a
+  `subscribe` callback.
+- Reactive forms are the exception: the `FormGroup` is the form's own mutable state, created once
+  as a `readonly` field.
+
+```typescript
+// WRONG — plain field set in an async callback: OnPush never re-renders it
+errorMessage: string | null = null;
+error: (err) => { this.errorMessage = 'Erreur lors de la génération.'; }
+
+// CORRECT — derived from the action stream: cleared on dispatch, set on failure
+protected readonly errorMessage$: Observable<string | null> = merge(
+  this.actions$.pipe(ofActionDispatched(GenerateBracket), map(() => null)),
+  this.actions$.pipe(
+    ofActionCompleted(GenerateBracket),
+    map(({ result }) => result.error ? BracketGenerateModal.toErrorMessage(result.error) : null),
+  ),
+);
+```
+
+```html
+@if (errorMessage$ | async; as message) { <p class="error-text">{{ message }}</p> }
+```
 
 ### Typed Forms
 
@@ -613,6 +661,8 @@ export const TOURNAMENT_ROUTES: Routes = [
 | Pages | Dispatch actions, select state — one per route |
 | Components | Pure — `@Input` / `@Output` only, no store access |
 | Standalone | All components are standalone |
+| Change detection | Every component uses `ChangeDetectionStrategy.OnPush` |
+| UI state | No signals, no mutable fields — fields are `readonly`; store data via `vm$ \| async`; user-driven UI state is a `Subject` + `startWith` feeding the view selector; action-driven UI state derived from the NGXS `Actions` stream |
 | Typed forms | Access controls via typed `form.controls.xxx` / `form.value.xxx` — never `form.get('xxx')` |
 | Template conditions | Compound `@if` conditions (`||` / `&&`) extracted into an intent-named `.ts` method returning `boolean` — single expressions stay inline |
 | Styles | Always use `styleUrl` with a `.scss` file — never inline `styles` |

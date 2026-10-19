@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,7 @@ export interface TournamentDeleteConfirmData {
 
 @Component({
   selector: 'app-tournament-delete-confirm-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-delete-confirm.modal.html',
   standalone: true,
   imports: [MatDialogModule, MatButtonModule, MatIconModule],

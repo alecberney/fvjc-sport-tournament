@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { GenerateRandomTeams } from '@app/domain/team/team.actions';
 
 @Component({
   selector: 'app-team-random-generate-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './team-random-generate.modal.html',
   standalone: true,
   imports: [

@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-tournament-end-confirm-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-end-confirm.modal.html',
   standalone: true,
   imports: [MatDialogModule, MatButtonModule, MatIconModule],

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { GenerateGroups } from '@app/domain/group/group.actions';
 
 @Component({
   selector: 'app-group-generate-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './group-generate.modal.html',
   styleUrl: './group-generate.modal.scss',
   standalone: true,

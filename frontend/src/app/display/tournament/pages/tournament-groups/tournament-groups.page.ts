@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -19,6 +19,7 @@ import { TournamentActionsComponent } from '@app/display/tournament/components/t
 
 @Component({
   selector: 'app-tournament-groups-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-groups.page.html',
   standalone: true,
   imports: [AsyncPipe, MatButtonModule, MatIconModule, GroupListComponent, TournamentNavComponent, TournamentHeaderComponent, TournamentActionsComponent],

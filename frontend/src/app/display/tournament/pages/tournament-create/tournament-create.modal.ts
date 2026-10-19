@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,7 @@ import { CreateTournament } from '@app/domain/tournament/tournament.actions';
 
 @Component({
   selector: 'app-tournament-create-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-create.modal.html',
   styleUrl: './tournament-create.modal.scss',
   standalone: true,

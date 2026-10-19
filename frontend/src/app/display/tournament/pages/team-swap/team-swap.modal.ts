@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -16,6 +16,7 @@ export interface TeamSwapData {
 
 @Component({
   selector: 'app-team-swap-modal',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './team-swap.modal.html',
   styleUrl: './team-swap.modal.scss',
   standalone: true,

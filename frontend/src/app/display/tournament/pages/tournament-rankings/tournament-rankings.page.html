@@ -8,7 +8,7 @@
     <div class="rankings-filter">
       <mat-form-field appearance="outline">
         <mat-label>Groupe</mat-label>
-        <mat-select [ngModel]="selectedGroupName()" (ngModelChange)="onGroupFilterChange($event)">
+        <mat-select [ngModel]="vm.selectedGroupName" (ngModelChange)="onGroupFilterChange($event)">
           @for (option of vm.groupOptions; track option.value) {
             <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }

@@ -1,6 +1,6 @@
 # IDEA-02 — Code & architecture improvements
 
-**Status:** in progress — F1, F2, F3, F4, F6, F7, F8, F9, B1, B2, B3 and B4 done
+**Status:** in progress — all items done (B4 podium follow-up remaining)
 **Scope:** frontend (main topic: view models) + backend
 **Type:** technical debt / refactoring — no functional change for the user
 
@@ -14,7 +14,7 @@
 | F2 | `TournamentDomainService` — stop duplicating `isDraft()` | Frontend | S | Medium | ✅ Done |
 | F3 | Extract shared components (ranking table, score form) | Frontend | S | Medium | ✅ Done |
 | F4 | Flatten nested `async` pipes into a single `vm$` | Frontend | S | Medium | ✅ Done |
-| F5 | `OnPush` change detection everywhere | Frontend | S | Medium | To do |
+| F5 | `OnPush` change detection everywhere | Frontend | S | Medium | ✅ Done |
 | F6 | `takeUntilDestroyed()` instead of `destroy$` + `takeUntil` | Frontend | S | Low | ✅ Done |
 | F7 | Route param via component input binding | Frontend | S | Low | ✅ Done |
 | F8 | Score entry as a typed reactive form with validation | Frontend | S | Medium | ✅ Done |
@@ -43,6 +43,10 @@
   except the status labels of the list page.
 - **F3** — `components/ranking-table/` (used by results + rankings pages) and
   `components/score-form/` (used by results + bracket pages).
+- **F5** — all 25 components use `ChangeDetectionStrategy.OnPush`. No signals and no mutable
+  UI fields: page selections are `Subject` streams (`startWith(null)`) feeding the view selector,
+  the bracket-generate modal error is derived from the NGXS `Actions` stream (`errorMessage$`).
+  Rule added to `frontend-rules.md` ("Change Detection and UI State").
 - **F6** — the seven modals use `takeUntilDestroyed(this.destroyRef)`; no `destroy$` left.
 - **F7** — `withComponentInputBinding()` in `app.config.ts`; the six tournament pages declare
   `@Input({ alias: 'id', required: true }) tournamentId!: string` instead of reading
@@ -279,9 +283,7 @@ and show a podium. Needs a backend transition + a frontend `isFinished` flag (vi
 
 Remaining work:
 
-1. **F5** — pages no longer hold mutable fields (UI state is in signals), so every component
-   can switch to `OnPush`.
-2. **B4 follow-up** — podium display for a `FINISHED` tournament.
+1. **B4 follow-up** — podium display for a `FINISHED` tournament.
 
 ---
 

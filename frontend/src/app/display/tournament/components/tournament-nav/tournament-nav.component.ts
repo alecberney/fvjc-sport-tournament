@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,7 @@ interface TournamentNavTab {
 
 @Component({
   selector: 'app-tournament-nav',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-nav.component.html',
   styleUrl: './tournament-nav.component.scss',
   standalone: true,

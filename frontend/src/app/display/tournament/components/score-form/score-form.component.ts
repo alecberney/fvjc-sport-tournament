@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnChanges, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnChanges, Output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,6 +11,7 @@ export interface ScoreFormValue {
 
 @Component({
   selector: 'app-score-form',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './score-form.component.html',
   styleUrl: './score-form.component.scss',
   standalone: true,

@@ -133,6 +133,7 @@ describe('ResultViewMapper', () => {
       const result = ResultViewMapper.toRankingPageView(tournament, groups, rankings, 'B');
 
       // assert
+      expect(result.selectedGroupName).toBe('B');
       expect(result.rankings.map(group => group.title)).toEqual(['Groupe B']);
       expect(result.groupOptions.length).toBe(3);
     });

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ import { DateFormatPipe } from '@app/display/shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-tournament-schedule-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tournament-schedule.page.html',
   styleUrl: './tournament-schedule.page.scss',
   standalone: true,

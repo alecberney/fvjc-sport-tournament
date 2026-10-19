@@ -81,6 +81,7 @@ export class ResultViewMapper {
   ): RankingPageView {
     return {
       tournament,
+      selectedGroupName,
       groupOptions: ResultViewMapper.toRankingGroupOptionViews(groups),
       rankings: ResultDomainService.findRankingsToDisplay(groups, rankings, selectedGroupName)
         .map(ResultViewMapper.toRankingGroupView),
